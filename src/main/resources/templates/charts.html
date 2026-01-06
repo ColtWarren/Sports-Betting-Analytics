@@ -17,7 +17,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
         
         .container {
@@ -27,15 +27,15 @@
         
         header {
             background: white;
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
         
         h1 {
             color: #667eea;
-            font-size: 2em;
+            font-size: clamp(1.5em, 5vw, 2em);
             margin-bottom: 10px;
         }
         
@@ -47,18 +47,25 @@
             text-decoration: none;
             border-radius: 8px;
             margin-top: 15px;
+            font-size: clamp(0.9em, 2.5vw, 1em);
         }
         
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            grid-template-columns: 1fr;
             gap: 20px;
             margin-bottom: 30px;
         }
         
+        @media (min-width: 768px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
         .chart-container {
             background: white;
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
@@ -66,11 +73,12 @@
         .chart-container h2 {
             color: #374151;
             margin-bottom: 20px;
-            font-size: 1.3em;
+            font-size: clamp(1.1em, 3vw, 1.3em);
         }
         
         canvas {
             max-height: 300px;
+            width: 100% !important;
         }
         
         .full-width {
@@ -87,25 +95,21 @@
         </header>
         
         <div class="charts-grid">
-            <!-- Profit Over Time -->
             <div class="chart-container full-width">
                 <h2>Profit/Loss Over Time</h2>
                 <canvas id="profitChart"></canvas>
             </div>
             
-            <!-- Win/Loss Distribution -->
             <div class="chart-container">
                 <h2>Bet Outcome Distribution</h2>
                 <canvas id="distributionChart"></canvas>
             </div>
             
-            <!-- Profit by Sportsbook -->
             <div class="chart-container">
                 <h2>Profit by Sportsbook</h2>
                 <canvas id="sportsbookChart"></canvas>
             </div>
             
-            <!-- Profit by Sport -->
             <div class="chart-container full-width">
                 <h2>Profit by Sport</h2>
                 <canvas id="sportChart"></canvas>
@@ -114,11 +118,8 @@
     </div>
     
     <script>
-        // Get data from server
         const betsData = /*[[${bets}]]*/ [];
-        console.log('Bets data:', betsData);
         
-        // Process data for profit over time
         const sortedBets = [...betsData].sort((a, b) => {
             const dateA = new Date(a.settledAt || a.placedAt);
             const dateB = new Date(b.settledAt || b.placedAt);
@@ -136,9 +137,6 @@
             };
         });
         
-        console.log('Profit data:', profitData);
-        
-        // Profit Over Time Chart
         new Chart(document.getElementById('profitChart'), {
             type: 'line',
             data: {
@@ -197,11 +195,9 @@
             }
         });
         
-        // Win/Loss Distribution
         const wonCount = betsData.filter(b => b.status === 'WON').length;
         const lostCount = betsData.filter(b => b.status === 'LOST').length;
         const pushCount = betsData.filter(b => b.status === 'PUSH').length;
-        const pendingCount = betsData.filter(b => b.status === 'PENDING').length;
         
         new Chart(document.getElementById('distributionChart'), {
             type: 'doughnut',
@@ -238,7 +234,6 @@
             }
         });
         
-        // Profit by Sportsbook
         const sportsbookProfit = {};
         betsData.forEach(bet => {
             if (bet.profitLoss !== null && bet.profitLoss !== undefined) {
@@ -293,7 +288,6 @@
             }
         });
         
-        // Profit by Sport
         const sportProfit = {};
         betsData.forEach(bet => {
             if (bet.profitLoss !== null && bet.profitLoss !== undefined) {
