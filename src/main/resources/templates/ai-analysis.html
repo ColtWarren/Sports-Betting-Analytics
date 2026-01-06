@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Performance Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6b7280;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .stats-summary {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .ai-analysis {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            line-height: 1.8;
+        }
+        
+        .ai-icon {
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .analysis-content {
+            white-space: pre-wrap;
+            color: #374151;
+            font-size: 1.05em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Performance Analysis</h1>
+            <p>Claude AI analyzes your betting performance</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </header>
+        
+        <div class="stats-summary">
+            <h2>Your Current Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Total Bets</div>
+                    <div class="stat-value" th:text="${totalBets}">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Won</div>
+                    <div class="stat-value" th:text="${wonCount}">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Lost</div>
+                    <div class="stat-value" th:text="${lostCount}">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Profit/Loss</div>
+                    <div class="stat-value">$<span th:text="${#numbers.formatDecimal(profitLoss, 1, 2)}">0.00</span></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value"><span th:text="${#numbers.formatDecimal(winRate, 1, 1)}">0.0</span>%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">ROI</div>
+                    <div class="stat-value"><span th:text="${#numbers.formatDecimal(roi, 1, 1)}">0.0</span>%</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ai-analysis">
+            <div class="ai-icon">🤖</div>
+            <div class="analysis-content" th:text="${analysis}">
+                Analyzing your performance...
+            </div>
+        </div>
+    </div>
+</body>
+</html>
