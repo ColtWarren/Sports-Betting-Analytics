@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6b7280;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        canvas {
+            max-height: 300px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Analytics Charts</h1>
+            <p>Visualize your betting performance</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </header>
+        
+        <div class="charts-grid">
+            <!-- Profit Over Time -->
+            <div class="chart-container full-width">
+                <h2>Profit/Loss Over Time</h2>
+                <canvas id="profitChart"></canvas>
+            </div>
+            
+            <!-- Win/Loss Distribution -->
+            <div class="chart-container">
+                <h2>Bet Outcome Distribution</h2>
+                <canvas id="distributionChart"></canvas>
+            </div>
+            
+            <!-- Profit by Sportsbook -->
+            <div class="chart-container">
+                <h2>Profit by Sportsbook</h2>
+                <canvas id="sportsbookChart"></canvas>
+            </div>
+            
+            <!-- Profit by Sport -->
+            <div class="chart-container full-width">
+                <h2>Profit by Sport</h2>
+                <canvas id="sportChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get data from server
+        const betsData = /*[[${bets}]]*/ [];
+        console.log('Bets data:', betsData);
+        
+        // Process data for profit over time
+        const sortedBets = [...betsData].sort((a, b) => {
+            const dateA = new Date(a.settledAt || a.placedAt);
+            const dateB = new Date(b.settledAt || b.placedAt);
+            return dateA - dateB;
+        });
+        
+        let cumulativeProfit = 0;
+        const profitData = sortedBets.map(bet => {
+            if (bet.profitLoss !== null && bet.profitLoss !== undefined) {
+                cumulativeProfit += bet.profitLoss;
+            }
+            return {
+                x: bet.settledAt || bet.placedAt,
+                y: cumulativeProfit
+            };
+        });
+        
+        console.log('Profit data:', profitData);
+        
+        // Profit Over Time Chart
+        new Chart(document.getElementById('profitChart'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Cumulative Profit/Loss',
+                    data: profitData,
+                    borderColor: 'rgb(102, 126, 234)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Profit/Loss ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Profit: $' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Win/Loss Distribution
+        const wonCount = betsData.filter(b => b.status === 'WON').length;
+        const lostCount = betsData.filter(b => b.status === 'LOST').length;
+        const pushCount = betsData.filter(b => b.status === 'PUSH').length;
+        const pendingCount = betsData.filter(b => b.status === 'PENDING').length;
+        
+        new Chart(document.getElementById('distributionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Won', 'Lost', 'Push'],
+                datasets: [{
+                    data: [wonCount, lostCount, pushCount],
+                    backgroundColor: [
+                        'rgb(16, 185, 129)',
+                        'rgb(239, 68, 68)',
+                        'rgb(245, 158, 11)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Profit by Sportsbook
+        const sportsbookProfit = {};
+        betsData.forEach(bet => {
+            if (bet.profitLoss !== null && bet.profitLoss !== undefined) {
+                if (!sportsbookProfit[bet.sportsbookName]) {
+                    sportsbookProfit[bet.sportsbookName] = 0;
+                }
+                sportsbookProfit[bet.sportsbookName] += bet.profitLoss;
+            }
+        });
+        
+        new Chart(document.getElementById('sportsbookChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(sportsbookProfit),
+                datasets: [{
+                    label: 'Profit/Loss',
+                    data: Object.values(sportsbookProfit),
+                    backgroundColor: Object.values(sportsbookProfit).map(v => 
+                        v >= 0 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)'
+                    )
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Profit/Loss ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Profit: $' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Profit by Sport
+        const sportProfit = {};
+        betsData.forEach(bet => {
+            if (bet.profitLoss !== null && bet.profitLoss !== undefined) {
+                if (!sportProfit[bet.sport]) {
+                    sportProfit[bet.sport] = 0;
+                }
+                sportProfit[bet.sport] += bet.profitLoss;
+            }
+        });
+        
+        new Chart(document.getElementById('sportChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(sportProfit),
+                datasets: [{
+                    label: 'Profit/Loss',
+                    data: Object.values(sportProfit),
+                    backgroundColor: Object.values(sportProfit).map(v => 
+                        v >= 0 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)'
+                    )
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Profit/Loss ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Profit: $' + context.parsed.x.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -22,24 +22,20 @@ public class DashboardController {
     
     @GetMapping("/")
     public String home(Model model) {
-        // Get all bets
         List<Bet> allBets = betService.getAllBets();
         List<Bet> pendingBets = betService.getPendingBets();
         List<Bet> settledBets = betService.getSettledBets();
         
-        // Get analytics
         BigDecimal totalProfitLoss = betService.calculateTotalProfitLoss();
         Double winRate = betService.calculateWinRate();
         Double roi = betService.calculateROI();
         
-        // Get counts
         long totalCount = allBets.size();
         long pendingCount = betService.countBetsByStatus("PENDING");
         long wonCount = betService.countBetsByStatus("WON");
         long lostCount = betService.countBetsByStatus("LOST");
         long pushCount = betService.countBetsByStatus("PUSH");
         
-        // Add to model
         model.addAttribute("allBets", allBets);
         model.addAttribute("pendingBets", pendingBets);
         model.addAttribute("settledBets", settledBets);
@@ -89,5 +85,12 @@ public class DashboardController {
     public String deleteBet(@PathVariable Long id) {
         betService.deleteBet(id);
         return "redirect:/";
+    }
+    
+    @GetMapping("/charts")
+    public String charts(Model model) {
+        List<Bet> bets = betService.getSettledBets();
+        model.addAttribute("bets", bets);
+        return "charts";
     }
 }
