@@ -1,7 +1,9 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
-import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.service.BetService;
+import com.coltwarren.sports_betting_analytics.service.BankrollService;
+import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.Bankroll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,15 +11,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class DashboardController {
     
     private final BetService betService;
+    private final BankrollService bankrollService;
     
     @Autowired
-    public DashboardController(BetService betService) {
+    public DashboardController(BetService betService, BankrollService bankrollService) {
         this.betService = betService;
+        this.bankrollService = bankrollService;
     }
     
     @GetMapping("/")
@@ -97,5 +102,28 @@ public class DashboardController {
     @GetMapping("/best-bets")
     public String bestBets() {
         return "best-bets";
+    }
+    
+    @GetMapping("/bankroll")
+    public String bankroll(Model model) {
+        Map<String, Object> stats = bankrollService.getBankrollStats();
+        List<Bankroll> transactions = bankrollService.getAllTransactions();
+        
+        model.addAttribute("stats", stats);
+        model.addAttribute("transactions", transactions);
+        
+        return "bankroll";
+    }
+    
+    @PostMapping("/bankroll/deposit")
+    public String recordDeposit(@RequestParam BigDecimal amount, @RequestParam(required = false) String notes) {
+        bankrollService.recordDeposit(amount, notes);
+        return "redirect:/bankroll";
+    }
+    
+    @PostMapping("/bankroll/withdrawal")
+    public String recordWithdrawal(@RequestParam BigDecimal amount, @RequestParam(required = false) String notes) {
+        bankrollService.recordWithdrawal(amount, notes);
+        return "redirect:/bankroll";
     }
 }

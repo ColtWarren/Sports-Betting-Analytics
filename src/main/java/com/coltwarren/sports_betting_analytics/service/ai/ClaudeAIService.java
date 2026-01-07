@@ -104,7 +104,7 @@ public class ClaudeAIService {
         return callClaudeAPI(prompt);
     }
     
-    private String callClaudeAPI(String prompt) {
+    public String callClaudeAPI(String prompt) {
         try {
             Map<String, Object> requestBody = Map.of(
                 "model", model,
