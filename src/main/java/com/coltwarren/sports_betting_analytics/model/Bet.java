@@ -187,7 +187,45 @@ public class Bet {
                 ", sportsbookName='" + sportsbookName + '\'' +
                 '}';
     }
-}
 
+    // CLV Calculation Methods
+    public Double calculateCLV() {
+        if (this.closingOdds == null || this.odds == null) {
+            return null;
+        }
+        
+        double yourOddsDecimal = americanToDecimal(this.odds.intValue());
+        double closingOddsDecimal = americanToDecimal(this.closingOdds.intValue());
+        
+        // CLV = (Your Decimal Odds / Closing Decimal Odds) - 1
+        return ((yourOddsDecimal / closingOddsDecimal) - 1) * 100;
+    }
     
+    public void checkBeatClosingLine() {
+        if (this.closingOdds == null || this.odds == null) {
+            this.beatClosingLine = null;
+            return;
+        }
+        
+        int yourOdds = this.odds.intValue();
+        int closing = this.closingOdds.intValue();
+        
+        // Better odds = beat the line
+        if (yourOdds > 0 && closing > 0) {
+            this.beatClosingLine = yourOdds > closing;
+        } else if (yourOdds < 0 && closing < 0) {
+            this.beatClosingLine = Math.abs(yourOdds) < Math.abs(closing);
+        } else {
+            this.beatClosingLine = yourOdds > closing;
+        }
+    }
+    
+    private double americanToDecimal(int americanOdds) {
+        if (americanOdds > 0) {
+            return (americanOdds / 100.0) + 1;
+        } else {
+            return (100.0 / Math.abs(americanOdds)) + 1;
+        }
+    }
+    }
 
