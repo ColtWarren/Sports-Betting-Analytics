@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sports Betting Analytics</title>
+    <title>Command Center - Sports Betting Analytics</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,380 +14,619 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
             min-height: 100vh;
-            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        /* Glowing orbs */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            animation: orbPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         
         header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            animation: headerShine 4s infinite;
+        }
+        
+        @keyframes headerShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
         
         h1 {
-            color: #667eea;
-            font-size: clamp(1.5em, 5vw, 2.5em);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2.5em, 7vw, 4.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 1;
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         
         .subtitle {
-            color: #666;
-            font-size: clamp(0.9em, 3vw, 1.1em);
+            font-size: clamp(1.1em, 3vw, 1.5em);
+            color: #a5b4fc;
+            font-weight: 300;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
         }
         
-        .stats-grid {
+        .nav-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+            position: relative;
+            z-index: 1;
         }
         
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .nav-btn {
+            display: block;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(124, 58, 237, 0.3));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: clamp(0.95em, 2.5vw, 1.1em);
+            font-weight: 700;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .nav-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.5);
+            border-color: rgba(139, 92, 246, 0.8);
+        }
+        
+        .nav-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
         
         .stat-card {
-            background: white;
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            text-align: center;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #6366f1, #8b5cf6, transparent);
+            animation: lineSlide 3s infinite;
+        }
+        
+        @keyframes lineSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+            border-color: rgba(139, 92, 246, 0.7);
+        }
+        
+        .stat-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 10px currentColor);
         }
         
         .stat-label {
-            color: #666;
-            font-size: clamp(0.75em, 2vw, 0.9em);
+            font-size: clamp(0.85em, 2vw, 1em);
+            color: #a5b4fc;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
         
         .stat-value {
-            font-size: clamp(1.5em, 4vw, 2.5em);
-            font-weight: bold;
-            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 5vw, 2.8em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        .stat-value.profit {
-            color: #10b981;
+        .stat-value.negative {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
-        .stat-value.loss {
-            color: #ef4444;
+        .stat-value.warning {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
-        .action-bar {
-            background: white;
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .action-bar h2 {
-            color: #374151;
-            font-size: clamp(1.2em, 4vw, 1.5em);
-            flex: 1 1 100%;
-        }
-        
-        @media (min-width: 768px) {
-            .action-bar h2 {
-                flex: 0 1 auto;
-            }
-        }
-        
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            width: 100%;
-        }
-        
-        @media (min-width: 768px) {
-            .action-buttons {
-                width: auto;
-            }
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: none;
-            font-size: clamp(0.9em, 2.5vw, 1em);
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            flex: 1 1 auto;
-            text-align: center;
-            min-width: 100px;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        
-        .btn-success {
-            background: #10b981;
-            color: white;
-            padding: 6px 12px;
-            font-size: clamp(0.8em, 2vw, 0.9em);
-        }
-        
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-            padding: 6px 12px;
-            font-size: clamp(0.8em, 2vw, 0.9em);
-        }
-        
-        .btn-warning {
-            background: #f59e0b;
-            color: white;
-            padding: 6px 12px;
-            font-size: clamp(0.8em, 2vw, 0.9em);
-        }
-        
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-            padding: 6px 12px;
-            font-size: clamp(0.8em, 2vw, 0.9em);
-        }
-        
-        .bets-table {
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-        
-        @media (max-width: 768px) {
-            table {
-                font-size: 0.85em;
-            }
-        }
-        
-        th {
-            background: #f9fafb;
-            padding: 12px 8px;
-            text-align: left;
-            color: #374151;
-            font-weight: 600;
-            border-bottom: 2px solid #e5e7eb;
-            white-space: nowrap;
-        }
-        
-        td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        tr:hover {
-            background: #f9fafb;
-        }
-        
-        .badge {
-            padding: 4px 10px;
+        .section {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
             border-radius: 20px;
-            font-size: clamp(0.75em, 2vw, 0.85em);
-            font-weight: 600;
-            white-space: nowrap;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5em, 4vw, 2em);
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .bet-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .bet-item {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .bet-item:hover {
+            transform: translateX(5px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        .bet-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+            border-radius: 15px 0 0 15px;
+        }
+        
+        .bet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .bet-event {
+            font-size: clamp(1.1em, 3vw, 1.3em);
+            font-weight: 700;
+            color: #e0e7ff;
+        }
+        
+        .bet-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: clamp(0.8em, 2vw, 0.9em);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .badge-pending {
-            background: #fef3c7;
-            color: #92400e;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
         }
         
         .badge-won {
-            background: #d1fae5;
-            color: #065f46;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
         }
         
         .badge-lost {
-            background: #fee2e2;
-            color: #991b1b;
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: #fff;
         }
         
         .badge-push {
-            background: #e0e7ff;
-            color: #3730a3;
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
+            color: #fff;
         }
         
-        .action-btns {
+        .bet-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: clamp(0.9em, 2.5vw, 1em);
+        }
+        
+        .detail-item {
+            color: #a5b4fc;
+        }
+        
+        .detail-item strong {
+            color: #e0e7ff;
+            font-weight: 700;
+        }
+        
+        .bet-actions {
             display: flex;
-            gap: 5px;
+            gap: 10px;
             flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-won {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
+        }
+        
+        .btn-won:hover {
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn-lost {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: #fff;
+        }
+        
+        .btn-lost:hover {
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn-push {
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
+            color: #fff;
+        }
+        
+        .btn-push:hover {
+            box-shadow: 0 5px 20px rgba(107, 114, 128, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #f87171;
+        }
+        
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.3);
         }
         
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
-            color: #9ca3af;
+            padding: 60px 20px;
+            color: #a5b4fc;
         }
         
         .empty-state h3 {
-            font-size: clamp(1.2em, 4vw, 1.5em);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
             margin-bottom: 10px;
+            color: #6366f1;
+        }
+        
+        /* Pulse animation for pending bets */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .badge-pending {
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎲 Sports Betting Analytics</h1>
-            <p class="subtitle">Track your bets, analyze performance, maximize profits</p>
+            <h1>⚡ COMMAND CENTER</h1>
+            <p class="subtitle">Sports Betting Analytics Platform</p>
+            
+            <div class="nav-grid">
+                <a href="/bets/new" class="nav-btn"><span>➕ New Bet</span></a>
+                <a href="/best-bets" class="nav-btn"><span>🔥 Best Bets</span></a>
+                <a href="/charts" class="nav-btn"><span>📊 Charts</span></a>
+                <a href="/ai/analyze-performance" class="nav-btn"><span>🤖 AI Analysis</span></a>
+                <a href="/bankroll" class="nav-btn"><span>💰 Bankroll</span></a>
+                <a href="/clv" class="nav-btn"><span>📈 CLV Tracker</span></a>
+            </div>
         </header>
         
-        <div class="stats-grid">
+        <div class="stats-overview">
             <div class="stat-card">
+                <div class="stat-icon">💰</div>
                 <div class="stat-label">Total P/L</div>
-                <div class="stat-value" th:classappend="${totalProfitLoss >= 0} ? 'profit' : 'loss'">
-                    <span th:if="${totalProfitLoss >= 0}">+</span>$<span th:text="${#numbers.formatDecimal(totalProfitLoss, 1, 2)}">0.00</span>
+                <div class="stat-value" 
+                     th:classappend="${totalProfitLoss != null && totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? '' : 'negative'">
+                    <span th:if="${totalProfitLoss != null && totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0}">+</span>$<span th:text="${totalProfitLoss != null ? #numbers.formatDecimal(totalProfitLoss, 1, 2) : '0.00'}">0.00</span>
                 </div>
             </div>
             
             <div class="stat-card">
+                <div class="stat-icon">🎯</div>
                 <div class="stat-label">Win Rate</div>
-                <div class="stat-value">
-                    <span th:text="${#numbers.formatDecimal(winRate, 1, 1)}">0.0</span>%
+                <div class="stat-value" 
+                     th:classappend="${winRate != null && winRate >= 55} ? '' : (${winRate != null && winRate >= 50} ? 'warning' : 'negative')">
+                    <span th:text="${winRate != null ? #numbers.formatDecimal(winRate * 100, 1, 1) : '0.0'}">0.0</span>%
                 </div>
             </div>
             
             <div class="stat-card">
+                <div class="stat-icon">📈</div>
                 <div class="stat-label">ROI</div>
-                <div class="stat-value">
-                    <span th:text="${#numbers.formatDecimal(roi, 1, 1)}">0.0</span>%
+                <div class="stat-value" 
+                     th:classappend="${roi != null && roi >= 0} ? '' : 'negative'">
+                    <span th:if="${roi != null && roi >= 0}">+</span><span th:text="${roi != null ? #numbers.formatDecimal(roi * 100, 1, 1) : '0.0'}">0.0</span>%
                 </div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-label">Total</div>
-                <div class="stat-value" th:text="${totalCount}">0</div>
+                <div class="stat-icon">🎲</div>
+                <div class="stat-label">Total Bets</div>
+                <div class="stat-value">
+                    <span th:text="${totalCount}">0</span>
+                </div>
             </div>
             
             <div class="stat-card">
+                <div class="stat-icon">⏳</div>
                 <div class="stat-label">Pending</div>
-                <div class="stat-value" th:text="${pendingCount}">0</div>
+                <div class="stat-value warning">
+                    <span th:text="${pendingCount}">0</span>
+                </div>
             </div>
             
             <div class="stat-card">
+                <div class="stat-icon">✅</div>
                 <div class="stat-label">Won</div>
-                <div class="stat-value" th:text="${wonCount}">0</div>
+                <div class="stat-value">
+                    <span th:text="${wonCount}">0</span>
+                </div>
             </div>
             
             <div class="stat-card">
+                <div class="stat-icon">❌</div>
                 <div class="stat-label">Lost</div>
-                <div class="stat-value" th:text="${lostCount}">0</div>
+                <div class="stat-value negative">
+                    <span th:text="${lostCount}">0</span>
+                </div>
             </div>
             
             <div class="stat-card">
+                <div class="stat-icon">↔️</div>
                 <div class="stat-label">Push</div>
-                <div class="stat-value" th:text="${pushCount}">0</div>
+                <div class="stat-value">
+                    <span th:text="${pushCount}">0</span>
+                </div>
             </div>
         </div>
         
-        <div class="action-bar">
-            <h2>All Bets</h2>
-            <div class="action-buttons">
-                <a href="/charts" class="btn btn-primary">📊 Charts</a>
-                <a href="/ai/analyze-performance" class="btn btn-primary">🤖 AI Analysis</a>
-                <a href="/bets/new" class="btn btn-primary">➕ New Bet</a>
+        <div class="section" th:if="${!pendingBets.isEmpty()}">
+            <h2 class="section-title">⏳ Pending Bets</h2>
+            <div class="bet-list">
+                <div class="bet-item" th:each="bet : ${pendingBets}">
+                    <div class="bet-header">
+                        <div class="bet-event" th:text="${bet.eventName}">Event Name</div>
+                        <span class="bet-badge badge-pending">PENDING</span>
+                    </div>
+                    <div class="bet-details">
+                        <div class="detail-item"><strong th:text="${bet.sport}">Sport</strong></div>
+                        <div class="detail-item"><strong th:text="${bet.betType}">Type</strong></div>
+                        <div class="detail-item">Selection: <strong th:text="${bet.selection}">Pick</strong></div>
+                        <div class="detail-item">Stake: <strong>$<span th:text="${#numbers.formatDecimal(bet.stake, 1, 2)}">0.00</span></strong></div>
+                        <div class="detail-item">Odds: <strong th:text="${bet.odds > 0 ? '+' + bet.odds : bet.odds}">+100</strong></div>
+                        <div class="detail-item">Book: <strong th:text="${bet.sportsbookName}">Sportsbook</strong></div>
+                    </div>
+                    <div class="bet-actions">
+                        <form th:action="@{/bets/{id}/won(id=${bet.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="action-btn btn-won">✅ Won</button>
+                        </form>
+                        <form th:action="@{/bets/{id}/lost(id=${bet.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="action-btn btn-lost">❌ Lost</button>
+                        </form>
+                        <form th:action="@{/bets/{id}/push(id=${bet.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="action-btn btn-push">↔️ Push</button>
+                        </form>
+                        <form th:action="@{/bets/{id}/delete(id=${bet.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="action-btn btn-delete">🗑️ Delete</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="bets-table">
-            <div th:if="${allBets.isEmpty()}" class="empty-state">
-                <h3>No bets yet</h3>
-                <p>Click "New Bet" to get started!</p>
+        <div class="section" th:if="${!settledBets.isEmpty()}">
+            <h2 class="section-title">📜 Recent Settled Bets</h2>
+            <div class="bet-list">
+                <div class="bet-item" th:each="bet : ${settledBets}">
+                    <div class="bet-header">
+                        <div class="bet-event" th:text="${bet.eventName}">Event Name</div>
+                        <span class="bet-badge" 
+                              th:classappend="${bet.status == 'WON'} ? 'badge-won' : (${bet.status == 'LOST'} ? 'badge-lost' : 'badge-push')"
+                              th:text="${bet.status}">WON</span>
+                    </div>
+                    <div class="bet-details">
+                        <div class="detail-item"><strong th:text="${bet.sport}">Sport</strong></div>
+                        <div class="detail-item"><strong th:text="${bet.betType}">Type</strong></div>
+                        <div class="detail-item">Selection: <strong th:text="${bet.selection}">Pick</strong></div>
+                        <div class="detail-item">Stake: <strong>$<span th:text="${#numbers.formatDecimal(bet.stake, 1, 2)}">0.00</span></strong></div>
+                        <div class="detail-item">P/L: <strong 
+                            th:style="${bet.profitLoss != null && bet.profitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? 'color: #10b981;' : 'color: #ef4444;'">
+                            <span th:if="${bet.profitLoss != null && bet.profitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0}">+</span>$<span th:text="${bet.profitLoss != null ? #numbers.formatDecimal(bet.profitLoss, 1, 2) : '0.00'}">0.00</span>
+                        </strong></div>
+                        <div class="detail-item">Book: <strong th:text="${bet.sportsbookName}">Sportsbook</strong></div>
+                    </div>
+                    <div class="bet-actions">
+                        <form th:action="@{/bets/{id}/delete(id=${bet.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="action-btn btn-delete">🗑️ Delete</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            
-            <table th:if="${!allBets.isEmpty()}">
-                <thead>
-                    <tr>
-                        <th>Sport</th>
-                        <th>Event</th>
-                        <th>Type</th>
-                        <th>Selection</th>
-                        <th>Book</th>
-                        <th>Stake</th>
-                        <th>Odds</th>
-                        <th>P/L</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="bet : ${allBets}">
-                        <td th:text="${bet.sport}">NFL</td>
-                        <td th:text="${bet.eventName}">Chiefs vs Bills</td>
-                        <td th:text="${bet.betType}">SPREAD</td>
-                        <td th:text="${bet.selection}">Chiefs -3</td>
-                        <td th:text="${bet.sportsbookName}">FANDUEL</td>
-                        <td>$<span th:text="${#numbers.formatDecimal(bet.stake, 1, 2)}">110.00</span></td>
-                        <td th:text="${bet.odds}">-110</td>
-                        <td>
-                            <span th:if="${bet.profitLoss != null}">
-                                <span th:if="${bet.profitLoss >= 0}">+</span>$<span th:text="${#numbers.formatDecimal(bet.profitLoss, 1, 2)}">0.00</span>
-                            </span>
-                            <span th:if="${bet.profitLoss == null}">-</span>
-                        </td>
-                        <td>
-                            <span class="badge" 
-                                  th:classappend="${bet.status == 'PENDING'} ? 'badge-pending' : 
-                                                 (${bet.status == 'WON'} ? 'badge-won' : 
-                                                 (${bet.status == 'LOST'} ? 'badge-lost' : 'badge-push'))"
-                                  th:text="${bet.status}">PENDING</span>
-                        </td>
-                        <td>
-                            <div class="action-btns" th:if="${bet.status == 'PENDING'}">
-                                <form th:action="@{/bets/{id}/won(id=${bet.id})}" method="post" style="display: inline;">
-                                    <button type="submit" class="btn btn-success">✓</button>
-                                </form>
-                                <form th:action="@{/bets/{id}/lost(id=${bet.id})}" method="post" style="display: inline;">
-                                    <button type="submit" class="btn btn-danger">✗</button>
-                                </form>
-                                <form th:action="@{/bets/{id}/push(id=${bet.id})}" method="post" style="display: inline;">
-                                    <button type="submit" class="btn btn-warning">=</button>
-                                </form>
-                            </div>
-                            <form th:action="@{/bets/{id}/delete(id=${bet.id})}" method="post" style="display: inline;">
-                                <button type="submit" class="btn btn-secondary" onclick="return confirm('Delete this bet?')">🗑️</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        </div>
+        
+        <div class="section" th:if="${pendingBets.isEmpty() && settledBets.isEmpty()}">
+            <div class="empty-state">
+                <h3>🚀 Ready to Start!</h3>
+                <p>No bets yet. Click "New Bet" to get started!</p>
+            </div>
         </div>
     </div>
 </body>
