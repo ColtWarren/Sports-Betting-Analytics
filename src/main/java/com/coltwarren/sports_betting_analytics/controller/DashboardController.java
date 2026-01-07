@@ -93,4 +93,9 @@ public class DashboardController {
         model.addAttribute("bets", bets);
         return "charts";
     }
+    
+    @GetMapping("/best-bets")
+    public String bestBets() {
+        return "best-bets";
+    }
 }

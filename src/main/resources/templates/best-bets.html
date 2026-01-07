@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Bets Today</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: clamp(1.5em, 5vw, 2.5em);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: clamp(0.9em, 3vw, 1.1em);
+            margin-bottom: 15px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6b7280;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: clamp(0.9em, 2.5vw, 1em);
+        }
+        
+        .refresh-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-left: 10px;
+            font-size: clamp(0.9em, 2.5vw, 1em);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .loading {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .bet-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .bet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        }
+        
+        .bet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .game-info {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .game-title {
+            font-size: clamp(1.1em, 3vw, 1.3em);
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        
+        .game-time {
+            color: #6b7280;
+            font-size: clamp(0.85em, 2vw, 0.9em);
+        }
+        
+        .value-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .value-number {
+            font-size: clamp(1.5em, 4vw, 2em);
+            display: block;
+        }
+        
+        .value-label {
+            font-size: clamp(0.75em, 2vw, 0.85em);
+            opacity: 0.9;
+        }
+        
+        .bet-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .bet-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .detail-box {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .detail-label {
+            color: #6b7280;
+            font-size: clamp(0.8em, 2vw, 0.85em);
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #374151;
+            font-size: clamp(1em, 2.5vw, 1.1em);
+            font-weight: 600;
+        }
+        
+        .best-odds {
+            color: #10b981 !important;
+            font-size: clamp(1.2em, 3vw, 1.5em) !important;
+        }
+        
+        .worst-odds {
+            color: #ef4444 !important;
+        }
+        
+        .all-books {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .book-item {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .book-item.best {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+        }
+        
+        .book-name {
+            font-size: clamp(0.75em, 2vw, 0.85em);
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        
+        .book-odds {
+            font-size: clamp(1em, 2.5vw, 1.1em);
+            font-weight: bold;
+            color: #374151;
+        }
+        
+        .book-item.best .book-odds {
+            color: #10b981;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: clamp(1em, 2.5vw, 1.1em);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .empty-state {
+            background: white;
+            padding: 60px 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state h2 {
+            color: #374151;
+            margin-bottom: 10px;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Best Bets Today</h1>
+            <p class="subtitle">Top 10 line shopping opportunities with the biggest edge</p>
+            <a href="/" class="back-btn">← Dashboard</a>
+            <button class="refresh-btn" onclick="location.reload()">🔄 Refresh Odds</button>
+        </header>
+        
+        <div id="betsContainer">
+            <div class="loading">
+                <h2>🔄 Loading best bets...</h2>
+                <p>Finding the biggest edges for you...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('Script loaded!');
+        
+        async function loadBestBets() {
+            console.log('loadBestBets called');
+            const container = document.getElementById('betsContainer');
+            
+            try {
+                console.log('Fetching from API...');
+                const response = await fetch('/api/odds/best-bets-today?sport=NFL&limit=10');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const bets = await response.json();
+                console.log('Received bets:', bets);
+                console.log('Number of bets:', bets.length);
+                
+                if (bets.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h2>📭 No opportunities found</h2>
+                            <p>Check back later for new games!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Remove duplicates
+                const uniqueBets = [];
+                const seen = new Set();
+                
+                for (const bet of bets) {
+                    const key = `${bet.game}-${bet.selection}-${bet.point}-${bet.betType}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueBets.push(bet);
+                    }
+                }
+                
+                console.log('Unique bets:', uniqueBets.length);
+                
+                let html = '';
+                
+                uniqueBets.forEach((bet, index) => {
+                    try {
+                        const commenceDate = new Date(bet.commence_time);
+                        const formattedDate = commenceDate.toLocaleString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit'
+                        });
+                        
+                        const spreadText = bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : '';
+                        
+                        const booksHtml = Object.entries(bet.allBooks).map(([book, odds]) => `
+                            <div class="book-item ${book === bet.bestBook ? 'best' : ''}">
+                                <div class="book-name">${book}</div>
+                                <div class="book-odds">${odds > 0 ? '+' : ''}${odds}</div>
+                            </div>
+                        `).join('');
+                        
+                        html += `
+                            <div class="bet-card">
+                                <div class="bet-header">
+                                    <div class="game-info">
+                                        <div class="game-title">${bet.game}</div>
+                                        <div class="game-time">🕐 ${formattedDate}</div>
+                                    </div>
+                                    <div class="value-badge">
+                                        <span class="value-number">${Math.round(bet.value)}</span>
+                                        <span class="value-label">pts value</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bet-details">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Selection</div>
+                                        <div class="detail-value">${bet.selection}${spreadText}</div>
+                                    </div>
+                                    <div class="detail-box">
+                                        <div class="detail-label">Bet Type</div>
+                                        <div class="detail-value">${bet.betType}</div>
+                                    </div>
+                                    <div class="detail-box">
+                                        <div class="detail-label">✅ Best Odds</div>
+                                        <div class="detail-value best-odds">${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook}</div>
+                                    </div>
+                                    <div class="detail-box">
+                                        <div class="detail-label">❌ Worst Odds</div>
+                                        <div class="detail-value worst-odds">${bet.worstOdds > 0 ? '+' : ''}${bet.worstOdds} @ ${bet.worstBook}</div>
+                                    </div>
+                                </div>
+                                
+                                <details>
+                                    <summary style="cursor: pointer; color: #667eea; font-weight: 600; margin-bottom: 10px;">📊 View All Books</summary>
+                                    <div class="all-books">${booksHtml}</div>
+                                </details>
+                                
+                                <button class="action-btn" onclick="createBet(${index})">
+                                    ➕ Create This Bet (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
+                                </button>
+                            </div>
+                        `;
+                    } catch (err) {
+                        console.error('Error rendering bet:', err, bet);
+                    }
+                });
+                
+                console.log('Setting HTML...');
+                container.innerHTML = html;
+                
+                // Store bets data
+                window.bestBetsData = uniqueBets;
+                console.log('Stored bets data');
+                
+            } catch (error) {
+                console.error('Error in loadBestBets:', error);
+                container.innerHTML = `
+                    <div class="error">
+                        <h2>❌ Error loading bets</h2>
+                        <p>${error.message}</p>
+                        <p>Check the console for details (Press F12)</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function createBet(index) {
+            const bet = window.bestBetsData[index];
+            
+            const params = new URLSearchParams({
+                sport: 'NFL',
+                event: bet.game,
+                betType: bet.betType,
+                selection: bet.selection + (bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : ''),
+                odds: bet.bestOdds,
+                sportsbook: bet.bestBook
+            });
+            
+            window.location.href = `/bets/new?${params.toString()}`;
+        }
+        
+        // Load on page load
+        console.log('Calling loadBestBets...');
+        loadBestBets();
+    </script>
+</body>
+</html>

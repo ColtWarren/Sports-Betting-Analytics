@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
         }
         
@@ -53,6 +53,7 @@
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         
         @media (min-width: 768px) {
@@ -156,10 +157,104 @@
             background: #d1d5db;
         }
         
+        .btn-odds {
+            background: #10b981;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .btn-odds:hover {
+            background: #059669;
+        }
+        
         .helper-text {
             font-size: clamp(0.8em, 2vw, 0.85em);
             color: #6b7280;
             margin-top: 5px;
+        }
+        
+        .odds-comparison {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .odds-comparison.show {
+            display: block;
+        }
+        
+        .odds-comparison h2 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: clamp(1.2em, 4vw, 1.5em);
+        }
+        
+        .odds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .odds-card {
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .odds-card.best {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        
+        .odds-card.best .book-name {
+            color: #065f46;
+        }
+        
+        .book-name {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+            font-size: clamp(0.9em, 2.5vw, 1em);
+        }
+        
+        .odds-value {
+            font-size: clamp(1.5em, 4vw, 2em);
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .odds-card.best .odds-value {
+            color: #10b981;
+        }
+        
+        .best-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -171,7 +266,16 @@
             <a href="/" class="back-btn">← Back to Dashboard</a>
         </header>
         
+        <div id="oddsComparison" class="odds-comparison">
+            <h2>📊 Live Odds Comparison</h2>
+            <div id="oddsContent"></div>
+        </div>
+        
         <div class="form-container">
+            <button type="button" class="btn btn-odds" onclick="fetchLiveOdds()">
+                🔍 Fetch Live Odds
+            </button>
+            
             <form th:action="@{/bets/create}" method="post">
                 <div class="form-grid">
                     <div class="form-group">
@@ -204,6 +308,13 @@
                             <option value="UNIBET">Unibet</option>
                             <option value="OTHER">Other</option>
                         </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="eventName">Team Name (for odds lookup) *</label>
+                        <input type="text" id="teamName" 
+                               placeholder="e.g., Carolina Panthers or Green Bay Packers">
+                        <span class="helper-text">Use full team name for best results</span>
                     </div>
                     
                     <div class="form-group full-width">
@@ -262,5 +373,83 @@
             </form>
         </div>
     </div>
+    
+    <script>
+        async function fetchLiveOdds() {
+            const sport = document.getElementById('sport').value;
+            const teamName = document.getElementById('teamName').value;
+            const betType = document.getElementById('betType').value;
+            
+            if (!sport || !teamName || !betType) {
+                alert('Please select Sport, enter Team Name, and select Bet Type first!');
+                return;
+            }
+            
+            const oddsContainer = document.getElementById('oddsComparison');
+            const oddsContent = document.getElementById('oddsContent');
+            
+            oddsContent.innerHTML = '<div class="loading">🔄 Fetching live odds...</div>';
+            oddsContainer.classList.add('show');
+            
+            try {
+                const response = await fetch(`/api/odds/best?sport=${sport}&team=${encodeURIComponent(teamName)}&betType=${betType}`);
+                const data = await response.json();
+                
+                if (!data.found) {
+                    oddsContent.innerHTML = '<div class="error">❌ No odds found. Check team name spelling or try a different game.</div>';
+                    return;
+                }
+                
+                let html = `<p><strong>Game:</strong> ${data.game}</p>`;
+                html += `<p><strong>Best Book:</strong> ${data.bestBook} at ${data.bestOdds > 0 ? '+' : ''}${data.bestOdds}</p>`;
+                html += '<div class="odds-grid">';
+                
+                const bookmakers = data.bookmakers;
+                for (const [book, odds] of Object.entries(bookmakers)) {
+                    const isBest = book === data.bestBook;
+                    const oddsValue = odds.price;
+                    
+                    html += `
+                        <div class="odds-card ${isBest ? 'best' : ''}" onclick="useTheseOdds('${book}', ${oddsValue})">
+                            <div class="book-name">${book}</div>
+                            <div class="odds-value">${oddsValue > 0 ? '+' : ''}${oddsValue}</div>
+                            ${isBest ? '<span class="best-badge">BEST</span>' : ''}
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                html += '<p style="margin-top: 15px; font-size: 0.9em; color: #6b7280;">💡 Click any card to use those odds</p>';
+                
+                oddsContent.innerHTML = html;
+                
+            } catch (error) {
+                oddsContent.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function useTheseOdds(book, odds) {
+            document.getElementById('odds').value = odds;
+            
+            // Try to match the book name
+            const sportsbookSelect = document.getElementById('sportsbookName');
+            const bookMapping = {
+                'FanDuel': 'FANDUEL',
+                'DraftKings': 'DRAFTKINGS',
+                'BetMGM': 'BETMGM',
+                'BetRivers': 'OTHER',
+                'MyBookie.ag': 'OTHER',
+                'BetOnline.ag': 'OTHER',
+                'LowVig.ag': 'OTHER',
+                'BetUS': 'OTHER',
+                'Bovada': 'OTHER'
+            };
+            
+            const mappedBook = bookMapping[book] || 'OTHER';
+            sportsbookSelect.value = mappedBook;
+            
+            alert(`✅ Odds set to ${odds > 0 ? '+' : ''}${odds} from ${book}`);
+        }
+    </script>
 </body>
 </html>
