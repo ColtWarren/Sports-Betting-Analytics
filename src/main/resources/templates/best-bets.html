@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Best Bets Today</title>
+    <title>Best Bets - Command Center</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,286 +14,437 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
             min-height: 100vh;
-            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(251, 191, 36, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+            animation: orbPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         
         header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(251, 191, 36, 0.3);
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(251, 191, 36, 0.1), transparent);
+            animation: shine 4s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
         
         h1 {
-            color: #667eea;
-            font-size: clamp(1.5em, 5vw, 2.5em);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 6vw, 3.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            z-index: 1;
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         
         .subtitle {
-            color: #666;
-            font-size: clamp(0.9em, 3vw, 1.1em);
-            margin-bottom: 15px;
+            font-size: clamp(1.1em, 3vw, 1.5em);
+            color: #fde68a;
+            font-weight: 300;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
         }
         
-        .back-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #6b7280;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: clamp(0.9em, 2.5vw, 1em);
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
         }
         
-        .refresh-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #10b981;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-left: 10px;
-            font-size: clamp(0.9em, 2.5vw, 1em);
-            cursor: pointer;
+        .btn {
+            padding: 12px 30px;
             border: none;
+            border-radius: 12px;
+            font-size: clamp(0.95em, 2.5vw, 1.1em);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
         }
         
-        .loading {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
+        .btn-back {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+        }
+        
+        .btn-refresh {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
+            border: 1px solid rgba(16, 185, 129, 0.5);
+        }
+        
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+        }
+        
+        .loading, .empty-state {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 20px;
+            padding: 60px 30px;
             text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .loading h2, .empty-state h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5em, 4vw, 2.5em);
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .loading p, .empty-state p {
+            font-size: clamp(1em, 3vw, 1.2em);
+            color: #fde68a;
         }
         
         .bet-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .bet-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
+            animation: lineSlide 3s infinite;
+        }
+        
+        @keyframes lineSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
         }
         
         .bet-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            box-shadow: 0 20px 60px rgba(251, 191, 36, 0.4);
+            border-color: rgba(245, 158, 11, 0.6);
         }
         
         .bet-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .game-info {
-            flex: 1;
-            min-width: 200px;
+            gap: 15px;
         }
         
         .game-title {
-            font-size: clamp(1.1em, 3vw, 1.3em);
-            font-weight: bold;
-            color: #374151;
-            margin-bottom: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+            font-weight: 700;
+            color: #fde68a;
+            flex: 1;
         }
         
         .game-time {
-            color: #6b7280;
-            font-size: clamp(0.85em, 2vw, 0.9em);
+            color: #a5b4fc;
+            font-size: clamp(0.9em, 2vw, 1em);
+            margin-top: 5px;
         }
         
         .value-badge {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: bold;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 15px;
             text-align: center;
-            min-width: 120px;
+            min-width: 140px;
         }
         
         .value-number {
-            font-size: clamp(1.5em, 4vw, 2em);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 5vw, 2.5em);
+            font-weight: 900;
             display: block;
+            line-height: 1;
         }
         
         .value-label {
-            font-size: clamp(0.75em, 2vw, 0.85em);
-            opacity: 0.9;
+            font-size: clamp(0.8em, 2vw, 0.9em);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
         }
         
         .bet-details {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
         
-        @media (min-width: 768px) {
-            .bet-details {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
         .detail-box {
-            background: #f9fafb;
+            background: rgba(30, 41, 59, 0.6);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
         }
         
         .detail-label {
-            color: #6b7280;
-            font-size: clamp(0.8em, 2vw, 0.85em);
-            margin-bottom: 5px;
+            color: #fde68a;
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .detail-value {
-            color: #374151;
-            font-size: clamp(1em, 2.5vw, 1.1em);
-            font-weight: 600;
+            font-size: clamp(1.1em, 3vw, 1.3em);
+            font-weight: 700;
+            color: #e0e7ff;
         }
         
         .best-odds {
             color: #10b981 !important;
-            font-size: clamp(1.2em, 3vw, 1.5em) !important;
+            font-family: 'Orbitron', sans-serif;
         }
         
         .worst-odds {
             color: #ef4444 !important;
         }
         
+        details {
+            margin: 20px 0;
+        }
+        
+        summary {
+            cursor: pointer;
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: clamp(1em, 2.5vw, 1.1em);
+            padding: 12px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        summary:hover {
+            background: rgba(251, 191, 36, 0.2);
+        }
+        
         .all-books {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
         
         .book-item {
-            background: #f3f4f6;
-            padding: 10px;
-            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 15px;
+            border-radius: 12px;
             text-align: center;
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .book-item:hover {
+            transform: translateY(-3px);
+            border-color: rgba(251, 191, 36, 0.5);
         }
         
         .book-item.best {
-            background: #d1fae5;
-            border: 2px solid #10b981;
+            border-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
         }
         
         .book-name {
-            font-size: clamp(0.75em, 2vw, 0.85em);
-            color: #6b7280;
-            margin-bottom: 5px;
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            color: #a5b4fc;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
         }
         
         .book-odds {
-            font-size: clamp(1em, 2.5vw, 1.1em);
-            font-weight: bold;
-            color: #374151;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 3vw, 1.6em);
+            font-weight: 900;
+            color: #e0e7ff;
         }
         
         .book-item.best .book-odds {
-            color: #10b981;
+            color: #fbbf24;
         }
         
         .action-btn {
             width: 100%;
-            padding: 15px;
-            background: #667eea;
+            padding: 18px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: clamp(1em, 2.5vw, 1.1em);
-            font-weight: 600;
+            border-radius: 12px;
+            font-size: clamp(1em, 2.5vw, 1.2em);
+            font-weight: 900;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            margin-top: 15px;
         }
         
         .action-btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(99, 102, 241, 0.6);
         }
         
-        .empty-state {
-            background: white;
-            padding: 60px 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
         }
         
-        .empty-state h2 {
-            color: #374151;
-            margin-bottom: 10px;
-            font-size: clamp(1.3em, 4vw, 1.8em);
-        }
-        
-        .error {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
+        .loading {
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>💰 Best Bets Today</h1>
-            <p class="subtitle">Top 10 line shopping opportunities with the biggest edge</p>
-            <a href="/" class="back-btn">← Dashboard</a>
-            <button class="refresh-btn" onclick="location.reload()">🔄 Refresh Odds</button>
+            <h1>🔥 BEST BETS TODAY</h1>
+            <p class="subtitle">Top Value Opportunities with Maximum Edge</p>
+            <div class="nav-buttons">
+                <a href="/" class="btn btn-back">← Command Center</a>
+                <button class="btn btn-refresh" onclick="location.reload()">🔄 Refresh Odds</button>
+            </div>
         </header>
         
         <div id="betsContainer">
             <div class="loading">
-                <h2>🔄 Loading best bets...</h2>
-                <p>Finding the biggest edges for you...</p>
+                <h2>🔄 LOADING BEST BETS...</h2>
+                <p>Scanning 40+ sportsbooks for maximum value...</p>
             </div>
         </div>
     </div>
     
     <script>
-        console.log('Script loaded!');
-        
         async function loadBestBets() {
-            console.log('loadBestBets called');
             const container = document.getElementById('betsContainer');
             
             try {
-                console.log('Fetching from API...');
                 const response = await fetch('/api/odds/best-bets-today?sport=NFL&limit=10');
-                console.log('Response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
                 const bets = await response.json();
-                console.log('Received bets:', bets);
-                console.log('Number of bets:', bets.length);
                 
                 if (bets.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <h2>📭 No opportunities found</h2>
+                            <h2>📭 NO OPPORTUNITIES FOUND</h2>
                             <p>Check back later for new games!</p>
                         </div>
                     `;
@@ -310,91 +463,79 @@
                     }
                 }
                 
-                console.log('Unique bets:', uniqueBets.length);
-                
                 let html = '';
                 
                 uniqueBets.forEach((bet, index) => {
-                    try {
-                        const commenceDate = new Date(bet.commence_time);
-                        const formattedDate = commenceDate.toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit'
-                        });
-                        
-                        const spreadText = bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : '';
-                        
-                        const booksHtml = Object.entries(bet.allBooks).map(([book, odds]) => `
-                            <div class="book-item ${book === bet.bestBook ? 'best' : ''}">
-                                <div class="book-name">${book}</div>
-                                <div class="book-odds">${odds > 0 ? '+' : ''}${odds}</div>
-                            </div>
-                        `).join('');
-                        
-                        html += `
-                            <div class="bet-card">
-                                <div class="bet-header">
-                                    <div class="game-info">
-                                        <div class="game-title">${bet.game}</div>
-                                        <div class="game-time">🕐 ${formattedDate}</div>
-                                    </div>
-                                    <div class="value-badge">
-                                        <span class="value-number">${Math.round(bet.value)}</span>
-                                        <span class="value-label">pts value</span>
-                                    </div>
+                    const commenceDate = new Date(bet.commence_time);
+                    const formattedDate = commenceDate.toLocaleString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    });
+                    
+                    const spreadText = bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : '';
+                    
+                    const booksHtml = Object.entries(bet.allBooks).map(([book, odds]) => `
+                        <div class="book-item ${book === bet.bestBook ? 'best' : ''}">
+                            <div class="book-name">${book}</div>
+                            <div class="book-odds">${odds > 0 ? '+' : ''}${odds}</div>
+                        </div>
+                    `).join('');
+                    
+                    html += `
+                        <div class="bet-card">
+                            <div class="bet-header">
+                                <div>
+                                    <div class="game-title">${bet.game}</div>
+                                    <div class="game-time">🕐 ${formattedDate}</div>
                                 </div>
-                                
-                                <div class="bet-details">
-                                    <div class="detail-box">
-                                        <div class="detail-label">Selection</div>
-                                        <div class="detail-value">${bet.selection}${spreadText}</div>
-                                    </div>
-                                    <div class="detail-box">
-                                        <div class="detail-label">Bet Type</div>
-                                        <div class="detail-value">${bet.betType}</div>
-                                    </div>
-                                    <div class="detail-box">
-                                        <div class="detail-label">✅ Best Odds</div>
-                                        <div class="detail-value best-odds">${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook}</div>
-                                    </div>
-                                    <div class="detail-box">
-                                        <div class="detail-label">❌ Worst Odds</div>
-                                        <div class="detail-value worst-odds">${bet.worstOdds > 0 ? '+' : ''}${bet.worstOdds} @ ${bet.worstBook}</div>
-                                    </div>
+                                <div class="value-badge">
+                                    <span class="value-number">${Math.round(bet.value)}</span>
+                                    <span class="value-label">pts value</span>
                                 </div>
-                                
-                                <details>
-                                    <summary style="cursor: pointer; color: #667eea; font-weight: 600; margin-bottom: 10px;">📊 View All Books</summary>
-                                    <div class="all-books">${booksHtml}</div>
-                                </details>
-                                
-                                <button class="action-btn" onclick="createBet(${index})">
-                                    ➕ Create This Bet (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
-                                </button>
                             </div>
-                        `;
-                    } catch (err) {
-                        console.error('Error rendering bet:', err, bet);
-                    }
+                            
+                            <div class="bet-details">
+                                <div class="detail-box">
+                                    <div class="detail-label">Selection</div>
+                                    <div class="detail-value">${bet.selection}${spreadText}</div>
+                                </div>
+                                <div class="detail-box">
+                                    <div class="detail-label">Bet Type</div>
+                                    <div class="detail-value">${bet.betType}</div>
+                                </div>
+                                <div class="detail-box">
+                                    <div class="detail-label">✅ Best Odds</div>
+                                    <div class="detail-value best-odds">${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook}</div>
+                                </div>
+                                <div class="detail-box">
+                                    <div class="detail-label">❌ Worst Odds</div>
+                                    <div class="detail-value worst-odds">${bet.worstOdds > 0 ? '+' : ''}${bet.worstOdds} @ ${bet.worstBook}</div>
+                                </div>
+                            </div>
+                            
+                            <details>
+                                <summary>📊 View All Books</summary>
+                                <div class="all-books">${booksHtml}</div>
+                            </details>
+                            
+                            <button class="action-btn" onclick="createBet(${index})">
+                                ➕ CREATE BET (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
+                            </button>
+                        </div>
+                    `;
                 });
                 
-                console.log('Setting HTML...');
                 container.innerHTML = html;
-                
-                // Store bets data
                 window.bestBetsData = uniqueBets;
-                console.log('Stored bets data');
                 
             } catch (error) {
-                console.error('Error in loadBestBets:', error);
                 container.innerHTML = `
-                    <div class="error">
-                        <h2>❌ Error loading bets</h2>
+                    <div class="empty-state">
+                        <h2>❌ ERROR LOADING BETS</h2>
                         <p>${error.message}</p>
-                        <p>Check the console for details (Press F12)</p>
                     </div>
                 `;
             }
@@ -415,8 +556,6 @@
             window.location.href = `/bets/new?${params.toString()}`;
         }
         
-        // Load on page load
-        console.log('Calling loadBestBets...');
         loadBestBets();
     </script>
 </body>

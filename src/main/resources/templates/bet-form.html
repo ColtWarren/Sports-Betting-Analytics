@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create New Bet</title>
+    <title>New Bet - Command Center</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,61 +14,163 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
             min-height: 100vh;
-            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 70% 60%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
+            animation: orbPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
         
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         
         header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            animation: shine 4s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
         
         h1 {
-            color: #667eea;
-            font-size: clamp(1.5em, 5vw, 2em);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 6vw, 3.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            z-index: 1;
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         
         .back-btn {
             display: inline-block;
-            padding: 10px 20px;
-            background: #6b7280;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-top: 15px;
-            font-size: clamp(0.9em, 2.5vw, 1em);
+            font-size: clamp(0.95em, 2.5vw, 1.1em);
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
         }
         
         .form-container {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.2);
+            position: relative;
+            overflow: hidden;
         }
         
-        @media (min-width: 768px) {
-            .form-container {
-                padding: 40px;
-            }
+        .form-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            pointer-events: none;
         }
         
         .form-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 25px;
+            position: relative;
+            z-index: 1;
         }
         
         @media (min-width: 768px) {
@@ -76,8 +180,7 @@
         }
         
         .form-group {
-            display: flex;
-            flex-direction: column;
+            position: relative;
         }
         
         .form-group.full-width {
@@ -85,23 +188,37 @@
         }
         
         label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-            font-size: clamp(0.9em, 2.5vw, 0.95em);
+            display: block;
+            font-size: clamp(0.95em, 2.5vw, 1.1em);
+            font-weight: 700;
+            color: #a5b4fc;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         input, select, textarea {
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: clamp(0.95em, 2.5vw, 1em);
-            transition: border-color 0.3s;
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-size: clamp(0.95em, 2.5vw, 1.05em);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
         
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        select {
+            cursor: pointer;
         }
         
         textarea {
@@ -109,177 +226,183 @@
             min-height: 100px;
         }
         
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        @media (min-width: 768px) {
-            .button-group {
-                flex-direction: row;
-            }
-        }
-        
-        .btn {
-            padding: 15px 30px;
-            border-radius: 8px;
-            border: none;
-            font-size: clamp(1em, 2.5vw, 1.1em);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            text-align: center;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-            flex: 1;
-        }
-        
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-            background: #e5e7eb;
-            color: #374151;
-            padding: 15px 30px;
-            text-decoration: none;
-            display: inline-block;
-            flex: 1;
-        }
-        
-        .btn-secondary:hover {
-            background: #d1d5db;
-        }
-        
         .btn-odds {
-            background: #10b981;
-            color: white;
-            margin-bottom: 10px;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(1em, 2.5vw, 1.2em);
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.3);
         }
         
         .btn-odds:hover {
-            background: #059669;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.5);
         }
         
-        .helper-text {
-            font-size: clamp(0.8em, 2vw, 0.85em);
-            color: #6b7280;
-            margin-top: 5px;
+        .btn-submit {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(1.1em, 3vw, 1.4em);
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+            margin-top: 20px;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(99, 102, 241, 0.6);
         }
         
         .odds-comparison {
-            background: white;
-            padding: 20px;
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid rgba(99, 102, 241, 0.3);
             border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
             display: none;
         }
         
         .odds-comparison.show {
             display: block;
+            animation: fadeIn 0.5s ease;
         }
         
-        .odds-comparison h2 {
-            color: #374151;
-            margin-bottom: 15px;
-            font-size: clamp(1.2em, 4vw, 1.5em);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .odds-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         
         .odds-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         
         .odds-card {
-            padding: 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
+            background: rgba(17, 24, 39, 0.8);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 20px;
             text-align: center;
-            transition: all 0.3s;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .odds-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #6366f1, transparent);
+            animation: lineSlide 2s infinite;
+        }
+        
+        @keyframes lineSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        
+        .odds-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            border-color: rgba(139, 92, 246, 0.6);
         }
         
         .odds-card.best {
             border-color: #10b981;
-            background: #d1fae5;
+            background: rgba(16, 185, 129, 0.1);
         }
         
-        .odds-card.best .book-name {
-            color: #065f46;
+        .odds-card.best::before {
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
         }
         
         .book-name {
-            font-weight: 600;
-            color: #374151;
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            color: #a5b4fc;
             margin-bottom: 10px;
-            font-size: clamp(0.9em, 2.5vw, 1em);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
-        .odds-value {
+        .book-odds {
+            font-family: 'Orbitron', sans-serif;
             font-size: clamp(1.5em, 4vw, 2em);
-            font-weight: bold;
-            color: #667eea;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
-        .odds-card.best .odds-value {
-            color: #10b981;
+        .odds-card.best .book-odds {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .best-badge {
-            background: #10b981;
-            color: white;
-            padding: 4px 10px;
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
             border-radius: 20px;
             font-size: 0.75em;
-            margin-top: 5px;
-            display: inline-block;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-        }
-        
-        .error {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            font-weight: 900;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>➕ Create New Bet</h1>
-            <p>Enter your bet details below</p>
-            <a href="/" class="back-btn">← Back to Dashboard</a>
+            <h1>➕ NEW BET</h1>
+            <p class="subtitle">Place Your Next Winning Bet</p>
+            <a href="/" class="back-btn">← Command Center</a>
         </header>
         
-        <div id="oddsComparison" class="odds-comparison">
-            <h2>📊 Live Odds Comparison</h2>
-            <div id="oddsContent"></div>
-        </div>
-        
         <div class="form-container">
-            <button type="button" class="btn btn-odds" onclick="fetchLiveOdds()">
-                🔍 Fetch Live Odds
-            </button>
-            
             <form th:action="@{/bets/create}" method="post">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="sport">Sport *</label>
+                        <label for="sport">🏈 Sport</label>
                         <select id="sport" name="sport" required>
                             <option value="">Select Sport</option>
                             <option value="NFL">NFL</option>
@@ -288,89 +411,83 @@
                             <option value="NHL">NHL</option>
                             <option value="NCAAF">NCAAF</option>
                             <option value="NCAAB">NCAAB</option>
-                            <option value="SOCCER">Soccer</option>
-                            <option value="UFC">UFC</option>
-                            <option value="BOXING">Boxing</option>
-                            <option value="OTHER">Other</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="sportsbookName">Sportsbook *</label>
-                        <select id="sportsbookName" name="sportsbookName" required>
-                            <option value="">Select Sportsbook</option>
-                            <option value="FANDUEL">FanDuel</option>
-                            <option value="DRAFTKINGS">DraftKings</option>
-                            <option value="BETMGM">BetMGM</option>
-                            <option value="CAESARS">Caesars</option>
-                            <option value="POINTSBET">PointsBet</option>
-                            <option value="BARSTOOL">Barstool</option>
-                            <option value="UNIBET">Unibet</option>
-                            <option value="OTHER">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="eventName">Team Name (for odds lookup) *</label>
-                        <input type="text" id="teamName" 
-                               placeholder="e.g., Carolina Panthers or Green Bay Packers">
-                        <span class="helper-text">Use full team name for best results</span>
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="eventName">Event Name *</label>
-                        <input type="text" id="eventName" name="eventName" 
-                               placeholder="e.g., Kansas City Chiefs vs Buffalo Bills" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="betType">Bet Type *</label>
+                        <label for="betType">📊 Bet Type</label>
                         <select id="betType" name="betType" required>
                             <option value="">Select Type</option>
                             <option value="MONEYLINE">Moneyline</option>
                             <option value="SPREAD">Spread</option>
-                            <option value="TOTAL_OVER">Total (Over)</option>
-                            <option value="TOTAL_UNDER">Total (Under)</option>
-                            <option value="PROP">Prop Bet</option>
-                            <option value="PARLAY">Parlay</option>
-                            <option value="TEASER">Teaser</option>
-                            <option value="FUTURES">Futures</option>
+                            <option value="TOTAL_OVER">Total Over</option>
+                            <option value="TOTAL_UNDER">Total Under</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="eventName">🎯 Event</label>
+                        <input type="text" id="eventName" name="eventName" placeholder="e.g., Chiefs vs Bills" required>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="teamName">🔍 Team Name (for live odds)</label>
+                        <input type="text" id="teamName" placeholder="e.g., Kansas City Chiefs">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <button type="button" class="btn-odds" onclick="fetchLiveOdds()">
+                            🔥 FETCH LIVE ODDS
+                        </button>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="selection">✅ Selection</label>
+                        <input type="text" id="selection" name="selection" placeholder="e.g., Chiefs -3.5" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stake">💰 Stake ($)</label>
+                        <input type="number" id="stake" name="stake" step="0.01" min="0.01" placeholder="100.00" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="odds">📈 Odds</label>
+                        <input type="number" id="odds" name="odds" step="1" placeholder="-110" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sportsbookName">🏦 Sportsbook</label>
+                        <select id="sportsbookName" name="sportsbookName" required>
+                            <option value="">Select Book</option>
+                            <option value="DRAFTKINGS">DraftKings</option>
+                            <option value="FANDUEL">FanDuel</option>
+                            <option value="BETMGM">BetMGM</option>
+                            <option value="CAESARS">Caesars</option>
                             <option value="OTHER">Other</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="selection">Selection *</label>
-                        <input type="text" id="selection" name="selection" 
-                               placeholder="e.g., Chiefs -3 or Lakers ML" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stake">Stake ($) *</label>
-                        <input type="number" id="stake" name="stake" step="0.01" min="0.01" 
-                               placeholder="100.00" required>
-                        <span class="helper-text">Amount you're risking</span>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="odds">Odds (American) *</label>
-                        <input type="number" id="odds" name="odds" step="1" 
-                               placeholder="-110 or +150" required>
-                        <span class="helper-text">Use American format (e.g., -110, +150)</span>
+                        <label for="eventStartTime">⏰ Event Start</label>
+                        <input type="datetime-local" id="eventStartTime" name="eventStartTime">
                     </div>
                     
                     <div class="form-group full-width">
-                        <label for="notes">Notes (Optional)</label>
-                        <textarea id="notes" name="notes" 
-                                  placeholder="Any additional information about this bet..."></textarea>
+                        <label for="notes">📝 Notes (Optional)</label>
+                        <textarea id="notes" name="notes" placeholder="Add any notes about this bet..."></textarea>
                     </div>
                 </div>
                 
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">💾 Create Bet</button>
-                    <a href="/" class="btn btn-secondary">Cancel</a>
-                </div>
+                <button type="submit" class="btn-submit">
+                    🚀 PLACE BET
+                </button>
             </form>
+            
+            <div id="odds-comparison" class="odds-comparison">
+                <h3 class="odds-title">📊 Live Odds Comparison</h3>
+                <div id="odds-grid" class="odds-grid"></div>
+            </div>
         </div>
     </div>
     
@@ -381,72 +498,57 @@
             const betType = document.getElementById('betType').value;
             
             if (!sport || !teamName || !betType) {
-                alert('Please select Sport, enter Team Name, and select Bet Type first!');
+                alert('⚠️ Please select Sport, Bet Type, and enter Team Name first!');
                 return;
             }
-            
-            const oddsContainer = document.getElementById('oddsComparison');
-            const oddsContent = document.getElementById('oddsContent');
-            
-            oddsContent.innerHTML = '<div class="loading">🔄 Fetching live odds...</div>';
-            oddsContainer.classList.add('show');
             
             try {
                 const response = await fetch(`/api/odds/best?sport=${sport}&team=${encodeURIComponent(teamName)}&betType=${betType}`);
                 const data = await response.json();
                 
-                if (!data.found) {
-                    oddsContent.innerHTML = '<div class="error">❌ No odds found. Check team name spelling or try a different game.</div>';
-                    return;
+                if (data.found) {
+                    displayOdds(data);
+                } else {
+                    alert('❌ No odds found. Check team name spelling or try a different game.');
                 }
-                
-                let html = `<p><strong>Game:</strong> ${data.game}</p>`;
-                html += `<p><strong>Best Book:</strong> ${data.bestBook} at ${data.bestOdds > 0 ? '+' : ''}${data.bestOdds}</p>`;
-                html += '<div class="odds-grid">';
-                
-                const bookmakers = data.bookmakers;
-                for (const [book, odds] of Object.entries(bookmakers)) {
-                    const isBest = book === data.bestBook;
-                    const oddsValue = odds.price;
-                    
-                    html += `
-                        <div class="odds-card ${isBest ? 'best' : ''}" onclick="useTheseOdds('${book}', ${oddsValue})">
-                            <div class="book-name">${book}</div>
-                            <div class="odds-value">${oddsValue > 0 ? '+' : ''}${oddsValue}</div>
-                            ${isBest ? '<span class="best-badge">BEST</span>' : ''}
-                        </div>
-                    `;
-                }
-                
-                html += '</div>';
-                html += '<p style="margin-top: 15px; font-size: 0.9em; color: #6b7280;">💡 Click any card to use those odds</p>';
-                
-                oddsContent.innerHTML = html;
-                
             } catch (error) {
-                oddsContent.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                alert('❌ Error fetching odds: ' + error.message);
             }
+        }
+        
+        function displayOdds(data) {
+            const comparison = document.getElementById('odds-comparison');
+            const grid = document.getElementById('odds-grid');
+            
+            let html = '';
+            const bestBook = data.bestBook;
+            
+            Object.entries(data.bookmakers).forEach(([book, odds]) => {
+                const isBest = book === bestBook;
+                html += `
+                    <div class="odds-card ${isBest ? 'best' : ''}" onclick="useTheseOdds('${book}', ${odds})">
+                        <div class="book-name">${book}</div>
+                        <div class="book-odds">${odds > 0 ? '+' : ''}${odds}</div>
+                        ${isBest ? '<span class="best-badge">BEST</span>' : ''}
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+            comparison.classList.add('show');
         }
         
         function useTheseOdds(book, odds) {
             document.getElementById('odds').value = odds;
             
-            // Try to match the book name
-            const sportsbookSelect = document.getElementById('sportsbookName');
             const bookMapping = {
                 'FanDuel': 'FANDUEL',
                 'DraftKings': 'DRAFTKINGS',
-                'BetMGM': 'BETMGM',
-                'BetRivers': 'OTHER',
-                'MyBookie.ag': 'OTHER',
-                'BetOnline.ag': 'OTHER',
-                'LowVig.ag': 'OTHER',
-                'BetUS': 'OTHER',
-                'Bovada': 'OTHER'
+                'BetMGM': 'BETMGM'
             };
             
             const mappedBook = bookMapping[book] || 'OTHER';
-            sportsbookSelect.value = mappedBook;
+            document.getElementById('sportsbookName').value = mappedBook;
             
             alert(`✅ Odds set to ${odds > 0 ? '+' : ''}${odds} from ${book}`);
         }
