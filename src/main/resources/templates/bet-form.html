@@ -22,7 +22,6 @@
             overflow-x: hidden;
         }
         
-        /* Animated grid background */
         body::before {
             content: '';
             position: fixed;
@@ -154,15 +153,95 @@
             overflow: hidden;
         }
         
-        .form-container::after {
+        .kelly-calculator {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .kelly-calculator.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .kelly-calculator::before {
             content: '';
             position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            animation: lineSlide 2s infinite;
+        }
+        
+        @keyframes lineSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        
+        .kelly-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .kelly-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .kelly-stat {
+            background: rgba(17, 24, 39, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            text-align: center;
+        }
+        
+        .kelly-label {
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            color: #6ee7b7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .kelly-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.8em, 5vw, 2.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .kelly-note {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            color: #6ee7b7;
+            font-size: clamp(0.9em, 2vw, 1em);
+            text-align: center;
         }
         
         .form-grid {
@@ -215,15 +294,6 @@
             border-color: #8b5cf6;
             box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
             background: rgba(30, 41, 59, 0.8);
-        }
-        
-        select {
-            cursor: pointer;
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 100px;
         }
         
         .btn-odds {
@@ -290,18 +360,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .odds-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.3em, 4vw, 1.8em);
-            font-weight: 700;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
         .odds-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -317,24 +375,6 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .odds-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #6366f1, transparent);
-            animation: lineSlide 2s infinite;
-        }
-        
-        @keyframes lineSlide {
-            0%, 100% { transform: translateX(-100%); }
-            50% { transform: translateX(100%); }
         }
         
         .odds-card:hover {
@@ -346,19 +386,6 @@
         .odds-card.best {
             border-color: #10b981;
             background: rgba(16, 185, 129, 0.1);
-        }
-        
-        .odds-card.best::before {
-            background: linear-gradient(90deg, transparent, #10b981, transparent);
-        }
-        
-        .book-name {
-            font-size: clamp(0.85em, 2vw, 0.95em);
-            color: #a5b4fc;
-            margin-bottom: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
         
         .book-odds {
@@ -375,19 +402,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
-        .best-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            color: #000;
-            border-radius: 20px;
-            font-size: 0.75em;
-            font-weight: 900;
-            margin-top: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
     </style>
 </head>
 <body>
@@ -399,11 +413,37 @@
         </header>
         
         <div class="form-container">
+            <!-- Kelly Calculator Display -->
+            <div id="kellyCalculator" class="kelly-calculator">
+                <h3 class="kelly-title">🧮 KELLY CRITERION</h3>
+                <div class="kelly-stats">
+                    <div class="kelly-stat">
+                        <div class="kelly-label">Recommended Stake</div>
+                        <div class="kelly-value">$<span id="kellyStake">0.00</span></div>
+                    </div>
+                    <div class="kelly-stat">
+                        <div class="kelly-label">Kelly %</div>
+                        <div class="kelly-value"><span id="kellyPercent">0.0</span>%</div>
+                    </div>
+                    <div class="kelly-stat">
+                        <div class="kelly-label">Expected Value</div>
+                        <div class="kelly-value"><span id="kellyEV">0.0</span>%</div>
+                    </div>
+                    <div class="kelly-stat">
+                        <div class="kelly-label">Current Bankroll</div>
+                        <div class="kelly-value">$<span id="kellyBankroll">0.00</span></div>
+                    </div>
+                </div>
+                <div class="kelly-note">
+                    💡 Using Quarter Kelly (25%) for safer long-term bankroll management
+                </div>
+            </div>
+            
             <form th:action="@{/bets/create}" method="post">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="sport">🏈 Sport</label>
-                        <select id="sport" name="sport" required>
+                        <select id="sport" name="sport" required onchange="calculateKelly()">
                             <option value="">Select Sport</option>
                             <option value="NFL">NFL</option>
                             <option value="NBA">NBA</option>
@@ -416,7 +456,7 @@
                     
                     <div class="form-group">
                         <label for="betType">📊 Bet Type</label>
-                        <select id="betType" name="betType" required>
+                        <select id="betType" name="betType" required onchange="calculateKelly()">
                             <option value="">Select Type</option>
                             <option value="MONEYLINE">Moneyline</option>
                             <option value="SPREAD">Spread</option>
@@ -448,12 +488,12 @@
                     
                     <div class="form-group">
                         <label for="stake">💰 Stake ($)</label>
-                        <input type="number" id="stake" name="stake" step="0.01" min="0.01" placeholder="100.00" required>
+                        <input type="number" id="stake" name="stake" step="0.01" min="0.01" placeholder="100.00" required oninput="calculateKelly()">
                     </div>
                     
                     <div class="form-group">
                         <label for="odds">📈 Odds</label>
-                        <input type="number" id="odds" name="odds" step="1" placeholder="-110" required>
+                        <input type="number" id="odds" name="odds" step="1" placeholder="-110" required oninput="calculateKelly()">
                     </div>
                     
                     <div class="form-group">
@@ -492,6 +532,48 @@
     </div>
     
     <script>
+        let currentBankroll = 0;
+        
+        // Fetch current bankroll on load
+        async function loadBankroll() {
+            try {
+                const response = await fetch('/api/kelly/calculate?odds=-110&winProbability=0.52&fractional=true');
+                const data = await response.json();
+                currentBankroll = data.currentBankroll;
+            } catch (error) {
+                console.error('Error loading bankroll:', error);
+                currentBankroll = 1000; // Default
+            }
+        }
+        
+        async function calculateKelly() {
+            const odds = parseInt(document.getElementById('odds').value);
+            const stake = parseFloat(document.getElementById('stake').value);
+            
+            if (!odds || isNaN(odds)) {
+                document.getElementById('kellyCalculator').classList.remove('show');
+                return;
+            }
+            
+            try {
+                // Use 52% win probability as default (slight edge over 50%)
+                const winProb = odds < 0 ? 0.54 : 0.48; // Favorites vs underdogs
+                
+                const response = await fetch(`/api/kelly/calculate?odds=${odds}&winProbability=${winProb}&fractional=true`);
+                const data = await response.json();
+                
+                document.getElementById('kellyStake').textContent = data.recommendedStake.toFixed(2);
+                document.getElementById('kellyPercent').textContent = data.kellyPercentage.toFixed(2);
+                document.getElementById('kellyEV').textContent = data.expectedValue.toFixed(2);
+                document.getElementById('kellyBankroll').textContent = data.currentBankroll.toFixed(2);
+                
+                document.getElementById('kellyCalculator').classList.add('show');
+                
+            } catch (error) {
+                console.error('Error calculating Kelly:', error);
+            }
+        }
+        
         async function fetchLiveOdds() {
             const sport = document.getElementById('sport').value;
             const teamName = document.getElementById('teamName').value;
@@ -550,8 +632,13 @@
             const mappedBook = bookMapping[book] || 'OTHER';
             document.getElementById('sportsbookName').value = mappedBook;
             
+            calculateKelly();
+            
             alert(`✅ Odds set to ${odds > 0 ? '+' : ''}${odds} from ${book}`);
         }
+        
+        // Load bankroll on page load
+        loadBankroll();
     </script>
 </body>
 </html>

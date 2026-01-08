@@ -182,20 +182,6 @@
             text-align: center;
         }
         
-        .loading h2, .empty-state h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.5em, 4vw, 2.5em);
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .loading p, .empty-state p {
-            font-size: clamp(1em, 3vw, 1.2em);
-            color: #fde68a;
-        }
-        
         .bet-card {
             background: rgba(17, 24, 39, 0.8);
             backdrop-filter: blur(20px);
@@ -278,6 +264,39 @@
             margin-top: 5px;
         }
         
+        .kelly-recommendation {
+            background: rgba(16, 185, 129, 0.15);
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .kelly-box {
+            text-align: center;
+        }
+        
+        .kelly-box-label {
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            color: #6ee7b7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .kelly-box-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5em, 4vw, 2em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
         .bet-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -310,10 +329,6 @@
         .best-odds {
             color: #10b981 !important;
             font-family: 'Orbitron', sans-serif;
-        }
-        
-        .worst-odds {
-            color: #ef4444 !important;
         }
         
         details {
@@ -363,25 +378,6 @@
             background: rgba(251, 191, 36, 0.1);
         }
         
-        .book-name {
-            font-size: clamp(0.85em, 2vw, 0.95em);
-            color: #a5b4fc;
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .book-odds {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.3em, 3vw, 1.6em);
-            font-weight: 900;
-            color: #e0e7ff;
-        }
-        
-        .book-item.best .book-odds {
-            color: #fbbf24;
-        }
-        
         .action-btn {
             width: 100%;
             padding: 18px;
@@ -418,7 +414,7 @@
     <div class="container">
         <header>
             <h1>🔥 BEST BETS TODAY</h1>
-            <p class="subtitle">Top Value Opportunities with Maximum Edge</p>
+            <p class="subtitle">Top Value Opportunities with Kelly Recommended Stakes</p>
             <div class="nav-buttons">
                 <a href="/" class="btn btn-back">← Command Center</a>
                 <button class="btn btn-refresh" onclick="location.reload()">🔄 Refresh Odds</button>
@@ -428,13 +424,39 @@
         <div id="betsContainer">
             <div class="loading">
                 <h2>🔄 LOADING BEST BETS...</h2>
-                <p>Scanning 40+ sportsbooks for maximum value...</p>
+                <p>Scanning 40+ sportsbooks and calculating Kelly stakes...</p>
             </div>
         </div>
     </div>
     
     <script>
+        let currentBankroll = 0;
+        
+        async function loadBankroll() {
+            try {
+                const response = await fetch('/api/kelly/calculate?odds=-110&winProbability=0.52&fractional=true');
+                const data = await response.json();
+                currentBankroll = data.currentBankroll;
+            } catch (error) {
+                console.error('Error loading bankroll:', error);
+                currentBankroll = 1000;
+            }
+        }
+        
+        async function calculateKellyForBet(odds) {
+            try {
+                const winProb = odds < 0 ? 0.54 : 0.48;
+                const response = await fetch(`/api/kelly/calculate?odds=${odds}&winProbability=${winProb}&fractional=true`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error calculating Kelly:', error);
+                return null;
+            }
+        }
+        
         async function loadBestBets() {
+            await loadBankroll();
+            
             const container = document.getElementById('betsContainer');
             
             try {
@@ -451,7 +473,6 @@
                     return;
                 }
                 
-                // Remove duplicates
                 const uniqueBets = [];
                 const seen = new Set();
                 
@@ -465,7 +486,9 @@
                 
                 let html = '';
                 
-                uniqueBets.forEach((bet, index) => {
+                for (const bet of uniqueBets) {
+                    const kellyData = await calculateKellyForBet(bet.bestOdds);
+                    
                     const commenceDate = new Date(bet.commence_time);
                     const formattedDate = commenceDate.toLocaleString('en-US', {
                         weekday: 'short',
@@ -497,6 +520,23 @@
                                 </div>
                             </div>
                             
+                            ${kellyData ? `
+                            <div class="kelly-recommendation">
+                                <div class="kelly-box">
+                                    <div class="kelly-box-label">💰 Kelly Stake</div>
+                                    <div class="kelly-box-value">$${kellyData.recommendedStake.toFixed(2)}</div>
+                                </div>
+                                <div class="kelly-box">
+                                    <div class="kelly-box-label">📊 Kelly %</div>
+                                    <div class="kelly-box-value">${kellyData.kellyPercentage.toFixed(2)}%</div>
+                                </div>
+                                <div class="kelly-box">
+                                    <div class="kelly-box-label">📈 Expected EV</div>
+                                    <div class="kelly-box-value">${kellyData.expectedValue.toFixed(2)}%</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
                             <div class="bet-details">
                                 <div class="detail-box">
                                     <div class="detail-label">Selection</div>
@@ -521,15 +561,14 @@
                                 <div class="all-books">${booksHtml}</div>
                             </details>
                             
-                            <button class="action-btn" onclick="createBet(${index})">
+                            <button class="action-btn" onclick="createBet('${bet.game}', '${bet.betType}', '${bet.selection}${spreadText}', ${bet.bestOdds}, '${bet.bestBook}', ${kellyData ? kellyData.recommendedStake : 0})">
                                 ➕ CREATE BET (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
                             </button>
                         </div>
                     `;
-                });
+                }
                 
                 container.innerHTML = html;
-                window.bestBetsData = uniqueBets;
                 
             } catch (error) {
                 container.innerHTML = `
@@ -541,16 +580,15 @@
             }
         }
         
-        function createBet(index) {
-            const bet = window.bestBetsData[index];
-            
+        function createBet(game, betType, selection, odds, sportsbook, kellyStake) {
             const params = new URLSearchParams({
                 sport: 'NFL',
-                event: bet.game,
-                betType: bet.betType,
-                selection: bet.selection + (bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : ''),
-                odds: bet.bestOdds,
-                sportsbook: bet.bestBook
+                event: game,
+                betType: betType,
+                selection: selection,
+                odds: odds,
+                sportsbook: sportsbook,
+                stake: kellyStake.toFixed(2)
             });
             
             window.location.href = `/bets/new?${params.toString()}`;
