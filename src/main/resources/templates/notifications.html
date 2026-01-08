@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Command Center</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(236, 72, 153, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+            animation: orbPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(236, 72, 153, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(236, 72, 153, 0.3);
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 6vw, 3.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #ec4899, #8b5cf6, #6366f1);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            margin-top: 15px;
+            font-size: clamp(0.95em, 2.5vw, 1.1em);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+        }
+        
+        .card {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ec4899, transparent);
+            animation: lineSlide 3s infinite;
+        }
+        
+        @keyframes lineSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .status-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background: rgba(236, 72, 153, 0.1);
+            border: 2px solid rgba(236, 72, 153, 0.3);
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-box.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+        
+        .status-label {
+            font-size: clamp(1.1em, 3vw, 1.3em);
+            font-weight: 700;
+            color: #fda4af;
+        }
+        
+        .status-box.active .status-label {
+            color: #6ee7b7;
+        }
+        
+        .toggle-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(1em, 2.5vw, 1.2em);
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .toggle-btn.enable {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
+        }
+        
+        .toggle-btn.disable {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: #fff;
+        }
+        
+        .toggle-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(236, 72, 153, 0.5);
+        }
+        
+        .setting-item {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .setting-name {
+            font-size: clamp(1em, 2.5vw, 1.2em);
+            font-weight: 700;
+            color: #fda4af;
+        }
+        
+        .setting-desc {
+            font-size: clamp(0.9em, 2vw, 1em);
+            color: #a5b4fc;
+            margin-top: 8px;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(239, 68, 68, 0.3);
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid rgba(239, 68, 68, 0.5);
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        input[type="number"] {
+            width: 120px;
+            padding: 10px 15px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid rgba(236, 72, 153, 0.3);
+            border-radius: 10px;
+            color: #e0e7ff;
+            font-size: clamp(0.95em, 2vw, 1.05em);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #ec4899;
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+        }
+        
+        .btn-test {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(1em, 2.5vw, 1.2em);
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            margin-top: 20px;
+        }
+        
+        .btn-test:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(99, 102, 241, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔔 NOTIFICATIONS</h1>
+            <p class="subtitle">Never Miss a +EV Opportunity</p>
+            <a href="/" class="back-btn">← Command Center</a>
+        </header>
+        
+        <div class="card">
+            <h2 class="card-title">📱 Notification Status</h2>
+            <div id="statusBox" class="status-box">
+                <span class="status-label">🔴 Notifications Disabled</span>
+                <button id="toggleBtn" class="toggle-btn enable" onclick="toggleNotifications()">
+                    Enable
+                </button>
+            </div>
+            <p style="color: #a5b4fc; font-size: clamp(0.9em, 2vw, 1em);">
+                💡 Enable browser notifications to get instant alerts for high-value betting opportunities!
+            </p>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title">⚙️ Notification Preferences</h2>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <div>
+                        <div class="setting-name">🔥 Best Bets Alerts</div>
+                        <div class="setting-desc">Get notified when new best bets are available</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="enableBestBets" checked onchange="updatePreferences()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <div>
+                        <div class="setting-name">💎 High Value Alerts</div>
+                        <div class="setting-desc">Get notified for opportunities above threshold</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="enableHighValue" checked onchange="updatePreferences()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <div>
+                        <div class="setting-name">📊 Minimum Value</div>
+                        <div class="setting-desc">Only notify for bets above this value (pts)</div>
+                    </div>
+                    <input type="number" id="minValue" value="100" min="0" step="10" onchange="updatePreferences()">
+                </div>
+            </div>
+            
+            <button class="btn-test" onclick="testNotification()">
+                🧪 Send Test Notification
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        let sessionId = localStorage.getItem('notificationSessionId');
+        let notificationsEnabled = false;
+        
+        async function toggleNotifications() {
+            if (!notificationsEnabled) {
+                // Request permission
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    // Subscribe
+                    const response = await fetch('/api/notifications/subscribe', {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    
+                    sessionId = data.sessionId;
+                    localStorage.setItem('notificationSessionId', sessionId);
+                    notificationsEnabled = true;
+                    
+                    updateUI();
+                    
+                    // Show welcome notification
+                    new Notification('🔔 Notifications Enabled!', {
+                        body: 'You\'ll now receive alerts for high-value opportunities',
+                        icon: '/favicon.ico'
+                    });
+                } else {
+                    alert('❌ Please allow notifications in your browser settings');
+                }
+            } else {
+                // Unsubscribe
+                await fetch(`/api/notifications/unsubscribe?sessionId=${sessionId}`, {
+                    method: 'POST'
+                });
+                
+                notificationsEnabled = false;
+                updateUI();
+            }
+        }
+        
+        async function updatePreferences() {
+            if (!sessionId) return;
+            
+            const enableBestBets = document.getElementById('enableBestBets').checked;
+            const enableHighValue = document.getElementById('enableHighValue').checked;
+            const minValue = document.getElementById('minValue').value;
+            
+            await fetch(`/api/notifications/preferences?sessionId=${sessionId}&enableBestBets=${enableBestBets}&enableHighValue=${enableHighValue}&minValue=${minValue}`, {
+                method: 'POST'
+            });
+        }
+        
+        async function testNotification() {
+            if (!notificationsEnabled) {
+                alert('⚠️ Please enable notifications first!');
+                return;
+            }
+            
+            new Notification('🔥 Test Bet Alert!', {
+                body: 'Chiefs vs Bills - Chiefs -3 @ -110\n💎 235 pts value on DraftKings',
+                icon: '/favicon.ico'
+            });
+        }
+        
+        function updateUI() {
+            const statusBox = document.getElementById('statusBox');
+            const toggleBtn = document.getElementById('toggleBtn');
+            
+            if (notificationsEnabled) {
+                statusBox.classList.add('active');
+                statusBox.innerHTML = `
+                    <span class="status-label">🟢 Notifications Enabled</span>
+                    <button id="toggleBtn" class="toggle-btn disable" onclick="toggleNotifications()">
+                        Disable
+                    </button>
+                `;
+            } else {
+                statusBox.classList.remove('active');
+                statusBox.innerHTML = `
+                    <span class="status-label">🔴 Notifications Disabled</span>
+                    <button id="toggleBtn" class="toggle-btn enable" onclick="toggleNotifications()">
+                        Enable
+                    </button>
+                `;
+            }
+        }
+        
+        // Check if already enabled
+        if (sessionId && Notification.permission === 'granted') {
+            notificationsEnabled = true;
+            updateUI();
+        }
+    </script>
+</body>
+</html>

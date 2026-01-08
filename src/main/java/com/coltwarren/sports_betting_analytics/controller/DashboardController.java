@@ -126,4 +126,9 @@ public class DashboardController {
         bankrollService.recordWithdrawal(amount, notes);
         return "redirect:/bankroll";
     }
+    
+    @GetMapping("/notifications")
+    public String notificationsPage() {
+        return "notifications";
+    }
 }
