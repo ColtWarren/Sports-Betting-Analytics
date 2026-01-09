@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Performance Analysis</title>
+    <title>AI Analysis - Command Center</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,125 +14,234 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
             min-height: 100vh;
-            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 70% 60%, rgba(99, 102, 241, 0.1) 0%, transparent 40%);
+            animation: orbPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
         
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         
         header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.3);
         }
         
         h1 {
-            color: #667eea;
-            font-size: clamp(1.5em, 5vw, 2em);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 6vw, 3.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         
         .back-btn {
             display: inline-block;
-            padding: 10px 20px;
-            background: #6b7280;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-top: 15px;
-            font-size: clamp(0.9em, 2.5vw, 1em);
+            font-size: clamp(0.95em, 2.5vw, 1.1em);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
-        .stats-summary {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
+        }
+        
+        .stats-card, .analysis-card {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before, .analysis-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            animation: lineSlide 3s infinite;
+        }
+        
+        @keyframes lineSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+            font-weight: 700;
             margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        
-        .stats-summary h2 {
-            font-size: clamp(1.2em, 4vw, 1.5em);
-            margin-bottom: 15px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        @media (min-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
         }
         
         .stat-item {
             text-align: center;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
         }
         
         .stat-label {
-            color: #666;
-            font-size: clamp(0.8em, 2vw, 0.9em);
-            margin-bottom: 5px;
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            color: #c4b5fd;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
         
         .stat-value {
-            font-size: clamp(1.2em, 3vw, 1.5em);
-            font-weight: bold;
-            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5em, 4vw, 2em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
-        .ai-analysis {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            line-height: 1.8;
-        }
-        
-        @media (min-width: 768px) {
-            .ai-analysis {
-                padding: 30px;
-            }
-        }
-        
-        .ai-icon {
-            font-size: clamp(2em, 6vw, 3em);
-            text-align: center;
-            margin-bottom: 20px;
+        .stat-value.negative {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .analysis-content {
-            white-space: pre-wrap;
-            color: #374151;
-            font-size: clamp(0.95em, 2.5vw, 1.05em);
+            line-height: 1.8;
+            font-size: clamp(1em, 2.5vw, 1.15em);
+            color: #e0e7ff;
+        }
+        
+        .analysis-content h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: #c4b5fd;
+            margin: 25px 0 15px;
+            font-size: clamp(1.2em, 3vw, 1.5em);
+        }
+        
+        .analysis-content strong {
+            color: #a78bfa;
+            font-weight: 700;
+        }
+        
+        .analysis-content ul, .analysis-content ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        
+        .analysis-content li {
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🤖 AI Performance Analysis</h1>
-            <p>Claude AI analyzes your betting performance</p>
-            <a href="/" class="back-btn">← Back to Dashboard</a>
+            <h1>🤖 AI ANALYSIS</h1>
+            <p style="color: #c4b5fd; font-size: clamp(1.1em, 3vw, 1.3em); letter-spacing: 2px;">
+                Claude Sonnet 4 Performance Insights
+            </p>
+            <a href="/" class="back-btn">← Command Center</a>
         </header>
         
-        <div class="stats-summary">
-            <h2>Your Current Stats</h2>
+        <div class="stats-card">
+            <h2 class="card-title">📊 Your Current Stats</h2>
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-label">Total Bets</div>
-                    <div class="stat-value" th:text="${totalBets}">0</div>
+                    <div class="stat-value" th:text="${totalCount}">0</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Won</div>
@@ -138,27 +249,36 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Lost</div>
-                    <div class="stat-value" th:text="${lostCount}">0</div>
+                    <div class="stat-value negative" th:text="${lostCount}">0</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Profit/Loss</div>
-                    <div class="stat-value">$<span th:text="${#numbers.formatDecimal(profitLoss, 1, 2)}">0.00</span></div>
+                    <div class="stat-value" 
+                         th:classappend="${totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? '' : 'negative'">
+                        <span th:if="${totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0}">+</span>$<span th:text="${#numbers.formatDecimal(totalProfitLoss, 1, 2)}">0.00</span>
+                    </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Win Rate</div>
-                    <div class="stat-value"><span th:text="${#numbers.formatDecimal(winRate, 1, 1)}">0.0</span>%</div>
+                    <div class="stat-value" 
+                         th:classappend="${winRate >= 0.55} ? '' : 'negative'">
+                        <span th:text="${#numbers.formatDecimal(winRate * 100, 1, 1)}">0.0</span>%
+                    </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">ROI</div>
-                    <div class="stat-value"><span th:text="${#numbers.formatDecimal(roi, 1, 1)}">0.0</span>%</div>
+                    <div class="stat-value" 
+                         th:classappend="${roi >= 0} ? '' : 'negative'">
+                        <span th:if="${roi >= 0}">+</span><span th:text="${#numbers.formatDecimal(roi * 100, 1, 1)}">0.0</span>%
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="ai-analysis">
-            <div class="ai-icon">🤖</div>
-            <div class="analysis-content" th:text="${analysis}">
-                Analyzing your performance...
+        <div class="analysis-card">
+            <h2 class="card-title">🤖 AI Performance Report</h2>
+            <div class="analysis-content" th:utext="${analysis}">
+                Analysis will appear here...
             </div>
         </div>
     </div>
