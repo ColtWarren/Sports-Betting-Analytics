@@ -297,6 +297,86 @@
             -webkit-text-fill-color: transparent;
         }
         
+        .ai-analysis-section {
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .ai-analysis-section.show {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .ai-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.2em, 3vw, 1.5em);
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .ai-disclaimer {
+            background: rgba(245, 158, 11, 0.15);
+            border: 2px solid rgba(245, 158, 11, 0.4);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-size: clamp(0.85em, 2vw, 0.95em);
+            color: #fde68a;
+            line-height: 1.6;
+        }
+        
+        .ai-disclaimer strong {
+            color: #fbbf24;
+            font-weight: 700;
+        }
+        
+        .ai-content {
+            color: #e0e7ff;
+            line-height: 1.8;
+            font-size: clamp(0.95em, 2.5vw, 1.05em);
+        }
+        
+        .ai-content h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #c4b5fd;
+            margin: 20px 0 10px;
+            font-size: clamp(1.1em, 3vw, 1.3em);
+        }
+        
+        .ai-loading {
+            text-align: center;
+            padding: 30px;
+            color: #c4b5fd;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         .bet-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -378,11 +458,16 @@
             background: rgba(251, 191, 36, 0.1);
         }
         
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
         .action-btn {
             width: 100%;
             padding: 18px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
             border: none;
             border-radius: 12px;
             font-size: clamp(1em, 2.5vw, 1.2em);
@@ -392,10 +477,31 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             font-family: 'Orbitron', sans-serif;
-            margin-top: 15px;
         }
         
-        .action-btn:hover {
+        .btn-ai {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-ai:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(139, 92, 246, 0.6);
+        }
+        
+        .btn-ai:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-create {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-create:hover {
             transform: translateY(-3px);
             box-shadow: 0 15px 50px rgba(99, 102, 241, 0.6);
         }
@@ -414,7 +520,7 @@
     <div class="container">
         <header>
             <h1>🔥 BEST BETS TODAY</h1>
-            <p class="subtitle">Top Value Opportunities with Kelly Recommended Stakes</p>
+            <p class="subtitle">AI-Powered Betting Intelligence with Kelly Stakes</p>
             <div class="nav-buttons">
                 <a href="/" class="btn btn-back">← Command Center</a>
                 <button class="btn btn-refresh" onclick="location.reload()">🔄 Refresh Odds</button>
@@ -454,6 +560,68 @@
             }
         }
         
+        async function analyzeMatchup(index) {
+            const bet = window.bestBetsData[index];
+            const analysisDiv = document.getElementById(`analysis-${index}`);
+            const button = document.getElementById(`ai-btn-${index}`);
+            
+            // Toggle if already showing
+            if (analysisDiv.classList.contains('show')) {
+                analysisDiv.classList.remove('show');
+                button.textContent = '🤖 AI ANALYSIS';
+                return;
+            }
+            
+            // Show loading
+            analysisDiv.innerHTML = `
+                <div class="ai-loading">
+                    <div class="spinner"></div>
+                    <p>🧠 Claude is analyzing this matchup...</p>
+                </div>
+            `;
+            analysisDiv.classList.add('show');
+            button.textContent = '⏳ ANALYZING...';
+            button.disabled = true;
+            
+            try {
+                const params = new URLSearchParams({
+                    game: bet.game,
+                    betType: bet.betType,
+                    selection: bet.selection + (bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : ''),
+                    bestOdds: bet.bestOdds,
+                    worstOdds: bet.worstOdds,
+                    valuePoints: bet.value
+                });
+                
+                const response = await fetch(`/api/matchup-analysis/analyze?${params.toString()}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                analysisDiv.innerHTML = `
+                    <div class="ai-title">🤖 CLAUDE AI MATCHUP ANALYSIS</div>
+                    <div class="ai-disclaimer">
+                        <strong>⚠️ ANALYSIS DISCLAIMER:</strong> This AI analysis uses general sports knowledge and betting concepts. 
+                        It may not reflect current injuries, lineup changes, or live statistics. 
+                        Always verify: ✓ Injury reports (ESPN/Rotoworld) ✓ Team records ✓ Weather conditions. 
+                        Use AI as a strategic framework, not as definitive predictions.
+                    </div>
+                    <div class="ai-content">${data.analysis}</div>
+                `;
+                button.textContent = '✅ HIDE ANALYSIS';
+                
+            } catch (error) {
+                analysisDiv.innerHTML = `
+                    <div class="ai-loading">
+                        <p style="color: #ef4444;">❌ Error: ${error.message}</p>
+                    </div>
+                `;
+                button.textContent = '🤖 AI ANALYSIS';
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
         async function loadBestBets() {
             await loadBankroll();
             
@@ -486,7 +654,8 @@
                 
                 let html = '';
                 
-                for (const bet of uniqueBets) {
+                for (let i = 0; i < uniqueBets.length; i++) {
+                    const bet = uniqueBets[i];
                     const kellyData = await calculateKellyForBet(bet.bestOdds);
                     
                     const commenceDate = new Date(bet.commence_time);
@@ -556,19 +725,27 @@
                                 </div>
                             </div>
                             
+                            <div id="analysis-${i}" class="ai-analysis-section"></div>
+                            
                             <details>
                                 <summary>📊 View All Books</summary>
                                 <div class="all-books">${booksHtml}</div>
                             </details>
                             
-                            <button class="action-btn" onclick="createBet('${bet.game}', '${bet.betType}', '${bet.selection}${spreadText}', ${bet.bestOdds}, '${bet.bestBook}', ${kellyData ? kellyData.recommendedStake : 0})">
-                                ➕ CREATE BET (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
-                            </button>
+                            <div class="action-buttons">
+                                <button id="ai-btn-${i}" class="action-btn btn-ai" onclick="analyzeMatchup(${i})">
+                                    🤖 AI ANALYSIS
+                                </button>
+                                <button class="action-btn btn-create" onclick="createBet('${bet.game}', '${bet.betType}', '${bet.selection}${spreadText}', ${bet.bestOdds}, '${bet.bestBook}', ${kellyData ? kellyData.recommendedStake : 0})">
+                                    ➕ CREATE BET (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
+                                </button>
+                            </div>
                         </div>
                     `;
                 }
                 
                 container.innerHTML = html;
+                window.bestBetsData = uniqueBets;
                 
             } catch (error) {
                 container.innerHTML = `
