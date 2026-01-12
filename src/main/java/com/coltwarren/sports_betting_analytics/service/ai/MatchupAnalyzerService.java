@@ -1,9 +1,10 @@
 package com.coltwarren.sports_betting_analytics.service.ai;
 
+import com.coltwarren.sports_betting_analytics.service.WeatherService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -13,9 +14,13 @@ public class MatchupAnalyzerService {
     
     private final WebClient webClient;
     private final String apiKey;
+    private final WeatherService weatherService;
     
-    public MatchupAnalyzerService(@Value("${claude.api.key}") String apiKey) {
+    @Autowired
+    public MatchupAnalyzerService(@Value("${claude.api.key}") String apiKey,
+                                   WeatherService weatherService) {
         this.apiKey = apiKey;
+        this.weatherService = weatherService;
         this.webClient = WebClient.builder()
             .baseUrl("https://api.anthropic.com/v1")
             .defaultHeader("x-api-key", apiKey)
@@ -27,7 +32,11 @@ public class MatchupAnalyzerService {
     public String analyzeMatchup(String game, String betType, String selection, 
                                  int bestOdds, int worstOdds, double valuePoints) {
         
-        String prompt = buildAnalysisPrompt(game, betType, selection, bestOdds, worstOdds, valuePoints);
+        // Get live weather data
+        Map<String, Object> weather = weatherService.getWeatherForGame(game);
+        
+        String prompt = buildAnalysisPrompt(game, betType, selection, bestOdds, 
+                                           worstOdds, valuePoints, weather);
         
         try {
             String response = webClient.post()
@@ -50,7 +59,7 @@ public class MatchupAnalyzerService {
                 })
                 .block();
             
-            return formatAnalysis(response);
+            return formatAnalysis(response, weather);
             
         } catch (Exception e) {
             return "Error generating analysis: " + e.getMessage();
@@ -58,7 +67,30 @@ public class MatchupAnalyzerService {
     }
     
     private String buildAnalysisPrompt(String game, String betType, String selection,
-                                      int bestOdds, int worstOdds, double valuePoints) {
+                                      int bestOdds, int worstOdds, double valuePoints,
+                                      Map<String, Object> weather) {
+        
+        StringBuilder weatherInfo = new StringBuilder();
+        if ((Boolean) weather.get("available")) {
+            weatherInfo.append(String.format("""
+                
+                LIVE WEATHER DATA:
+                Temperature: %d°F (Feels like %d°F)
+                Wind: %d mph %s
+                Condition: %s
+                Humidity: %d%%
+                Betting Impact: %s
+                """,
+                weather.get("temperature"),
+                weather.get("feelsLike"),
+                weather.get("windSpeed"),
+                weather.get("windDirection"),
+                weather.get("condition"),
+                weather.get("humidity"),
+                weather.get("bettingImpact")
+            ));
+        }
+        
         return String.format("""
             You are a professional sports betting analyst. Analyze this betting opportunity:
             
@@ -68,6 +100,7 @@ public class MatchupAnalyzerService {
             BEST ODDS: %s (best available)
             WORST ODDS: %s (worst available)
             MARKET VALUE: %.0f points (spread between books)
+            %s
             
             Provide a detailed matchup analysis in this format:
             
@@ -75,6 +108,7 @@ public class MatchupAnalyzerService {
             - List 3-5 important factors (injuries, trends, matchups, weather if relevant)
             - Use ✅ for factors favoring the bet
             - Use ⚠️ for concerns
+            - If weather data is available, incorporate it into your analysis
             
             TRENDS:
             - Relevant historical trends
@@ -96,6 +130,7 @@ public class MatchupAnalyzerService {
             """, 
             game, betType, selection, 
             formatOdds(bestOdds), formatOdds(worstOdds), valuePoints,
+            weatherInfo.toString(),
             formatOdds(bestOdds)
         );
     }
@@ -104,18 +139,51 @@ public class MatchupAnalyzerService {
         return odds > 0 ? "+" + odds : String.valueOf(odds);
     }
     
-    private String formatAnalysis(String analysis) {
+    private String formatAnalysis(String analysis, Map<String, Object> weather) {
         if (analysis == null || analysis.isEmpty()) {
             return "Analysis unavailable";
         }
         
-        // Convert to HTML with proper formatting
-        return analysis
+        StringBuilder formatted = new StringBuilder();
+        
+        // Add weather box if available
+        if ((Boolean) weather.get("available")) {
+            formatted.append(String.format("""
+                <div style='background: rgba(59, 130, 246, 0.15); border: 2px solid rgba(59, 130, 246, 0.4); 
+                            border-radius: 12px; padding: 15px; margin-bottom: 20px;'>
+                    <h3 style='margin: 0 0 10px 0; color: #93c5fd;'>%s LIVE WEATHER - %s</h3>
+                    <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;'>
+                        <div><strong>Temp:</strong> %d°F (feels %d°F)</div>
+                        <div><strong>Wind:</strong> %d mph %s</div>
+                        <div><strong>Condition:</strong> %s</div>
+                        <div><strong>Humidity:</strong> %d%%</div>
+                    </div>
+                    <div style='margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;'>
+                        <strong>📊 Impact:</strong> %s
+                    </div>
+                </div>
+                """,
+                weather.get("icon"),
+                weather.get("city"),
+                weather.get("temperature"),
+                weather.get("feelsLike"),
+                weather.get("windSpeed"),
+                weather.get("windDirection"),
+                weather.get("condition"),
+                weather.get("humidity"),
+                weather.get("bettingImpact")
+            ));
+        }
+        
+        // Add the main analysis
+        formatted.append(analysis
             .replace("KEY FACTORS:", "<h3>🎯 KEY FACTORS:</h3>")
             .replace("TRENDS:", "<h3>📊 TRENDS:</h3>")
             .replace("LINE VALUE ASSESSMENT:", "<h3>💎 LINE VALUE ASSESSMENT:</h3>")
             .replace("CONFIDENCE:", "<h3>📈 CONFIDENCE:</h3>")
             .replace("RECOMMENDATION:", "<h3>💡 RECOMMENDATION:</h3>")
-            .replace("\n", "<br>");
+            .replace("\n", "<br>"));
+        
+        return formatted.toString();
     }
 }
