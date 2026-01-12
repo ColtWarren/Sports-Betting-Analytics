@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service.ai;
 
 import com.coltwarren.sports_betting_analytics.service.WeatherService;
 import com.coltwarren.sports_betting_analytics.service.EspnService;
+import com.coltwarren.sports_betting_analytics.service.StatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,14 +18,17 @@ public class MatchupAnalyzerService {
     private final String apiKey;
     private final WeatherService weatherService;
     private final EspnService espnService;
+    private final StatsService statsService;
     
     @Autowired
     public MatchupAnalyzerService(@Value("${claude.api.key}") String apiKey,
                                    WeatherService weatherService,
-                                   EspnService espnService) {
+                                   EspnService espnService,
+                                   StatsService statsService) {
         this.apiKey = apiKey;
         this.weatherService = weatherService;
         this.espnService = espnService;
+        this.statsService = statsService;
         this.webClient = WebClient.builder()
             .baseUrl("https://api.anthropic.com/v1")
             .defaultHeader("x-api-key", apiKey)
@@ -42,8 +46,11 @@ public class MatchupAnalyzerService {
         // Get live injury data
         Map<String, Object> injuries = espnService.getInjuriesForGame(game);
         
+        // Get historical stats
+        Map<String, Object> stats = getStatsForGame(game);
+        
         String prompt = buildAnalysisPrompt(game, betType, selection, bestOdds, 
-                                           worstOdds, valuePoints, weather, injuries);
+                                           worstOdds, valuePoints, weather, injuries, stats);
         
         try {
             String response = webClient.post()
@@ -66,17 +73,37 @@ public class MatchupAnalyzerService {
                 })
                 .block();
             
-            return formatAnalysis(response, weather, injuries);
+            return formatAnalysis(response, weather, injuries, stats);
             
         } catch (Exception e) {
             return "Error generating analysis: " + e.getMessage();
         }
     }
     
+    private Map<String, Object> getStatsForGame(String game) {
+        try {
+            // Extract team names
+            String[] teams = game.split("@|vs");
+            if (teams.length == 2) {
+                String team1 = teams[0].trim().split(" ")[teams[0].trim().split(" ").length - 1];
+                String team2 = teams[1].trim().split(" ")[teams[1].trim().split(" ").length - 1];
+                
+                return statsService.getMatchupStats(team1, team2);
+            }
+        } catch (Exception e) {
+            // Return unavailable if parsing fails
+        }
+        
+        Map<String, Object> unavailable = new java.util.HashMap<>();
+        unavailable.put("available", false);
+        return unavailable;
+    }
+    
     private String buildAnalysisPrompt(String game, String betType, String selection,
                                       int bestOdds, int worstOdds, double valuePoints,
                                       Map<String, Object> weather,
-                                      Map<String, Object> injuries) {
+                                      Map<String, Object> injuries,
+                                      Map<String, Object> stats) {
         
         StringBuilder weatherInfo = new StringBuilder();
         if ((Boolean) weather.get("available")) {
@@ -134,6 +161,33 @@ public class MatchupAnalyzerService {
             }
         }
         
+        StringBuilder statsInfo = new StringBuilder();
+        if ((Boolean) stats.get("available")) {
+            statsInfo.append("\nVERIFIED HISTORICAL STATS:\n");
+            statsInfo.append(String.format("Summary: %s\n", stats.get("summary")));
+            
+            Map<String, Object> team1Stats = (Map<String, Object>) stats.get("team1Stats");
+            Map<String, Object> team2Stats = (Map<String, Object>) stats.get("team2Stats");
+            
+            if ((Boolean) team1Stats.get("available")) {
+                statsInfo.append(String.format("\n%s Stats:\n", stats.get("team1")));
+                statsInfo.append(String.format("  ATS Record: %s (%.1f%%)\n", 
+                    team1Stats.get("atsRecord"), team1Stats.get("atsPercentage")));
+                statsInfo.append(String.format("  O/U Record: %s (%.1f%% Over)\n", 
+                    team1Stats.get("ouRecord"), team1Stats.get("overPercentage")));
+                statsInfo.append(String.format("  Recent ATS: %s\n", team1Stats.get("recentATS")));
+            }
+            
+            if ((Boolean) team2Stats.get("available")) {
+                statsInfo.append(String.format("\n%s Stats:\n", stats.get("team2")));
+                statsInfo.append(String.format("  ATS Record: %s (%.1f%%)\n", 
+                    team2Stats.get("atsRecord"), team2Stats.get("atsPercentage")));
+                statsInfo.append(String.format("  O/U Record: %s (%.1f%% Over)\n", 
+                    team2Stats.get("ouRecord"), team2Stats.get("overPercentage")));
+                statsInfo.append(String.format("  Recent ATS: %s\n", team2Stats.get("recentATS")));
+            }
+        }
+        
         return String.format("""
             You are a professional sports betting analyst. Analyze this betting opportunity:
             
@@ -143,7 +197,7 @@ public class MatchupAnalyzerService {
             BEST ODDS: %s (best available)
             WORST ODDS: %s (worst available)
             MARKET VALUE: %.0f points (spread between books)
-            %s%s
+            %s%s%s
             
             Provide a detailed matchup analysis in this format:
             
@@ -151,12 +205,11 @@ public class MatchupAnalyzerService {
             - List 3-5 important factors (injuries, trends, matchups, weather)
             - Use ✅ for factors favoring the bet
             - Use ⚠️ for concerns
-            - Incorporate the live weather and injury data provided above
+            - Incorporate ALL live data provided above (weather, injuries, verified stats)
             
             TRENDS:
-            - Relevant historical trends
-            - Recent performance patterns
-            - Head-to-head history if applicable
+            - Use the VERIFIED STATS provided above (don't guess!)
+            - If stats unavailable, note that data is limited
             
             LINE VALUE ASSESSMENT:
             - Is this line value strong, fair, or weak?
@@ -169,12 +222,13 @@ public class MatchupAnalyzerService {
             - Should this bet be placed based on the value and factors?
             - What's the main risk?
             
-            Keep it concise, actionable, and data-focused.
+            Keep it concise, actionable, and data-focused. Only use verified statistics provided above.
             """, 
             game, betType, selection, 
             formatOdds(bestOdds), formatOdds(worstOdds), valuePoints,
             weatherInfo.toString(),
             injuryInfo.toString(),
+            statsInfo.toString(),
             formatOdds(bestOdds)
         );
     }
@@ -183,7 +237,8 @@ public class MatchupAnalyzerService {
         return odds > 0 ? "+" + odds : String.valueOf(odds);
     }
     
-    private String formatAnalysis(String analysis, Map<String, Object> weather, Map<String, Object> injuries) {
+    private String formatAnalysis(String analysis, Map<String, Object> weather, 
+                                  Map<String, Object> injuries, Map<String, Object> stats) {
         if (analysis == null || analysis.isEmpty()) {
             return "Analysis unavailable";
         }
@@ -274,6 +329,48 @@ public class MatchupAnalyzerService {
             
             injuryHtml.append("</div>");
             formatted.append(injuryHtml);
+        }
+        
+        // Add stats box if available
+        if ((Boolean) stats.get("available")) {
+            Map<String, Object> team1Stats = (Map<String, Object>) stats.get("team1Stats");
+            Map<String, Object> team2Stats = (Map<String, Object>) stats.get("team2Stats");
+            
+            formatted.append(String.format("""
+                <div style='background: rgba(34, 197, 94, 0.15); border: 2px solid rgba(34, 197, 94, 0.4); 
+                            border-radius: 12px; padding: 15px; margin-bottom: 20px;'>
+                    <h3 style='margin: 0 0 10px 0; color: #86efac;'>📊 VERIFIED STATS (YOUR DATABASE)</h3>
+                    <div style='padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px;'>
+                        <strong>Summary:</strong> %s
+                    </div>
+                    <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 15px;'>
+                        <div>
+                            <strong>%s:</strong><br>
+                            ATS: %s (%.1f%%)<br>
+                            O/U: %s<br>
+                            Recent: %s
+                        </div>
+                        <div>
+                            <strong>%s:</strong><br>
+                            ATS: %s (%.1f%%)<br>
+                            O/U: %s<br>
+                            Recent: %s
+                        </div>
+                    </div>
+                </div>
+                """,
+                stats.get("summary"),
+                stats.get("team1"),
+                team1Stats.get("atsRecord"),
+                team1Stats.get("atsPercentage"),
+                team1Stats.get("ouRecord"),
+                team1Stats.get("recentATS"),
+                stats.get("team2"),
+                team2Stats.get("atsRecord"),
+                team2Stats.get("atsPercentage"),
+                team2Stats.get("ouRecord"),
+                team2Stats.get("recentATS")
+            ));
         }
         
         // Add the main analysis
