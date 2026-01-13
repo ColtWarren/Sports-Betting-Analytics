@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Live Betting - Sports Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .live-indicator {
+            background: #ff4444;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        .sport-selector {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sport-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .sport-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+        
+        .sport-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .sport-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .game-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .game-status {
+            font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        
+        .status-live {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .status-upcoming {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .game-time {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .sport-badge {
+            background: #764ba2;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .teams {
+            margin: 20px 0;
+        }
+        
+        .team-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .team-rank {
+            background: #FFD700;
+            color: #333;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .team-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .team-score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .no-games {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+        }
+        
+        .no-games h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .auto-refresh {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-timer {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                🏈 Live Betting Tracker
+                <span class="live-indicator">● LIVE</span>
+            </h1>
+            <div class="nav-buttons">
+                <a href="/" class="nav-btn">Dashboard</a>
+                <a href="/bets" class="nav-btn">My Bets</a>
+            </div>
+        </header>
+        
+        <div class="sport-selector">
+            <div class="sport-buttons">
+                <button class="sport-btn active" onclick="changeSport('NFL')" id="btn-nfl">
+                    🏈 NFL
+                </button>
+                <button class="sport-btn" onclick="changeSport('CFB')" id="btn-cfb">
+                    🏈 College Football
+                </button>
+                <button class="sport-btn" onclick="changeSport('NBA')" id="btn-nba">
+                    🏀 NBA
+                </button>
+                <button class="sport-btn" onclick="changeSport('CBB')" id="btn-cbb">
+                    🏀 College Basketball
+                </button>
+                <button class="sport-btn" onclick="changeSport('MLB')" id="btn-mlb">
+                    ⚾ MLB
+                </button>
+                <button class="sport-btn" onclick="changeSport('NHL')" id="btn-nhl">
+                    🏒 NHL
+                </button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="filterGames('all')">All Games</button>
+            <button class="tab" onclick="filterGames('live')">Live Now</button>
+            <button class="tab" onclick="filterGames('upcoming')">Upcoming</button>
+        </div>
+        
+        <div class="auto-refresh">
+            Auto-refresh in: <span class="refresh-timer" id="timer">30</span>s
+        </div>
+        
+        <div id="loading" class="loading">
+            Loading live games...
+        </div>
+        
+        <div id="games-container" class="games-grid" style="display: none;"></div>
+        
+        <div id="no-games" class="no-games" style="display: none;">
+            <h2>No Games Available</h2>
+            <p>There are no live or upcoming games for this sport at the moment.</p>
+        </div>
+    </div>
+    
+    <script>
+        let currentFilter = 'all';
+        let currentSport = 'NFL';
+        let allGames = [];
+        let refreshTimer = 30;
+        let timerInterval;
+        
+        // Load games on page load
+        loadGames();
+        startRefreshTimer();
+        
+        function changeSport(sport) {
+            currentSport = sport;
+            
+            // Update button styles
+            document.querySelectorAll('.sport-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('btn-' + sport.toLowerCase()).classList.add('active');
+            
+            // Reset timer and reload
+            refreshTimer = 30;
+            loadGames();
+        }
+        
+        function loadGames() {
+            fetch('/api/live/games?sport=' + currentSport)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allGames = data.games;
+                        displayGames();
+                        document.getElementById('loading').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading games:', error);
+                    document.getElementById('loading').innerHTML = 'Error loading games';
+                });
+        }
+        
+        function displayGames() {
+            const container = document.getElementById('games-container');
+            const noGames = document.getElementById('no-games');
+            
+            let filteredGames = allGames;
+            
+            if (currentFilter === 'live') {
+                filteredGames = allGames.filter(g => g.status === 'IN_PROGRESS');
+            } else if (currentFilter === 'upcoming') {
+                filteredGames = allGames.filter(g => g.status === 'UPCOMING');
+            }
+            
+            if (filteredGames.length === 0) {
+                container.style.display = 'none';
+                noGames.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'grid';
+            noGames.style.display = 'none';
+            
+            container.innerHTML = filteredGames.map(game => `
+                <div class="game-card">
+                    <div class="game-header">
+                        <div>
+                            <span class="sport-badge">${game.sport || currentSport}</span>
+                            <span class="game-status ${game.status === 'IN_PROGRESS' ? 'status-live' : 'status-upcoming'}">
+                                ${game.status === 'IN_PROGRESS' ? '● LIVE' : 'UPCOMING'}
+                            </span>
+                        </div>
+                        <span class="game-time">
+                            ${game.status === 'IN_PROGRESS' ? 
+                                `Q${game.period || ''} ${game.clock || ''}` : 
+                                formatGameTime(game.gameTime)}
+                        </span>
+                    </div>
+                    
+                    <div class="teams">
+                        <div class="team-row">
+                            <div class="team-info">
+                                ${game.awayRank ? `<span class="team-rank">#${game.awayRank}</span>` : ''}
+                                <span class="team-name">${game.awayTeam || 'Away'}</span>
+                            </div>
+                            <span class="team-score">${game.awayScore || 0}</span>
+                        </div>
+                        <div class="team-row">
+                            <div class="team-info">
+                                ${game.homeRank ? `<span class="team-rank">#${game.homeRank}</span>` : ''}
+                                <span class="team-name">${game.homeTeam || 'Home'}</span>
+                            </div>
+                            <span class="team-score">${game.homeScore || 0}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="game-info">
+                        <span>📍 ${game.venue || 'N/A'}</span>
+                        <span>📺 ${game.network || 'N/A'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterGames(filter) {
+            currentFilter = filter;
+            
+            // Update tab styles
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayGames();
+        }
+        
+        function formatGameTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+        
+        function startRefreshTimer() {
+            timerInterval = setInterval(() => {
+                refreshTimer--;
+                document.getElementById('timer').textContent = refreshTimer;
+                
+                if (refreshTimer === 0) {
+                    loadGames();
+                    refreshTimer = 30;
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
