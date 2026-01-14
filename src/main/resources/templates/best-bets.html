@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <title>Best Bets - Multi-Sport Analysis</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Best Bets - Command Center</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
-        
         * {
             margin: 0;
             padding: 0;
@@ -14,184 +11,171 @@
         }
         
         body {
-            font-family: 'Rajdhani', sans-serif;
-            background: #0a0e27;
-            color: #e0e7ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-        
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: gridMove 20s linear infinite;
-            pointer-events: none;
-        }
-        
-        @keyframes gridMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-        
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 30% 40%, rgba(251, 191, 36, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
-            animation: orbPulse 8s ease-in-out infinite;
-            pointer-events: none;
-        }
-        
-        @keyframes orbPulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
+            padding: 20px;
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
         }
         
         header {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(251, 191, 36, 0.4);
-            border-radius: 20px;
-            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 60px rgba(251, 191, 36, 0.3);
-        }
-        
-        header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(251, 191, 36, 0.1), transparent);
-            animation: shine 4s infinite;
-        }
-        
-        @keyframes shine {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2em, 6vw, 3.5em);
-            font-weight: 900;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b, #ec4899);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            position: relative;
-            z-index: 1;
-            animation: gradientShift 5s ease infinite;
+            color: #667eea;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        
-        .subtitle {
-            font-size: clamp(1.1em, 3vw, 1.5em);
-            color: #fde68a;
-            font-weight: 300;
-            letter-spacing: 2px;
-            position: relative;
-            z-index: 1;
+        .ai-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
         }
         
         .nav-buttons {
             display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-            position: relative;
-            z-index: 1;
+            gap: 10px;
         }
         
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 12px;
-            font-size: clamp(0.95em, 2.5vw, 1.1em);
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
-        .btn-back {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        .nav-btn {
+            padding: 10px 20px;
+            background: #667eea;
             color: white;
-            border: 1px solid rgba(99, 102, 241, 0.5);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
         }
         
-        .btn-back:hover {
+        .nav-btn:hover {
+            background: #764ba2;
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
         }
         
-        .btn-refresh {
-            background: linear-gradient(135deg, #10b981, #34d399);
-            color: #000;
-            border: 1px solid rgba(16, 185, 129, 0.5);
+        .sport-selector {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
-        .btn-refresh:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+        .sport-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         
-        .loading, .empty-state {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            border-radius: 20px;
-            padding: 60px 30px;
+        .sport-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+        
+        .sport-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .sport-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .loading {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px;
+            border-radius: 15px;
             text-align: center;
         }
         
+        .loading h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .bets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            gap: 20px;
+        }
+        
         .bet-card {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
             position: relative;
             overflow: hidden;
-            transition: all 0.3s ease;
+        }
+        
+        .bet-card:hover {
+            transform: translateY(-5px);
         }
         
         .bet-card::before {
@@ -199,579 +183,428 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
-            animation: lineSlide 3s infinite;
-        }
-        
-        @keyframes lineSlide {
-            0%, 100% { transform: translateX(-100%); }
-            50% { transform: translateX(100%); }
-        }
-        
-        .bet-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 60px rgba(251, 191, 36, 0.4);
-            border-color: rgba(245, 158, 11, 0.6);
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
         }
         
         .bet-header {
             display: flex;
             justify-content: space-between;
-            align-items: start;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
         }
         
-        .game-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.3em, 4vw, 1.8em);
-            font-weight: 700;
-            color: #fde68a;
-            flex: 1;
+        .sport-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .sport-nfl { background: #013369; }
+        .sport-cfb { background: #CC0000; }
+        .sport-nba { background: #17408B; }
+        .sport-cbb { background: #FF6B35; }
+        .sport-mlb { background: #041E42; }
+        .sport-nhl { background: #000000; }
+        
+        .confidence-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+        }
+        
+        .confidence-high { color: #4CAF50; }
+        .confidence-medium { color: #FF9800; }
+        .confidence-low { color: #f44336; }
+        
+        .matchup {
+            margin: 15px 0;
+        }
+        
+        .teams {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
         }
         
         .game-time {
-            color: #a5b4fc;
-            font-size: clamp(0.9em, 2vw, 1em);
-            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
         }
         
-        .value-badge {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: #000;
-            padding: 15px 25px;
-            border-radius: 15px;
-            text-align: center;
-            min-width: 140px;
-        }
-        
-        .value-number {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2em, 5vw, 2.5em);
-            font-weight: 900;
-            display: block;
-            line-height: 1;
-        }
-        
-        .value-label {
-            font-size: clamp(0.8em, 2vw, 0.9em);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 5px;
-        }
-        
-        .kelly-recommendation {
-            background: rgba(16, 185, 129, 0.15);
-            border: 2px solid rgba(16, 185, 129, 0.4);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-        
-        .kelly-box {
-            text-align: center;
-        }
-        
-        .kelly-box-label {
-            font-size: clamp(0.85em, 2vw, 0.95em);
-            color: #6ee7b7;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .kelly-box-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.5em, 4vw, 2em);
-            font-weight: 900;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .ai-analysis-section {
-            background: rgba(139, 92, 246, 0.1);
-            border: 2px solid rgba(139, 92, 246, 0.3);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 20px 0;
-            display: none;
-        }
-        
-        .ai-analysis-section.show {
-            display: block;
-            animation: slideDown 0.5s ease;
-        }
-        
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .ai-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.2em, 3vw, 1.5em);
-            font-weight: 700;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .ai-disclaimer {
-            background: rgba(245, 158, 11, 0.15);
-            border: 2px solid rgba(245, 158, 11, 0.4);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            font-size: clamp(0.85em, 2vw, 0.95em);
-            color: #fde68a;
-            line-height: 1.6;
-        }
-        
-        .ai-disclaimer strong {
-            color: #fbbf24;
-            font-weight: 700;
-        }
-        
-        .ai-content {
-            color: #e0e7ff;
-            line-height: 1.8;
-            font-size: clamp(0.95em, 2.5vw, 1.05em);
-        }
-        
-        .ai-content h3 {
-            font-family: 'Orbitron', sans-serif;
-            color: #c4b5fd;
-            margin: 20px 0 10px;
-            font-size: clamp(1.1em, 3vw, 1.3em);
-        }
-        
-        .ai-loading {
-            text-align: center;
-            padding: 30px;
-            color: #c4b5fd;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(139, 92, 246, 0.2);
-            border-top-color: #8b5cf6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .bet-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .detail-box {
-            background: rgba(30, 41, 59, 0.6);
+        .recommendation {
+            background: linear-gradient(135deg, #667eea15, #764ba215);
             padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
         }
         
-        .detail-label {
-            color: #fde68a;
-            font-size: clamp(0.85em, 2vw, 0.95em);
-            margin-bottom: 8px;
+        .rec-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
         
-        .detail-value {
-            font-size: clamp(1.1em, 3vw, 1.3em);
-            font-weight: 700;
-            color: #e0e7ff;
+        .rec-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
         }
         
         .best-odds {
-            color: #10b981 !important;
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        details {
-            margin: 20px 0;
-        }
-        
-        summary {
-            cursor: pointer;
-            color: #fbbf24;
-            font-weight: 700;
-            font-size: clamp(1em, 2.5vw, 1.1em);
-            padding: 12px;
-            background: rgba(30, 41, 59, 0.4);
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        summary:hover {
-            background: rgba(251, 191, 36, 0.2);
-        }
-        
-        .all-books {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .odds-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .odds-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .odds-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .odds-book {
+            font-size: 11px;
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        
+        .analysis {
             margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
         }
         
-        .book-item {
-            background: rgba(30, 41, 59, 0.6);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            transition: all 0.3s ease;
+        .analysis-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
         
-        .book-item:hover {
-            transform: translateY(-3px);
-            border-color: rgba(251, 191, 36, 0.5);
+        .analysis-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
         }
         
-        .book-item.best {
-            border-color: #fbbf24;
-            background: rgba(251, 191, 36, 0.1);
-        }
-        
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .action-btn {
-            width: 100%;
-            padding: 18px;
+        .expand-btn {
+            background: #667eea;
+            color: white;
             border: none;
-            border-radius: 12px;
-            font-size: clamp(1em, 2.5vw, 1.2em);
-            font-weight: 900;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            margin-top: 10px;
+            transition: all 0.3s;
         }
         
-        .btn-ai {
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-            color: white;
-            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
+        .expand-btn:hover {
+            background: #764ba2;
         }
         
-        .btn-ai:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 50px rgba(139, 92, 246, 0.6);
+        .analysis-full {
+            display: none;
+            margin-top: 10px;
         }
         
-        .btn-ai:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-create {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.3);
-        }
-        
-        .btn-create:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 50px rgba(99, 102, 241, 0.6);
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        
-        .loading {
-            animation: pulse 2s infinite;
+        .analysis-full.expanded {
+            display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🔥 BEST BETS TODAY</h1>
-            <p class="subtitle">AI-Powered Betting Intelligence with Kelly Stakes</p>
+            <h1>
+                🎯 Best Bets Today
+                <span class="ai-badge">AI POWERED</span>
+            </h1>
             <div class="nav-buttons">
-                <a href="/" class="btn btn-back">← Command Center</a>
-                <button class="btn btn-refresh" onclick="location.reload()">🔄 Refresh Odds</button>
+                <a href="/" class="nav-btn">Dashboard</a>
+                <a href="/live-betting" class="nav-btn">Live Games</a>
+                <a href="/bets" class="nav-btn">My Bets</a>
             </div>
         </header>
         
-        <div id="betsContainer">
-            <div class="loading">
-                <h2>🔄 LOADING BEST BETS...</h2>
-                <p>Scanning 40+ sportsbooks and calculating Kelly stakes...</p>
+        <div class="sport-selector">
+            <div class="sport-buttons">
+                <button class="sport-btn active" onclick="filterSport('ALL')" id="btn-all">
+                    All Sports
+                </button>
+                <button class="sport-btn" onclick="filterSport('NFL')" id="btn-nfl">
+                    🏈 NFL
+                </button>
+                <button class="sport-btn" onclick="filterSport('CFB')" id="btn-cfb">
+                    🏈 College Football
+                </button>
+                <button class="sport-btn" onclick="filterSport('NBA')" id="btn-nba">
+                    🏀 NBA
+                </button>
+                <button class="sport-btn" onclick="filterSport('CBB')" id="btn-cbb">
+                    🏀 College Basketball
+                </button>
+                <button class="sport-btn" onclick="filterSport('NHL')" id="btn-nhl">
+                    🏒 NHL
+                </button>
+                <button class="sport-btn" onclick="filterSport('MLB')" id="btn-mlb">
+                    ⚾ MLB
+                </button>
             </div>
         </div>
+        
+        <div id="stats-bar" class="stats-bar" style="display: none;">
+            <div class="stat">
+                <div class="stat-value" id="total-bets">0</div>
+                <div class="stat-label">Total Best Bets</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="avg-confidence">0</div>
+                <div class="stat-label">Avg Confidence</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="sports-count">0</div>
+                <div class="stat-label">Sports Analyzed</div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            <h2>🔥 Analyzing Games Across All Sports...</h2>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; color: #666;">
+                Scanning NFL • CFB • NBA • CBB • MLB • NHL<br>
+                Using AI to find the best value bets...
+            </p>
+        </div>
+        
+        <div id="bets-container" class="bets-grid" style="display: none;"></div>
     </div>
     
     <script>
-        let currentBankroll = 0;
+        let allBets = [];
+        let currentFilter = 'ALL';
         
-        async function loadBankroll() {
-            try {
-                const response = await fetch('/api/kelly/calculate?odds=-110&winProbability=0.52&fractional=true');
-                const data = await response.json();
-                currentBankroll = data.currentBankroll;
-            } catch (error) {
-                console.error('Error loading bankroll:', error);
-                currentBankroll = 1000;
-            }
-        }
-        
-        async function calculateKellyForBet(odds) {
-            try {
-                const winProb = odds < 0 ? 0.54 : 0.48;
-                const response = await fetch(`/api/kelly/calculate?odds=${odds}&winProbability=${winProb}&fractional=true`);
-                return await response.json();
-            } catch (error) {
-                console.error('Error calculating Kelly:', error);
-                return null;
-            }
-        }
-        
-        async function analyzeMatchup(index) {
-            const bet = window.bestBetsData[index];
-            const analysisDiv = document.getElementById(`analysis-${index}`);
-            const button = document.getElementById(`ai-btn-${index}`);
-            
-            // Toggle if already showing
-            if (analysisDiv.classList.contains('show')) {
-                analysisDiv.classList.remove('show');
-                button.textContent = '🤖 AI ANALYSIS';
-                return;
-            }
-            
-            // Show loading
-            analysisDiv.innerHTML = `
-                <div class="ai-loading">
-                    <div class="spinner"></div>
-                    <p>🧠 Claude is analyzing this matchup...</p>
-                </div>
-            `;
-            analysisDiv.classList.add('show');
-            button.textContent = '⏳ ANALYZING...';
-            button.disabled = true;
-            
-            try {
-                const params = new URLSearchParams({
-                    game: bet.game,
-                    betType: bet.betType,
-                    selection: bet.selection + (bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : ''),
-                    bestOdds: bet.bestOdds,
-                    worstOdds: bet.worstOdds,
-                    valuePoints: bet.value
-                });
-                
-                const response = await fetch(`/api/matchup-analysis/analyze?${params.toString()}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                analysisDiv.innerHTML = `
-                    <div class="ai-title">🤖 CLAUDE AI MATCHUP ANALYSIS</div>
-                    <div class="ai-disclaimer">
-                        <strong>⚠️ ANALYSIS DISCLAIMER:</strong> This AI analysis uses general sports knowledge and betting concepts. 
-                        It may not reflect current injuries, lineup changes, or live statistics. 
-                        Always verify: ✓ Injury reports (ESPN/Rotoworld) ✓ Team records ✓ Weather conditions. 
-                        Use AI as a strategic framework, not as definitive predictions.
-                    </div>
-                    <div class="ai-content">${data.analysis}</div>
-                `;
-                button.textContent = '✅ HIDE ANALYSIS';
-                
-            } catch (error) {
-                analysisDiv.innerHTML = `
-                    <div class="ai-loading">
-                        <p style="color: #ef4444;">❌ Error: ${error.message}</p>
-                    </div>
-                `;
-                button.textContent = '🤖 AI ANALYSIS';
-            } finally {
-                button.disabled = false;
-            }
-        }
-        
-        async function loadBestBets() {
-            await loadBankroll();
-            
-            const container = document.getElementById('betsContainer');
-            
-            try {
-                const response = await fetch('/api/odds/best-bets-today?sport=NFL&limit=10');
-                const bets = await response.json();
-                
-                if (bets.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <h2>📭 NO OPPORTUNITIES FOUND</h2>
-                            <p>Check back later for new games!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                const uniqueBets = [];
-                const seen = new Set();
-                
-                for (const bet of bets) {
-                    const key = `${bet.game}-${bet.selection}-${bet.point}-${bet.betType}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        uniqueBets.push(bet);
-                    }
-                }
-                
-                let html = '';
-                
-                for (let i = 0; i < uniqueBets.length; i++) {
-                    const bet = uniqueBets[i];
-                    const kellyData = await calculateKellyForBet(bet.bestOdds);
-                    
-                    const commenceDate = new Date(bet.commence_time);
-                    const formattedDate = commenceDate.toLocaleString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                    });
-                    
-                    const spreadText = bet.point ? ` ${bet.point > 0 ? '+' : ''}${bet.point}` : '';
-                    
-                    const booksHtml = Object.entries(bet.allBooks).map(([book, odds]) => `
-                        <div class="book-item ${book === bet.bestBook ? 'best' : ''}">
-                            <div class="book-name">${book}</div>
-                            <div class="book-odds">${odds > 0 ? '+' : ''}${odds}</div>
-                        </div>
-                    `).join('');
-                    
-                    html += `
-                        <div class="bet-card">
-                            <div class="bet-header">
-                                <div>
-                                    <div class="game-title">${bet.game}</div>
-                                    <div class="game-time">🕐 ${formattedDate}</div>
-                                </div>
-                                <div class="value-badge">
-                                    <span class="value-number">${Math.round(bet.value)}</span>
-                                    <span class="value-label">pts value</span>
-                                </div>
-                            </div>
-                            
-                            ${kellyData ? `
-                            <div class="kelly-recommendation">
-                                <div class="kelly-box">
-                                    <div class="kelly-box-label">💰 Kelly Stake</div>
-                                    <div class="kelly-box-value">$${kellyData.recommendedStake.toFixed(2)}</div>
-                                </div>
-                                <div class="kelly-box">
-                                    <div class="kelly-box-label">📊 Kelly %</div>
-                                    <div class="kelly-box-value">${kellyData.kellyPercentage.toFixed(2)}%</div>
-                                </div>
-                                <div class="kelly-box">
-                                    <div class="kelly-box-label">📈 Expected EV</div>
-                                    <div class="kelly-box-value">${kellyData.expectedValue.toFixed(2)}%</div>
-                                </div>
-                            </div>
-                            ` : ''}
-                            
-                            <div class="bet-details">
-                                <div class="detail-box">
-                                    <div class="detail-label">Selection</div>
-                                    <div class="detail-value">${bet.selection}${spreadText}</div>
-                                </div>
-                                <div class="detail-box">
-                                    <div class="detail-label">Bet Type</div>
-                                    <div class="detail-value">${bet.betType}</div>
-                                </div>
-                                <div class="detail-box">
-                                    <div class="detail-label">✅ Best Odds</div>
-                                    <div class="detail-value best-odds">${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook}</div>
-                                </div>
-                                <div class="detail-box">
-                                    <div class="detail-label">❌ Worst Odds</div>
-                                    <div class="detail-value worst-odds">${bet.worstOdds > 0 ? '+' : ''}${bet.worstOdds} @ ${bet.worstBook}</div>
-                                </div>
-                            </div>
-                            
-                            <div id="analysis-${i}" class="ai-analysis-section"></div>
-                            
-                            <details>
-                                <summary>📊 View All Books</summary>
-                                <div class="all-books">${booksHtml}</div>
-                            </details>
-                            
-                            <div class="action-buttons">
-                                <button id="ai-btn-${i}" class="action-btn btn-ai" onclick="analyzeMatchup(${i})">
-                                    🤖 AI ANALYSIS
-                                </button>
-                                <button class="action-btn btn-create" onclick="createBet('${bet.game}', '${bet.betType}', '${bet.selection}${spreadText}', ${bet.bestOdds}, '${bet.bestBook}', ${kellyData ? kellyData.recommendedStake : 0})">
-                                    ➕ CREATE BET (${bet.bestOdds > 0 ? '+' : ''}${bet.bestOdds} @ ${bet.bestBook})
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                container.innerHTML = html;
-                window.bestBetsData = uniqueBets;
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h2>❌ ERROR LOADING BETS</h2>
-                        <p>${error.message}</p>
-                    </div>
-                `;
-            }
-        }
-        
-        function createBet(game, betType, selection, odds, sportsbook, kellyStake) {
-            const params = new URLSearchParams({
-                sport: 'NFL',
-                event: game,
-                betType: betType,
-                selection: selection,
-                odds: odds,
-                sportsbook: sportsbook,
-                stake: kellyStake.toFixed(2)
-            });
-            
-            window.location.href = `/bets/new?${params.toString()}`;
-        }
-        
+        // Load best bets on page load
         loadBestBets();
+        
+        function loadBestBets() {
+            fetch('/api/best-bets/all-sports')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allBets = data.bets;
+                        displayStats(data);
+                        displayBets();
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('stats-bar').style.display = 'flex';
+                        document.getElementById('bets-container').style.display = 'grid';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading best bets:', error);
+                    document.getElementById('loading').innerHTML = 
+                        '<h2 style="color: #f44336;">Error Loading Best Bets</h2>' +
+                        '<p>' + error.message + '</p>';
+                });
+        }
+        
+        function displayStats(data) {
+            document.getElementById('total-bets').textContent = data.totalBets;
+            
+            // Calculate average confidence
+            const avgConf = allBets.reduce((sum, bet) => sum + bet.confidence, 0) / allBets.length;
+            document.getElementById('avg-confidence').textContent = avgConf.toFixed(1);
+            
+            // Count unique sports
+            const sports = new Set(allBets.map(bet => bet.sport));
+            document.getElementById('sports-count').textContent = sports.size;
+        }
+        
+        function filterSport(sport) {
+            currentFilter = sport;
+            
+            // Update button styles
+            document.querySelectorAll('.sport-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('btn-' + sport.toLowerCase()).classList.add('active');
+            
+            displayBets();
+        }
+        
+        function displayBets() {
+            const container = document.getElementById('bets-container');
+            
+            let filteredBets = allBets;
+            if (currentFilter !== 'ALL') {
+                filteredBets = allBets.filter(bet => bet.sport === currentFilter);
+            }
+            
+            container.innerHTML = filteredBets.map((bet, index) => `
+                <div class="bet-card">
+                    <div class="bet-header">
+                        <span class="sport-badge sport-${bet.sport.toLowerCase()}">${getSportIcon(bet.sport)} ${bet.sport}</span>
+                        <span class="confidence-badge ${getConfidenceClass(bet.confidence)}">
+                            ⭐ ${bet.confidence}/10
+                        </span>
+                    </div>
+                    
+                    <div class="matchup">
+                        <div class="teams">${bet.awayTeam} @ ${bet.homeTeam}</div>
+                        <div class="game-time">${formatGameTime(bet.gameTime)}</div>
+                    </div>
+                    
+                    <div class="recommendation">
+                        <div class="rec-label">AI RECOMMENDATION</div>
+                        <div class="rec-value">${bet.recommendation}</div>
+                    </div>
+                    
+                    <div class="best-odds">
+                        ${formatBestOdds(bet.bestOdds)}
+                    </div>
+                    
+                    <div class="analysis">
+                        <div class="analysis-label">AI ANALYSIS</div>
+                        <div class="analysis-text">
+                            ${getAnalysisPreview(bet.analysis)}
+                        </div>
+                        <button class="expand-btn" onclick="toggleAnalysis(${index})">
+                            Read Full Analysis
+                        </button>
+                        <div class="analysis-full" id="analysis-${index}">
+                            ${bet.analysis}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getSportIcon(sport) {
+            const icons = {
+                'NFL': '🏈',
+                'CFB': '🏈',
+                'NBA': '🏀',
+                'CBB': '🏀',
+                'MLB': '⚾',
+                'NHL': '🏒'
+            };
+            return icons[sport] || '🎯';
+        }
+        
+        function getConfidenceClass(confidence) {
+            if (confidence >= 8) return 'confidence-high';
+            if (confidence >= 6) return 'confidence-medium';
+            return 'confidence-low';
+        }
+        
+        function formatGameTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+        
+        function formatBestOdds(odds) {
+            if (!odds) return '<p>No odds available</p>';
+            
+            let html = '';
+            
+            if (odds.homeML) {
+                html += `
+                    <div class="odds-item">
+                        <div class="odds-label">Best Home ML</div>
+                        <div class="odds-value">${formatOdds(odds.homeML)}</div>
+                        <div class="odds-book">${odds.homeMLBook}</div>
+                    </div>
+                `;
+            }
+            
+            if (odds.awayML) {
+                html += `
+                    <div class="odds-item">
+                        <div class="odds-label">Best Away ML</div>
+                        <div class="odds-value">${formatOdds(odds.awayML)}</div>
+                        <div class="odds-book">${odds.awayMLBook}</div>
+                    </div>
+                `;
+            }
+            
+            if (odds.homeSpreadOdds) {
+                html += `
+                    <div class="odds-item">
+                        <div class="odds-label">Best Home Spread</div>
+                        <div class="odds-value">${formatOdds(odds.homeSpreadOdds)}</div>
+                        <div class="odds-book">${odds.homeSpreadBook}</div>
+                    </div>
+                `;
+            }
+            
+            if (odds.awaySpreadOdds) {
+                html += `
+                    <div class="odds-item">
+                        <div class="odds-label">Best Away Spread</div>
+                        <div class="odds-value">${formatOdds(odds.awaySpreadOdds)}</div>
+                        <div class="odds-book">${odds.awaySpreadBook}</div>
+                    </div>
+                `;
+            }
+            
+            return html || '<p>Odds available</p>';
+        }
+        
+        function formatOdds(odds) {
+            if (odds > 0) return '+' + odds;
+            return odds.toString();
+        }
+        
+        function getAnalysisPreview(analysis) {
+            if (!analysis) return 'No analysis available';
+            
+            // Extract just the reason part if formatted
+            if (analysis.includes('REASON:')) {
+                const reason = analysis.split('REASON:')[1];
+                return reason ? reason.substring(0, 150) + '...' : analysis.substring(0, 150) + '...';
+            }
+            
+            return analysis.substring(0, 150) + '...';
+        }
+        
+        function toggleAnalysis(index) {
+            const element = document.getElementById('analysis-' + index);
+            element.classList.toggle('expanded');
+            
+            const btn = event.target;
+            if (element.classList.contains('expanded')) {
+                btn.textContent = 'Hide Analysis';
+            } else {
+                btn.textContent = 'Read Full Analysis';
+            }
+        }
     </script>
 </body>
 </html>

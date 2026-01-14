@@ -99,10 +99,6 @@ public class DashboardController {
         return "charts";
     }
     
-    @GetMapping("/best-bets")
-    public String bestBets() {
-        return "best-bets";
-    }
     
     @GetMapping("/bankroll")
     public String bankroll(Model model) {
