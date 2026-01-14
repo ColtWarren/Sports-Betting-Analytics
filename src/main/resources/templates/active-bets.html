@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Active Bets - Live Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .live-indicator {
+            background: #ff4444;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .filters {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+        
+        .filter-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .loading {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .loading h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .bets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        
+        .bet-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bet-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .bet-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        .bet-card.live::before {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+        }
+        
+        .bet-card.winning::before {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        }
+        
+        .bet-card.losing::before {
+            background: linear-gradient(135deg, #f44336, #c62828);
+        }
+        
+        .bet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .sport-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .sport-nfl { background: #013369; }
+        .sport-cfb { background: #CC0000; }
+        .sport-nba { background: #17408B; }
+        .sport-cbb { background: #FF6B35; }
+        .sport-mlb { background: #041E42; }
+        .sport-nhl { background: #000000; }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-live {
+            background: #ff4444;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-upcoming {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .matchup {
+            margin: 15px 0;
+        }
+        
+        .event-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .bet-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .bet-amount {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .live-score {
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .score-header {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .position {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .position.winning {
+            background: #4CAF5020;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .position.losing {
+            background: #f4433620;
+            border-left: 4px solid #f44336;
+        }
+        
+        .position.push {
+            background: #FF980020;
+            border-left: 4px solid #FF9800;
+        }
+        
+        .position-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .position-status {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .position-status.winning { color: #4CAF50; }
+        .position-status.losing { color: #f44336; }
+        .position-status.push { color: #FF9800; }
+        
+        .position-margin {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .potential {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .potential-item {
+            text-align: center;
+        }
+        
+        .potential-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .potential-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .hedge-alert {
+            background: linear-gradient(135deg, #FFD70015, #FFA50015);
+            border: 2px solid #FFD700;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .hedge-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #FF8C00;
+            margin-bottom: 5px;
+        }
+        
+        .hedge-text {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .no-bets {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .no-bets h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .no-bets p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .auto-refresh {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-timer {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                🎯 Active Bets
+                <span class="live-indicator">● LIVE TRACKING</span>
+            </h1>
+            <div class="nav-buttons">
+                <a href="/" class="nav-btn">Dashboard</a>
+                <a href="/best-bets" class="nav-btn">Best Bets</a>
+                <a href="/live-betting" class="nav-btn">Live Games</a>
+            </div>
+        </header>
+        
+        <div id="stats-bar" class="stats-bar" style="display: none;">
+            <div class="stat">
+                <div class="stat-value" id="total-bets">0</div>
+                <div class="stat-label">Total Active Bets</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="live-count">0</div>
+                <div class="stat-label">Live Now</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="upcoming-count">0</div>
+                <div class="stat-label">Upcoming</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="total-risk">$0</div>
+                <div class="stat-label">Total Risk</div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBets('all')" id="btn-all">
+                    All Bets
+                </button>
+                <button class="filter-btn" onclick="filterBets('live')" id="btn-live">
+                    🔴 Live Now
+                </button>
+                <button class="filter-btn" onclick="filterBets('upcoming')" id="btn-upcoming">
+                    🟢 Upcoming
+                </button>
+                <button class="filter-btn" onclick="filterBets('NFL')" id="btn-nfl">
+                    🏈 NFL
+                </button>
+                <button class="filter-btn" onclick="filterBets('NBA')" id="btn-nba">
+                    🏀 NBA
+                </button>
+                <button class="filter-btn" onclick="filterBets('CFB')" id="btn-cfb">
+                    🏈 CFB
+                </button>
+                <button class="filter-btn" onclick="filterBets('CBB')" id="btn-cbb">
+                    🏀 CBB
+                </button>
+                <button class="filter-btn" onclick="filterBets('NHL')" id="btn-nhl">
+                    🏒 NHL
+                </button>
+                <button class="filter-btn" onclick="filterBets('MLB')" id="btn-mlb">
+                    ⚾ MLB
+                </button>
+            </div>
+        </div>
+        
+        <div class="auto-refresh">
+            Auto-refresh in: <span class="refresh-timer" id="timer">30</span>s
+        </div>
+        
+        <div id="loading" class="loading">
+            <h2>🔄 Loading Your Active Bets...</h2>
+            <div class="spinner"></div>
+        </div>
+        
+        <div id="bets-container" class="bets-grid" style="display: none;"></div>
+        
+        <div id="no-bets" class="no-bets" style="display: none;">
+            <h2>No Active Bets</h2>
+            <p>You don't have any pending bets right now.</p>
+            <a href="/bet-form" class="nav-btn">Place a Bet</a>
+        </div>
+    </div>
+    
+    <script>
+        let allBets = [];
+        let currentFilter = 'all';
+        let refreshTimer = 30;
+        let timerInterval;
+        
+        // Load active bets on page load
+        loadActiveBets();
+        startRefreshTimer();
+        
+        function loadActiveBets() {
+            fetch('/api/active-bets')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allBets = [...data.liveBets, ...data.upcomingBets];
+                        displayStats(data);
+                        displayBets();
+                        
+                        document.getElementById('loading').style.display = 'none';
+                        
+                        if (allBets.length > 0) {
+                            document.getElementById('stats-bar').style.display = 'grid';
+                            document.getElementById('bets-container').style.display = 'grid';
+                        } else {
+                            document.getElementById('no-bets').style.display = 'block';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading active bets:', error);
+                    document.getElementById('loading').innerHTML = 
+                        '<h2 style="color: #f44336;">Error Loading Bets</h2>';
+                });
+        }
+        
+        function displayStats(data) {
+            document.getElementById('total-bets').textContent = data.totalActiveBets;
+            document.getElementById('live-count').textContent = data.liveCount;
+            document.getElementById('upcoming-count').textContent = data.upcomingCount;
+            
+            // Calculate total risk
+            const totalRisk = allBets.reduce((sum, bet) => sum + (bet.stake || 0), 0);
+            document.getElementById('total-risk').textContent = '$' + totalRisk.toFixed(2);
+        }
+        
+        function filterBets(filter) {
+            currentFilter = filter;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('btn-' + filter.toLowerCase()).classList.add('active');
+            
+            displayBets();
+        }
+        
+        function displayBets() {
+            const container = document.getElementById('bets-container');
+            
+            let filteredBets = allBets;
+            
+            if (currentFilter === 'live') {
+                filteredBets = allBets.filter(bet => bet.isLive);
+            } else if (currentFilter === 'upcoming') {
+                filteredBets = allBets.filter(bet => !bet.isLive);
+            } else if (currentFilter !== 'all') {
+                filteredBets = allBets.filter(bet => bet.sport === currentFilter);
+            }
+            
+            container.innerHTML = filteredBets.map(bet => createBetCard(bet)).join('');
+        }
+        
+        function createBetCard(bet) {
+            const isLive = bet.isLive;
+            const position = bet.position || {};
+            const cardClass = isLive && position.status ? position.status.toLowerCase() : '';
+            
+            let card = `
+                <div class="bet-card ${cardClass}">
+                    <div class="bet-header">
+                        <span class="sport-badge sport-${bet.sport.toLowerCase()}">${getSportIcon(bet.sport)} ${bet.sport}</span>
+                        <span class="status-badge ${isLive ? 'status-live' : 'status-upcoming'}">
+                            ${isLive ? '🔴 LIVE' : '🟢 UPCOMING'}
+                        </span>
+                    </div>
+                    
+                    <div class="matchup">
+                        <div class="event-name">${bet.eventName}</div>
+                        <div class="bet-details">
+                            ${bet.selection} (${formatOdds(bet.odds)}) - 
+                            <span class="bet-amount">$${bet.stake.toFixed(2)}</span>
+                        </div>
+                    </div>
+            `;
+            
+            // Add live score if available
+            if (isLive && bet.liveGame) {
+                card += `
+                    <div class="live-score">
+                        <div class="score-header">${bet.liveGame.statusDetail || 'LIVE'}</div>
+                        <div class="score-display">
+                            ${bet.liveGame.awayTeam || 'Away'}: ${bet.liveGame.awayScore || 0} - 
+                            ${bet.liveGame.homeTeam || 'Home'}: ${bet.liveGame.homeScore || 0}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Add position if available
+            if (position.status) {
+                card += `
+                    <div class="position ${position.status.toLowerCase()}">
+                        <div class="position-label">CURRENT POSITION</div>
+                        <div class="position-status ${position.status.toLowerCase()}">
+                            ${position.status === 'WINNING' ? '✅ WINNING' : 
+                              position.status === 'LOSING' ? '❌ LOSING' : '🟰 PUSH'}
+                        </div>
+                        ${position.margin ? `
+                            <div class="position-margin">
+                                Margin: ${position.margin.toFixed(1)} points
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            
+            // Add potential payout
+            card += `
+                <div class="potential">
+                    <div class="potential-item">
+                        <div class="potential-label">Stake</div>
+                        <div class="potential-value">$${bet.stake.toFixed(2)}</div>
+                    </div>
+                    <div class="potential-item">
+                        <div class="potential-label">To Win</div>
+                        <div class="potential-value">$${bet.potentialPayout.toFixed(2)}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Add hedge alert if available
+            if (bet.hedgeOpportunity && bet.hedgeOpportunity.available) {
+                card += `
+                    <div class="hedge-alert">
+                        <div class="hedge-header">
+                            🔥 HEDGE OPPORTUNITY AVAILABLE
+                        </div>
+                        <div class="hedge-text">
+                            Consider hedging for guaranteed profit!
+                        </div>
+                    </div>
+                `;
+            }
+            
+            card += `</div>`;
+            
+            return card;
+        }
+        
+        function getSportIcon(sport) {
+            const icons = {
+                'NFL': '🏈',
+                'CFB': '🏈',
+                'NBA': '🏀',
+                'CBB': '🏀',
+                'MLB': '⚾',
+                'NHL': '🏒'
+            };
+            return icons[sport] || '🎯';
+        }
+        
+        function formatOdds(odds) {
+            if (odds > 0) return '+' + odds;
+            return odds.toString();
+        }
+        
+        function startRefreshTimer() {
+            timerInterval = setInterval(() => {
+                refreshTimer--;
+                document.getElementById('timer').textContent = refreshTimer;
+                
+                if (refreshTimer === 0) {
+                    loadActiveBets();
+                    refreshTimer = 30;
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
