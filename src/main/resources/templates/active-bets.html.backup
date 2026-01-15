@@ -11,9 +11,8 @@
         }
         
         body {
-            color: #e0e7ff;
-            font-family: 'Rajdhani', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0e27;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -24,11 +23,10 @@
         }
         
         header {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
             padding: 20px 30px;
             border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
@@ -36,10 +34,7 @@
         }
         
         h1 {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
             font-size: 28px;
             display: flex;
             align-items: center;
@@ -67,13 +62,8 @@
         }
         
         .nav-btn {
-        
-        .nav-btn span {
-            display: inline;
-            visibility: visible;
-        }
             padding: 10px 20px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: #667eea;
             color: white;
             text-decoration: none;
             border-radius: 8px;
@@ -82,20 +72,19 @@
         }
         
         .nav-btn:hover {
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            background: #764ba2;
             transform: translateY(-2px);
         }
         
         .stats-bar {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
             padding: 20px;
             border-radius: 15px;
             margin-bottom: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
         .stat {
@@ -105,25 +94,21 @@
         .stat-value {
             font-size: 32px;
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
         }
         
         .stat-label {
             font-size: 14px;
-            color: #94a3b8;
+            color: #666;
             margin-top: 5px;
         }
         
         .filters {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
             padding: 20px;
             border-radius: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
         .filter-buttons {
@@ -134,43 +119,34 @@
         
         .filter-btn {
             padding: 12px 25px;
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border: 1px solid rgba(99, 102, 241, 0.4);
+            background: white;
+            border: 2px solid #667eea;
             border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
         }
         
         .filter-btn:hover {
-            background: rgba(51, 65, 85, 0.8);
+            background: #f0f0f0;
         }
         
         .filter-btn.active {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #e0e7ff;
+            background: #667eea;
+            color: white;
         }
         
         .loading {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
             padding: 60px;
             border-radius: 15px;
             text-align: center;
         }
         
         .loading h2 {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
             margin-bottom: 20px;
         }
         
@@ -196,12 +172,10 @@
         }
         
         .bet-card {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s;
             position: relative;
             overflow: hidden;
@@ -280,22 +254,19 @@
         .event-name {
             font-size: 20px;
             font-weight: bold;
-            color: #e0e7ff;
+            color: #333;
             margin-bottom: 5px;
         }
         
         .bet-details {
             font-size: 16px;
-            color: #94a3b8;
+            color: #666;
             margin-bottom: 10px;
         }
         
         .bet-amount {
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
         }
         
         .live-score {
@@ -308,7 +279,7 @@
         
         .score-header {
             font-size: 12px;
-            color: #94a3b8;
+            color: #666;
             font-weight: 600;
             margin-bottom: 5px;
         }
@@ -316,7 +287,7 @@
         .score-display {
             font-size: 24px;
             font-weight: bold;
-            color: #e0e7ff;
+            color: #333;
         }
         
         .position {
@@ -342,7 +313,7 @@
         
         .position-label {
             font-size: 12px;
-            color: #94a3b8;
+            color: #666;
             font-weight: 600;
             margin-bottom: 5px;
         }
@@ -358,7 +329,7 @@
         
         .position-margin {
             font-size: 14px;
-            color: #94a3b8;
+            color: #666;
             margin-top: 5px;
         }
         
@@ -376,17 +347,14 @@
         
         .potential-label {
             font-size: 11px;
-            color: #94a3b8;
+            color: #666;
             margin-bottom: 3px;
         }
         
         .potential-value {
             font-size: 16px;
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
         }
         
         .hedge-alert {
@@ -409,27 +377,23 @@
         
         .hedge-text {
             font-size: 13px;
-            color: #94a3b8;
+            color: #666;
         }
         
         .no-bets {
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
             padding: 60px;
             border-radius: 15px;
             text-align: center;
         }
         
         .no-bets h2 {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
             margin-bottom: 10px;
         }
         
         .no-bets p {
-            color: #94a3b8;
+            color: #666;
             margin-bottom: 20px;
         }
         
@@ -445,10 +409,7 @@
         
         .refresh-timer {
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #667eea;
         }
     </style>
 </head>
@@ -460,9 +421,9 @@
                 <span class="live-indicator">● LIVE TRACKING</span>
             </h1>
             <div class="nav-buttons">
-                <a href="/" class="nav-btn"><span>🏠 Dashboard</span></a>
-                <a href="/best-bets" class="nav-btn"><span>🔥 Best Bets</span></a>
-                <a href="/live-betting" class="nav-btn"><span>📺 Live Games</span></a>
+                <a href="/" class="nav-btn">Dashboard</a>
+                <a href="/best-bets" class="nav-btn">Best Bets</a>
+                <a href="/live-betting" class="nav-btn">Live Games</a>
             </div>
         </header>
         
