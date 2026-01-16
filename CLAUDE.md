@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AI-powered sports betting analytics platform built with Spring Boot 4.0.1 and Java 17. Integrates Claude AI for bet analysis, The Odds API for live sports data, ESPN API for game statistics, and weather data for outdoor sports.
 
+## AI Behavior Rules
+
+- Do not hallucinate APIs, endpoints, or SDKs
+- Ask before introducing new dependencies
+- Prefer correctness and clarity over cleverness
+- Explain reasoning when making architectural changes
+- Respect existing package structure
+
 ## Development Commands
 
 ### Running the Application

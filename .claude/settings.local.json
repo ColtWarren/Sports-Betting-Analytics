@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "SlashCommand(/init)",
+      "Bash(./mvnw clean compile)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

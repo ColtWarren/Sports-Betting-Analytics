@@ -118,7 +118,16 @@
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
         }
-        
+
+        .subtitle {
+            font-size: clamp(1.1em, 3vw, 1.5em);
+            color: #a5b4fc;
+            font-weight: 300;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
         .back-btn {
             display: inline-block;
             padding: 12px 30px;
@@ -401,6 +410,45 @@
             background: linear-gradient(135deg, #10b981, #34d399);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .odds-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3em, 4vw, 1.8em);
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .book-name {
+            font-size: clamp(0.9em, 2.5vw, 1.1em);
+            color: #a5b4fc;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .best-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #000;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
         }
     </style>
 </head>

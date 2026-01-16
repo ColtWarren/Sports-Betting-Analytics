@@ -80,7 +80,23 @@
             overflow: hidden;
             box-shadow: 0 0 60px rgba(139, 92, 246, 0.3);
         }
-        
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            animation: headerShine 4s infinite;
+        }
+
+        @keyframes headerShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
         h1 {
             font-family: 'Orbitron', sans-serif;
             font-size: clamp(2em, 6vw, 3.5em);
@@ -93,6 +109,8 @@
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 3px;
+            position: relative;
+            z-index: 1;
             animation: gradientShift 5s ease infinite;
         }
         
@@ -100,7 +118,16 @@
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
         }
-        
+
+        .subtitle {
+            font-size: clamp(1.1em, 3vw, 1.5em);
+            color: #a5b4fc;
+            font-weight: 300;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
         .back-btn {
             display: inline-block;
             padding: 12px 30px;
@@ -111,7 +138,10 @@
             margin-top: 15px;
             font-size: clamp(0.95em, 2.5vw, 1.1em);
             font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.5);
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -130,6 +160,13 @@
             margin-bottom: 25px;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover, .analysis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.4);
+            border-color: rgba(139, 92, 246, 0.6);
         }
         
         .stats-card::before, .analysis-card::before {
@@ -172,6 +209,13 @@
             background: rgba(30, 41, 59, 0.6);
             border-radius: 15px;
             border: 1px solid rgba(139, 92, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
         }
         
         .stat-label {
@@ -230,9 +274,7 @@
     <div class="container">
         <header>
             <h1>🤖 AI ANALYSIS</h1>
-            <p style="color: #c4b5fd; font-size: clamp(1.1em, 3vw, 1.3em); letter-spacing: 2px;">
-                Claude Sonnet 4 Performance Insights
-            </p>
+            <p class="subtitle">Claude Sonnet 4 Performance Insights</p>
             <a href="/" class="back-btn">← Command Center</a>
         </header>
         
@@ -253,9 +295,9 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Profit/Loss</div>
-                    <div class="stat-value" 
-                         th:classappend="${totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? '' : 'negative'">
-                        <span th:if="${totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0}">+</span>$<span th:text="${#numbers.formatDecimal(totalProfitLoss, 1, 2)}">0.00</span>
+                    <div class="stat-value"
+                         th:classappend="${totalProfitLoss != null && totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? '' : 'negative'">
+                        <span th:if="${totalProfitLoss != null && totalProfitLoss.compareTo(T(java.math.BigDecimal).ZERO) >= 0}">+</span>$<span th:text="${totalProfitLoss != null ? #numbers.formatDecimal(totalProfitLoss, 1, 2) : '0.00'}">0.00</span>
                     </div>
                 </div>
                 <div class="stat-item">
