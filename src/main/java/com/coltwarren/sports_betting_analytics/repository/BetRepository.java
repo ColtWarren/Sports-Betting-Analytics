@@ -74,17 +74,27 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
     /**
      * Find bets placed within a date range
      * Generated SQL: SELECT * FROM bets WHERE placed_at BETWEEN ? AND ?
-     * 
+     *
      * @param start - Start date/time
      * @param end - End date/time
      * @return List of bets placed in that range
      */
     List<Bet> findByPlacedAtBetween(LocalDateTime start, LocalDateTime end);
-    
+
+    /**
+     * Find bets settled within a date range (for tax year calculations)
+     * Generated SQL: SELECT * FROM bets WHERE settled_at BETWEEN ? AND ?
+     *
+     * @param start - Start date/time
+     * @param end - End date/time
+     * @return List of bets settled in that range
+     */
+    List<Bet> findBySettledAtBetween(LocalDateTime start, LocalDateTime end);
+
     /**
      * Find all pending bets (convenience method)
      * Same as findByStatus("PENDING")
-     * 
+     *
      * @return List of pending bets
      */
     default List<Bet> findPendingBets() {

@@ -14,13 +14,16 @@ public class MultiSportBestBetsService {
     
     @Autowired
     private MultiSportOddsService multiSportOddsService;
-    
+
     @Autowired
     private ClaudeAIService claudeAIService;
-    
+
     @Autowired
     private LiveGameService liveGameService;
-    
+
+    @Autowired
+    private KellyCriterionService kellyCriterionService;
+
     private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL"};
     
     public List<Map<String, Object>> getBestBetsAcrossAllSports() {
@@ -126,7 +129,11 @@ public class MultiSportBestBetsService {
                         bet.put("analysis", analysis);
                         bet.put("confidence", confidence);
                         bet.put("recommendation", extractRecommendation(analysis));
-                        
+
+                        // Calculate Kelly Criterion percentage
+                        double kellyPercent = calculateKellyForBet(gameOdds, confidence);
+                        bet.put("kellyPercent", kellyPercent);
+
                         sportBets.add(bet);
                     }
                     
@@ -216,7 +223,7 @@ public class MultiSportBestBetsService {
             if (analysis.toLowerCase().contains("recommendation:")) {
                 int start = analysis.toLowerCase().indexOf("recommendation:") + 15;
                 String sub = analysis.substring(start);
-                
+
                 int end = sub.indexOf("|");
                 if (end > 0) {
                     return sub.substring(0, end).trim();
@@ -224,11 +231,53 @@ public class MultiSportBestBetsService {
                     return sub.split("\n")[0].trim();
                 }
             }
-            
+
             return "See analysis";
-            
+
         } catch (Exception e) {
             return "See analysis";
+        }
+    }
+
+    private double calculateKellyForBet(Map<String, Object> gameOdds, double confidence) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> bestOdds = (Map<String, Object>) gameOdds.get("bestOdds");
+
+            if (bestOdds == null) {
+                return 0.0;
+            }
+
+            // Get the best odds available (try ML first, then spread)
+            Integer odds = null;
+            if (bestOdds.containsKey("homeML")) {
+                odds = (Integer) bestOdds.get("homeML");
+            } else if (bestOdds.containsKey("awayML")) {
+                odds = (Integer) bestOdds.get("awayML");
+            } else if (bestOdds.containsKey("homeSpreadOdds")) {
+                odds = (Integer) bestOdds.get("homeSpreadOdds");
+            } else if (bestOdds.containsKey("awaySpreadOdds")) {
+                odds = (Integer) bestOdds.get("awaySpreadOdds");
+            }
+
+            if (odds == null) {
+                return 0.0;
+            }
+
+            // Convert confidence (1-10) to win probability (50-70%)
+            // Confidence 7 = 55%, Confidence 8 = 60%, Confidence 9 = 65%, Confidence 10 = 70%
+            double winProbability = 0.50 + (confidence - 7.0) * 0.05;
+            winProbability = Math.max(0.50, Math.min(0.70, winProbability));
+
+            // Calculate Kelly (Quarter Kelly for safety)
+            Map<String, Object> kellyResult = kellyCriterionService.calculateKelly(odds, winProbability, true);
+
+            Double kellyPercentage = (Double) kellyResult.get("kellyPercentage");
+            return kellyPercentage != null ? kellyPercentage : 0.0;
+
+        } catch (Exception e) {
+            System.err.println("Error calculating Kelly: " + e.getMessage());
+            return 0.0;
         }
     }
 }

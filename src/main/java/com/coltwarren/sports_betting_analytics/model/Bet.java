@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 /**
@@ -65,7 +66,16 @@ public class Bet {
     
     @Column(length = 500)
     private String notes;
-    
+
+    @Column(length = 100)
+    private String sportsbookLocation; // e.g., "Online - NJ" or "Las Vegas, NV"
+
+    @Column
+    private Boolean triggersW2G = false; // Auto-calculated when bet wins
+
+    @Column
+    private Boolean w2gIssued = false; // User manually marks when they receive form
+
     // Constructors
     public Bet() {
         this.status = "PENDING";
@@ -102,6 +112,8 @@ public class Bet {
         this.actualPayout = this.potentialPayout;
         this.profitLoss = this.actualPayout.subtract(this.stake);
         this.settledAt = LocalDateTime.now();
+        // Check if this win triggers W-2G
+        checkIfTriggersW2G();
     }
     
     public void markAsLost() {
@@ -172,7 +184,16 @@ public class Bet {
     
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
-    
+
+    public String getSportsbookLocation() { return sportsbookLocation; }
+    public void setSportsbookLocation(String sportsbookLocation) { this.sportsbookLocation = sportsbookLocation; }
+
+    public Boolean getTriggersW2G() { return triggersW2G; }
+    public void setTriggersW2G(Boolean triggersW2G) { this.triggersW2G = triggersW2G; }
+
+    public Boolean getW2gIssued() { return w2gIssued; }
+    public void setW2gIssued(Boolean w2gIssued) { this.w2gIssued = w2gIssued; }
+
     @Override
     public String toString() {
         return "Bet{" +
@@ -186,6 +207,32 @@ public class Bet {
                 ", status='" + status + '\'' +
                 ", sportsbookName='" + sportsbookName + '\'' +
                 '}';
+    }
+
+    /**
+     * Checks if this winning bet triggers W-2G form requirements
+     * W-2G required if: winnings >= $600 AND payout is 300x or more the wager
+     */
+    public boolean checkIfTriggersW2G() {
+        if (status != null && status.equals("WON") && actualPayout != null && stake != null) {
+            BigDecimal netWinnings = actualPayout.subtract(stake);
+            boolean meetsAmountThreshold = netWinnings.compareTo(new BigDecimal("600")) >= 0;
+
+            BigDecimal ratio = actualPayout.divide(stake, 2, RoundingMode.HALF_UP);
+            boolean meets300xThreshold = ratio.compareTo(new BigDecimal("300")) >= 0;
+
+            this.triggersW2G = meetsAmountThreshold && meets300xThreshold;
+            return this.triggersW2G;
+        }
+        this.triggersW2G = false;
+        return false;
+    }
+
+    /**
+     * Gets the tax year for this bet (based on settlement date, or placement date if unsettled)
+     */
+    public int getTaxYear() {
+        return (settledAt != null ? settledAt : placedAt).getYear();
     }
 
     // CLV Calculation Methods

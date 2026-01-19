@@ -26,16 +26,18 @@ import java.util.Optional;
 @Service
 @Transactional
 public class BetService {
-    
+
     private final BetRepository betRepository;
-    
+    private final TaxReportService taxReportService;
+
     /**
      * Constructor injection (recommended over @Autowired on fields)
-     * Spring automatically injects BetRepository
+     * Spring automatically injects BetRepository and TaxReportService
      */
     @Autowired
-    public BetService(BetRepository betRepository) {
+    public BetService(BetRepository betRepository, TaxReportService taxReportService) {
         this.betRepository = betRepository;
+        this.taxReportService = taxReportService;
     }
     
     // ============================================
@@ -205,9 +207,14 @@ public class BetService {
     public Bet markBetAsWon(Long id) {
         Bet bet = betRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
-        
+
         bet.markAsWon();
-        return betRepository.save(bet);
+        Bet savedBet = betRepository.save(bet);
+
+        // Automatically create W-2G form if bet triggers W-2G requirement
+        taxReportService.createW2GFormFromBet(savedBet);
+
+        return savedBet;
     }
     
     /**

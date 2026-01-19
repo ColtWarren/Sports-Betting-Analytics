@@ -22,22 +22,24 @@ public class KellyCriterionService {
      * Calculate Kelly Criterion optimal bet size
      * Formula: Kelly % = (bp - q) / b
      * Where:
-     * - b = decimal odds (e.g., +150 = 1.5, -110 = 0.909)
+     * - b = net decimal odds (decimal odds - 1), e.g., +150 = 1.5, -110 = 0.909
      * - p = probability of winning
      * - q = probability of losing (1 - p)
      */
     public Map<String, Object> calculateKelly(int americanOdds, double winProbability, boolean fractional) {
         Map<String, Object> result = new HashMap<>();
-        
+
         // Convert American odds to decimal odds
         double decimalOdds = americanToDecimal(americanOdds);
-        
+
         // Calculate probabilities
         double p = winProbability;
         double q = 1 - winProbability;
-        
+
         // Calculate Kelly percentage
-        double kellyPercentage = ((decimalOdds * p) - q) / decimalOdds;
+        // b = net decimal odds (the profit multiplier, not the total return)
+        double b = decimalOdds - 1;
+        double kellyPercentage = ((b * p) - q) / b;
         
         // Apply fractional Kelly if requested (typically 0.25 to 0.5 for safety)
         if (fractional) {

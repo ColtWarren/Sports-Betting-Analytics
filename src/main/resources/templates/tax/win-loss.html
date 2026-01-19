@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Win/Loss Statement - Tax Center</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0e27;
+            color: #f3f4f6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .controls select {
+            background: #1a1f3a;
+            color: #f3f4f6;
+            border: 1px solid #2d3558;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #2d3558;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 8px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #0a0e27;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 2px solid #2d3558;
+        }
+
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #2d3558;
+        }
+
+        tr:hover {
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .bet-row {
+            font-size: 14px;
+        }
+
+        .sport-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(124, 58, 237, 0.2);
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .status-won {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .status-lost {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .status-push {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .w2g-badge {
+            background: #f59e0b;
+            color: #0a0e27;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 5px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Win/Loss Statement</h1>
+            <div class="controls">
+                <select onchange="window.location.href='/tax/win-loss?year=' + this.value">
+                    <option th:value="${currentYear}" th:selected="${currentYear == currentYear}" th:text="${currentYear}">2026</option>
+                    <option th:value="${currentYear - 1}" th:text="${currentYear - 1}">2025</option>
+                </select>
+                <button class="btn btn-primary" onclick="alert('PDF export coming soon!')">Export PDF</button>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="card">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">Total Bets</div>
+                    <div class="summary-value" th:text="${summary.totalBets}">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Won</div>
+                    <div class="summary-value status-won" th:text="${summary.wonBets}">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Win Rate</div>
+                    <div class="summary-value" th:text="${#numbers.formatDecimal(summary.winRate, 1, 1)} + '%'">0.0%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Net P/L</div>
+                    <div class="summary-value"
+                         th:classappend="${summary.netProfitLoss >= 0} ? 'status-won' : 'status-lost'"
+                         th:text="'$' + ${#numbers.formatDecimal(summary.netProfitLoss, 1, 2)}">$0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bet List -->
+        <div class="card">
+            <div class="table-container">
+                <table th:if="${bets != null and !bets.isEmpty()}">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Event</th>
+                            <th>Type</th>
+                            <th>Stake</th>
+                            <th>Odds</th>
+                            <th>Result</th>
+                            <th>P/L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bet-row" th:each="bet : ${bets}">
+                            <td>
+                                <div th:text="${#temporals.format(bet.placedAt, 'MMM dd')}">Jan 17</div>
+                                <div style="font-size: 12px; color: #9ca3af;" th:text="${#temporals.format(bet.placedAt, 'h:mm a')}">7:00 PM</div>
+                            </td>
+                            <td>
+                                <span class="sport-badge" th:text="${bet.sport}">NFL</span>
+                                <div th:text="${bet.eventName}">Bills @ Broncos</div>
+                                <div style="font-size: 12px; color: #9ca3af;" th:text="${bet.sportsbookName}">DraftKings</div>
+                            </td>
+                            <td>
+                                <div th:text="${bet.betType}">SPREAD</div>
+                                <div style="font-size: 12px; color: #9ca3af;" th:text="${bet.selection}">Buffalo -7.5</div>
+                            </td>
+                            <td th:text="'$' + ${#numbers.formatDecimal(bet.stake, 1, 2)}">$90.00</td>
+                            <td th:text="${bet.odds}">-110</td>
+                            <td>
+                                <span th:classappend="${bet.status == 'WON'} ? 'status-won' : (${bet.status == 'LOST'} ? 'status-lost' : 'status-push')"
+                                      th:text="${bet.status}">WON</span>
+                                <span class="w2g-badge" th:if="${bet.triggersW2G}">W-2G</span>
+                            </td>
+                            <td th:classappend="${bet.profitLoss >= 0} ? 'status-won' : 'status-lost'"
+                                th:text="'$' + ${#numbers.formatDecimal(bet.profitLoss, 1, 2)}">$89.11</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div th:unless="${bets != null and !bets.isEmpty()}" class="empty-state">
+                    <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
+                    <p>No settled bets for this tax year yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back -->
+        <div style="text-align: center; margin-top: 30px;">
+            <a th:href="@{/tax(year=${currentYear})}" style="color: #7c3aed; text-decoration: none;">← Back to Tax Center</a>
+        </div>
+    </div>
+</body>
+</html>

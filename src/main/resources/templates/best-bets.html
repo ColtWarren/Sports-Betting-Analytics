@@ -285,6 +285,24 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .kelly-display {
+            font-size: 14px;
+            font-weight: 600;
+            color: #10b981;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .kelly-percent {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: #34d399;
         }
         
         .best-odds {
@@ -392,6 +410,7 @@
                 <a href="/" class="nav-btn"><span>🏠 Dashboard</span></a>
                 <a href="/live-betting" class="nav-btn"><span>📺 Live Games</span></a>
                 <a href="/bets/new" class="nav-btn"><span>🎯 My Bets</span></a>
+                <a href="/tax" class="nav-btn"><span>🧾 Tax Center</span></a>
             </div>
         </header>
         
@@ -525,6 +544,9 @@
                     <div class="recommendation">
                         <div class="rec-label">AI RECOMMENDATION</div>
                         <div class="rec-value">${bet.recommendation}</div>
+                        <div class="kelly-display">
+                            💰 Kelly: <span class="kelly-percent">${formatKelly(bet.kellyPercent)}%</span> of bankroll
+                        </div>
                     </div>
                     
                     <div class="best-odds">
@@ -644,13 +666,21 @@
         function toggleAnalysis(index) {
             const element = document.getElementById('analysis-' + index);
             element.classList.toggle('expanded');
-            
+
             const btn = event.target;
             if (element.classList.contains('expanded')) {
                 btn.textContent = 'Hide Analysis';
             } else {
                 btn.textContent = 'Read Full Analysis';
             }
+        }
+
+        function formatKelly(kellyPercent) {
+            if (kellyPercent == null || kellyPercent === 0) {
+                return '0.0';
+            }
+            // Service already returns percentage (0-100), so don't multiply by 100
+            return kellyPercent.toFixed(1);
         }
     </script>
 </body>
