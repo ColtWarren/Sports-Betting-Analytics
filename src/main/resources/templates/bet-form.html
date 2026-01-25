@@ -685,6 +685,119 @@
             alert(`✅ Odds set to ${odds > 0 ? '+' : ''}${odds} from ${book}`);
         }
         
+        // Auto-fill form from Quick Bet data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for quick bet data
+            const quickBetData = localStorage.getItem('quickBetData');
+
+            if (quickBetData) {
+                try {
+                    const betData = JSON.parse(quickBetData);
+
+                    // Pre-fill form fields
+                    const gameField = document.getElementById('eventName');
+                    const pickField = document.getElementById('selection');
+                    const stakeField = document.getElementById('stake');
+                    const oddsField = document.getElementById('odds');
+                    const sportsbookField = document.getElementById('sportsbookName');
+
+                    // Fill in values
+                    if (gameField && betData.game) gameField.value = betData.game;
+                    if (pickField && betData.pick) pickField.value = betData.pick;
+                    if (stakeField && betData.stake) stakeField.value = betData.stake;
+                    if (oddsField && betData.odds) oddsField.value = betData.odds;
+
+                    // Map sportsbook name to dropdown value
+                    if (sportsbookField && betData.sportsbook) {
+                        const bookMapping = {
+                            'FanDuel': 'FANDUEL',
+                            'DraftKings': 'DRAFTKINGS',
+                            'BetMGM': 'BETMGM',
+                            'Caesars': 'CAESARS',
+                            'bet365': 'BET365',
+                            'Circa Sports': 'CIRCA_SPORTS',
+                            'theScore Bet': 'THESCORE_BET'
+                        };
+                        const mappedBook = bookMapping[betData.sportsbook] || 'OTHER';
+                        sportsbookField.value = mappedBook;
+                    }
+
+                    // Calculate Kelly criterion with pre-filled values
+                    if (oddsField && oddsField.value) {
+                        calculateKelly();
+                    }
+
+                    // Show success notification
+                    showAutoFillNotification();
+
+                    // Clear localStorage
+                    localStorage.removeItem('quickBetData');
+
+                } catch (error) {
+                    console.error('Error loading quick bet data:', error);
+                    localStorage.removeItem('quickBetData');
+                }
+            }
+        });
+
+        // Show notification that form was auto-filled
+        function showAutoFillNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'autofill-notification';
+            notification.innerHTML = '✅ Form pre-filled from AI recommendation';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #10b981, #34d399);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                font-family: 'Rajdhani', sans-serif;
+                font-weight: 600;
+                box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+            `;
+
+            // Add animation keyframes
+            if (!document.getElementById('autofill-styles')) {
+                const style = document.createElement('style');
+                style.id = 'autofill-styles';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(notification);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
         // Load bankroll on page load
         loadBankroll();
     </script>

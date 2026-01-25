@@ -397,6 +397,80 @@
         .analysis-full.expanded {
             display: block;
         }
+
+        /* Action Buttons Container */
+        .bet-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        /* Base Button Style */
+        .action-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Primary Button (Place Bet) */
+        .primary-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .primary-btn:hover {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Quick Bet Button */
+        .quick-bet-btn {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .quick-bet-btn:hover {
+            background: linear-gradient(135deg, #059669, #10b981);
+            box-shadow: 0 6px 20px rgba(52, 211, 153, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Button Ripple Effect */
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .action-btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
     </style>
 </head>
 <body>
@@ -565,6 +639,15 @@
                             ${bet.analysis}
                         </div>
                     </div>
+
+                    <div class="bet-actions">
+                        <a href="/bets/new" class="action-btn primary-btn">
+                            <span>📝 Place Bet</span>
+                        </a>
+                        <button class="action-btn quick-bet-btn" onclick="quickBet('${bet.awayTeam} @ ${bet.homeTeam}', '${bet.recommendation}', '${bet.kellyPercent}', '${getBestOddsValue(bet.bestOdds)}', '${getBestOddsBook(bet.bestOdds)}')">
+                            <span>⚡ Quick Bet</span>
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -681,6 +764,40 @@
             }
             // Service already returns percentage (0-100), so don't multiply by 100
             return kellyPercent.toFixed(1);
+        }
+
+        function getBestOddsValue(odds) {
+            if (!odds) return '';
+            // Try to get the first available odds value
+            return odds.homeML || odds.awayML || odds.homeSpreadOdds || odds.awaySpreadOdds || '';
+        }
+
+        function getBestOddsBook(odds) {
+            if (!odds) return '';
+            // Try to get the first available sportsbook
+            return odds.homeMLBook || odds.awayMLBook || odds.homeSpreadBook || odds.awaySpreadBook || '';
+        }
+
+        function quickBet(game, pick, kellyPercent, odds, sportsbook) {
+            // Calculate recommended stake based on Kelly criterion
+            // Assuming $1000 bankroll for demonstration (you can adjust this)
+            const bankroll = 1000;
+            const recommendedStake = (bankroll * kellyPercent / 100).toFixed(2);
+
+            // Store bet data in localStorage for the bet form to read
+            const betData = {
+                game: game,
+                pick: pick,
+                stake: recommendedStake,
+                odds: odds,
+                sportsbook: sportsbook,
+                timestamp: Date.now()
+            };
+
+            localStorage.setItem('quickBetData', JSON.stringify(betData));
+
+            // Redirect to bet form
+            window.location.href = '/bets/new';
         }
     </script>
 </body>
