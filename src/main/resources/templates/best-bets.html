@@ -235,6 +235,17 @@
         .sport-cbb { background: #FF6B35; }
         .sport-mlb { background: #041E42; }
         .sport-nhl { background: #000000; }
+        .sport-soccer { background: linear-gradient(135deg, #2E7D32, #4CAF50); }
+
+        /* Soccer-specific odds display */
+        .soccer-odds {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.15), rgba(76, 175, 80, 0.15));
+            border-left: 3px solid #4CAF50;
+        }
+
+        .soccer-odds .odds-label {
+            color: #81C784;
+        }
         
         .confidence-badge {
             display: flex;
@@ -511,6 +522,9 @@
                 <button class="sport-btn" onclick="filterSport('MLB')" id="btn-mlb">
                     ⚾ MLB
                 </button>
+                <button class="sport-btn" onclick="filterSport('SOCCER')" id="btn-soccer">
+                    ⚽ Soccer
+                </button>
             </div>
         </div>
         
@@ -659,7 +673,8 @@
                 'NBA': '🏀',
                 'CBB': '🏀',
                 'MLB': '⚾',
-                'NHL': '🏒'
+                'NHL': '🏒',
+                'SOCCER': '⚽'
             };
             return icons[sport] || '🎯';
         }
@@ -683,9 +698,29 @@
         
         function formatBestOdds(odds) {
             if (!odds) return '<p>No odds available</p>';
-            
+
             let html = '';
-            
+
+            // Soccer 3-way betting format (has 'outcome' field)
+            if (odds.outcome) {
+                const outcomeLabel = {
+                    'HOME_WIN': 'Home Win',
+                    'DRAW': 'Draw',
+                    'AWAY_WIN': 'Away Win'
+                }[odds.outcome] || odds.outcome;
+
+                const bookDisplay = odds.book || 'No MO books';
+                html += `
+                    <div class="odds-item soccer-odds">
+                        <div class="odds-label">${outcomeLabel}</div>
+                        <div class="odds-value">${formatOdds(odds.odds)}</div>
+                        <div class="odds-book">${bookDisplay}</div>
+                    </div>
+                `;
+                return html;
+            }
+
+            // US Sports format
             if (odds.homeML) {
                 html += `
                     <div class="odds-item">
@@ -695,7 +730,7 @@
                     </div>
                 `;
             }
-            
+
             if (odds.awayML) {
                 html += `
                     <div class="odds-item">
@@ -705,7 +740,7 @@
                     </div>
                 `;
             }
-            
+
             if (odds.homeSpreadOdds) {
                 html += `
                     <div class="odds-item">
@@ -715,7 +750,7 @@
                     </div>
                 `;
             }
-            
+
             if (odds.awaySpreadOdds) {
                 html += `
                     <div class="odds-item">
@@ -725,7 +760,7 @@
                     </div>
                 `;
             }
-            
+
             return html || '<p>Odds available</p>';
         }
         
@@ -768,13 +803,17 @@
 
         function getBestOddsValue(odds) {
             if (!odds) return '';
-            // Try to get the first available odds value
+            // Soccer format (3-way)
+            if (odds.odds) return odds.odds;
+            // US Sports format
             return odds.homeML || odds.awayML || odds.homeSpreadOdds || odds.awaySpreadOdds || '';
         }
 
         function getBestOddsBook(odds) {
             if (!odds) return '';
-            // Try to get the first available sportsbook
+            // Soccer format (3-way)
+            if (odds.book) return odds.book;
+            // US Sports format
             return odds.homeMLBook || odds.awayMLBook || odds.homeSpreadBook || odds.awaySpreadBook || '';
         }
 
