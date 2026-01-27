@@ -2,6 +2,8 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
+import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
+import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,10 @@ public class MultiSportBestBetsService {
     @Autowired
     private KellyCriterionService kellyCriterionService;
 
-    private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL"};
+    @Autowired
+    private SoccerDataAggregatorService soccerDataAggregator;
+
+    private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL", "SOCCER"};
     
     public List<Map<String, Object>> getBestBetsAcrossAllSports() {
         try {
@@ -74,7 +79,12 @@ public class MultiSportBestBetsService {
     private List<Map<String, Object>> analyzeSport(String sport) {
         try {
             System.out.println("🏈 Analyzing " + sport + "...");
-            
+
+            // Special handling for soccer (3-way betting)
+            if ("SOCCER".equals(sport)) {
+                return analyzeSoccerGames();
+            }
+
             // Get live and upcoming games
             List<Map<String, Object>> games = liveGameService.getLiveGames(sport);
             
@@ -278,6 +288,200 @@ public class MultiSportBestBetsService {
         } catch (Exception e) {
             System.err.println("Error calculating Kelly: " + e.getMessage());
             return 0.0;
+        }
+    }
+
+    /**
+     * Analyze soccer games with 3-way betting
+     * Kelly Criterion must account for 3 outcomes (Home/Draw/Away)
+     */
+    private List<Map<String, Object>> analyzeSoccerGames() {
+        List<Map<String, Object>> soccerBets = new ArrayList<>();
+
+        try {
+            System.out.println("⚽ Analyzing soccer games (3-way betting)...");
+
+            // Get fixtures from all leagues using odds-only mode to conserve API limits
+            Map<String, List<SoccerFixture>> allFixtures = soccerDataAggregator.getAllFixturesFromOddsOnly();
+
+            if (allFixtures.isEmpty()) {
+                System.out.println("⚠️ No soccer fixtures found");
+                return soccerBets;
+            }
+
+            int totalFixtures = allFixtures.values().stream().mapToInt(List::size).sum();
+            System.out.println("📋 Found " + totalFixtures + " soccer fixtures across " + allFixtures.size() + " leagues");
+
+            int gamesAnalyzed = 0;
+            int maxGamesPerLeague = 3; // Limit to conserve API calls
+
+            for (Map.Entry<String, List<SoccerFixture>> entry : allFixtures.entrySet()) {
+                String league = entry.getKey();
+                List<SoccerFixture> fixtures = entry.getValue();
+
+                int leagueGames = 0;
+                for (SoccerFixture fixture : fixtures) {
+                    if (leagueGames >= maxGamesPerLeague) break;
+
+                    try {
+                        // Analyze each 3-way outcome
+                        analyzeSoccerOutcome(fixture, "HOME_WIN", fixture.getHomeWinOdds(),
+                            fixture.getBestHomeBook(), league, soccerBets);
+
+                        analyzeSoccerOutcome(fixture, "DRAW", fixture.getDrawOdds(),
+                            fixture.getBestDrawBook(), league, soccerBets);
+
+                        analyzeSoccerOutcome(fixture, "AWAY_WIN", fixture.getAwayWinOdds(),
+                            fixture.getBestAwayBook(), league, soccerBets);
+
+                        leagueGames++;
+                        gamesAnalyzed++;
+
+                    } catch (Exception e) {
+                        System.err.println("Error analyzing soccer fixture: " + e.getMessage());
+                    }
+                }
+            }
+
+            System.out.println("✅ Analyzed " + gamesAnalyzed + " soccer games, found " + soccerBets.size() + " quality bets");
+
+        } catch (Exception e) {
+            System.err.println("Error analyzing soccer: " + e.getMessage());
+        }
+
+        return soccerBets;
+    }
+
+    /**
+     * Analyze a specific soccer outcome (Home/Draw/Away)
+     */
+    private void analyzeSoccerOutcome(SoccerFixture fixture, String outcome, Double odds,
+                                      String sportsbook, String league, List<Map<String, Object>> allBets) {
+        if (odds == null) return;
+
+        try {
+            // Get AI prediction probability for this outcome
+            double winProbability = getSoccerAIProbability(fixture, outcome);
+
+            // Convert American odds to decimal
+            double decimalOdds = americanToDecimal(odds.intValue());
+
+            // Calculate Expected Value
+            double expectedValue = (winProbability * decimalOdds) - 1.0;
+
+            // Only proceed if positive EV (or close to it for high-confidence picks)
+            if (expectedValue < -0.02) return; // Allow small negative EV for top picks
+
+            // Kelly Criterion for 3-way betting
+            double kellyFraction = (winProbability * decimalOdds - 1) / (decimalOdds - 1);
+            double kellyPercentage = Math.max(0, Math.min(kellyFraction * 25, 5.0)); // Quarter Kelly, max 5%
+
+            // Calculate confidence score (1-10)
+            double confidence = Math.min(10, 6 + (expectedValue * 20)); // Higher EV = higher confidence
+
+            // Only include bets with decent confidence
+            if (confidence < 6.0) return;
+
+            // Format the recommendation
+            String recommendation = formatSoccerPick(outcome, fixture);
+            String gameDescription = fixture.getHomeTeam() + " vs " + fixture.getAwayTeam();
+
+            Map<String, Object> bet = new HashMap<>();
+            bet.put("sport", "SOCCER");
+            bet.put("league", league);
+            bet.put("homeTeam", fixture.getHomeTeam());
+            bet.put("awayTeam", fixture.getAwayTeam());
+            bet.put("gameTime", fixture.getKickoffTime());
+            bet.put("recommendation", recommendation);
+            bet.put("confidence", confidence);
+            bet.put("kellyPercent", kellyPercentage);
+            bet.put("isLocalTeam", fixture.isLocalTeam());
+
+            // Create best odds map
+            Map<String, Object> bestOdds = new HashMap<>();
+            bestOdds.put("odds", odds.intValue());
+            bestOdds.put("book", sportsbook);
+            bestOdds.put("outcome", outcome);
+            bet.put("bestOdds", bestOdds);
+
+            // AI analysis
+            String analysis = String.format(
+                "RECOMMENDATION: %s | CONFIDENCE: %.1f | REASON: %s with %.1f%% implied probability. " +
+                "EV: %.2f%%. %s",
+                recommendation, confidence, outcome,
+                (1.0 / decimalOdds) * 100, expectedValue * 100,
+                fixture.isLocalTeam() ? "Missouri local team game!" : ""
+            );
+            bet.put("analysis", analysis);
+
+            allBets.add(bet);
+
+        } catch (Exception e) {
+            System.err.println("Error analyzing soccer outcome: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get AI-predicted probability for a soccer outcome
+     */
+    private double getSoccerAIProbability(SoccerFixture fixture, String outcome) {
+        Double odds = switch (outcome) {
+            case "HOME_WIN" -> fixture.getHomeWinOdds();
+            case "DRAW" -> fixture.getDrawOdds();
+            case "AWAY_WIN" -> fixture.getAwayWinOdds();
+            default -> null;
+        };
+
+        if (odds == null) return 0.0;
+
+        // Start with implied probability from odds
+        double impliedProb = oddsToImpliedProbability(odds.intValue());
+
+        // Adjust based on factors
+        // Home advantage: +5% for home wins
+        if ("HOME_WIN".equals(outcome)) {
+            impliedProb += 0.03;
+        }
+
+        // Missouri local teams: slight boost for home games
+        if (fixture.isLocalTeam() && "HOME_WIN".equals(outcome)) {
+            impliedProb += 0.02;
+        }
+
+        return Math.max(0.05, Math.min(0.80, impliedProb));
+    }
+
+    /**
+     * Format soccer pick for display
+     */
+    private String formatSoccerPick(String outcome, SoccerFixture fixture) {
+        return switch (outcome) {
+            case "HOME_WIN" -> fixture.getHomeTeam() + " to Win";
+            case "DRAW" -> "Draw";
+            case "AWAY_WIN" -> fixture.getAwayTeam() + " to Win";
+            default -> outcome;
+        };
+    }
+
+    /**
+     * Convert American odds to decimal
+     */
+    private double americanToDecimal(int americanOdds) {
+        if (americanOdds > 0) {
+            return (americanOdds / 100.0) + 1;
+        } else {
+            return (100.0 / Math.abs(americanOdds)) + 1;
+        }
+    }
+
+    /**
+     * Convert American odds to implied probability
+     */
+    private double oddsToImpliedProbability(int americanOdds) {
+        if (americanOdds > 0) {
+            return 100.0 / (americanOdds + 100);
+        } else {
+            return Math.abs(americanOdds) / (Math.abs(americanOdds) + 100.0);
         }
     }
 }

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer Betting - Sports Betting Analytics</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Glowing orbs */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            animation: orbPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            animation: headerShine 4s infinite;
+        }
+
+        @keyframes headerShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 6vw, 3.5em);
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 1;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: clamp(1.1em, 3vw, 1.4em);
+            color: #a5b4fc;
+            font-weight: 300;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(124, 58, 237, 0.3));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+            border-color: rgba(139, 92, 246, 0.8);
+        }
+
+        /* League filter */
+        .league-filter {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .league-filter label {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: #a5b4fc;
+            margin-right: 10px;
+        }
+
+        .league-btn {
+            padding: 10px 20px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            color: #e0e7ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .league-btn:hover, .league-btn.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: transparent;
+        }
+
+        /* Local teams section */
+        .local-teams-section {
+            background: rgba(251, 191, 36, 0.1);
+            border: 2px solid rgba(251, 191, 36, 0.5);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .local-teams-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+        }
+
+        .local-section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        /* Match cards grid */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .match-card {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        .match-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+        }
+
+        .match-card.local-team {
+            border-color: rgba(251, 191, 36, 0.5);
+        }
+
+        .match-card.local-team::before {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        }
+
+        .local-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .league-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .kickoff-time {
+            text-align: center;
+            padding: 8px 12px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        .match-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .team {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+        }
+
+        .team-logo img {
+            max-width: 40px;
+            max-height: 40px;
+        }
+
+        .team-name {
+            font-weight: 700;
+            font-size: 1em;
+            color: #e0e7ff;
+        }
+
+        .vs {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.2em;
+            color: #6366f1;
+            padding: 0 15px;
+        }
+
+        /* 3-Way Odds Display */
+        .odds-3way {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .odds-box {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .odds-box:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            transform: scale(1.02);
+        }
+
+        .odds-box.home { border-top: 3px solid #10b981; }
+        .odds-box.draw { border-top: 3px solid #f59e0b; }
+        .odds-box.away { border-top: 3px solid #ec4899; }
+
+        .odds-label {
+            font-size: 0.7em;
+            color: #a5b4fc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .odds-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3em;
+            font-weight: 900;
+            color: #e0e7ff;
+        }
+
+        .odds-book {
+            font-size: 0.7em;
+            color: #10b981;
+            margin-top: 4px;
+        }
+
+        /* Totals row */
+        .totals-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .total-box {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .goal-line {
+            text-align: center;
+            color: #a5b4fc;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        /* Action buttons */
+        .match-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95em;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .quick-bet-btn {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+        }
+
+        .quick-bet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Standings table */
+        .standings-section {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+
+        .standings-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .standings-table th {
+            background: rgba(99, 102, 241, 0.2);
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #a5b4fc;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .standings-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .standings-table tr:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .form-display {
+            display: flex;
+            gap: 3px;
+        }
+
+        .form-result {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: 900;
+        }
+
+        .form-result.W { background: #10b981; color: white; }
+        .form-result.D { background: #f59e0b; color: white; }
+        .form-result.L { background: #ef4444; color: white; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a5b4fc;
+        }
+
+        .empty-state h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #6366f1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .odds-3way {
+                grid-template-columns: 1fr;
+            }
+
+            .team-name {
+                font-size: 0.9em;
+            }
+        }
+
+        /* Legal disclaimer */
+        .legal-disclaimer {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 25px;
+            font-size: 0.85em;
+            color: #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Soccer Betting</h1>
+            <p class="subtitle">3-Way Odds - Home / Draw / Away</p>
+
+            <div class="nav-grid">
+                <a href="/" class="nav-btn">Dashboard</a>
+                <a href="/best-bets" class="nav-btn">Best Bets</a>
+                <a href="/live-betting" class="nav-btn">Live Games</a>
+                <a href="/bets/new" class="nav-btn">+ New Bet</a>
+            </div>
+        </header>
+
+        <!-- League Filter -->
+        <div class="league-filter">
+            <label>LEAGUE:</label>
+            <a href="/soccer" th:class="${selectedLeague == null} ? 'league-btn active' : 'league-btn'">All</a>
+            <a th:each="league : ${leagues}"
+               th:href="@{/soccer(league=${league})}"
+               th:text="${league.replace('_', ' ')}"
+               th:class="${selectedLeague == league} ? 'league-btn active' : 'league-btn'">League</a>
+        </div>
+
+        <!-- Missouri Local Teams Section -->
+        <div class="local-teams-section" th:if="${!localGames.isEmpty()}">
+            <h2 class="local-section-title">Missouri Local Teams</h2>
+            <div class="matches-grid">
+                <div class="match-card local-team" th:each="match : ${localGames}">
+                    <span class="local-badge">Missouri Team</span>
+                    <span class="league-badge" th:text="${match.league}">MLS</span>
+
+                    <div class="kickoff-time" th:if="${match.kickoffTime != null}">
+                        <span th:text="${#temporals.format(match.kickoffTime, 'MMM d, h:mm a')}">Jan 26, 7:00 PM</span>
+                    </div>
+
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">
+                                <img th:if="${match.homeTeamLogo}" th:src="${match.homeTeamLogo}" alt="Home Team">
+                                <span th:unless="${match.homeTeamLogo}">Home</span>
+                            </div>
+                            <div class="team-name" th:text="${match.homeTeam}">Home Team</div>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team">
+                            <div class="team-logo">
+                                <img th:if="${match.awayTeamLogo}" th:src="${match.awayTeamLogo}" alt="Away Team">
+                                <span th:unless="${match.awayTeamLogo}">Away</span>
+                            </div>
+                            <div class="team-name" th:text="${match.awayTeam}">Away Team</div>
+                        </div>
+                    </div>
+
+                    <!-- 3-Way Odds -->
+                    <div class="odds-3way">
+                        <div class="odds-box home">
+                            <div class="odds-label">Home Win</div>
+                            <div class="odds-value" th:text="${match.homeWinOdds != null ? (match.homeWinOdds > 0 ? '+' + match.homeWinOdds.intValue() : match.homeWinOdds.intValue()) : 'N/A'}">+150</div>
+                            <div class="odds-book" th:text="${match.bestHomeBook}">DraftKings</div>
+                        </div>
+                        <div class="odds-box draw">
+                            <div class="odds-label">Draw</div>
+                            <div class="odds-value" th:text="${match.drawOdds != null ? (match.drawOdds > 0 ? '+' + match.drawOdds.intValue() : match.drawOdds.intValue()) : 'N/A'}">+240</div>
+                            <div class="odds-book" th:text="${match.bestDrawBook}">FanDuel</div>
+                        </div>
+                        <div class="odds-box away">
+                            <div class="odds-label">Away Win</div>
+                            <div class="odds-value" th:text="${match.awayWinOdds != null ? (match.awayWinOdds > 0 ? '+' + match.awayWinOdds.intValue() : match.awayWinOdds.intValue()) : 'N/A'}">+180</div>
+                            <div class="odds-book" th:text="${match.bestAwayBook}">BetMGM</div>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="goal-line" th:if="${match.goalLine != null}">
+                        Goals Line: <strong th:text="${match.goalLine}">2.5</strong>
+                    </div>
+                    <div class="totals-row" th:if="${match.overOdds != null || match.underOdds != null}">
+                        <div class="total-box">
+                            <div class="odds-label">Over</div>
+                            <div class="odds-value" th:text="${match.overOdds != null ? (match.overOdds > 0 ? '+' + match.overOdds.intValue() : match.overOdds.intValue()) : 'N/A'}">-110</div>
+                            <div class="odds-book" th:text="${match.bestOverBook}">Caesars</div>
+                        </div>
+                        <div class="total-box">
+                            <div class="odds-label">Under</div>
+                            <div class="odds-value" th:text="${match.underOdds != null ? (match.underOdds > 0 ? '+' + match.underOdds.intValue() : match.underOdds.intValue()) : 'N/A'}">-110</div>
+                            <div class="odds-book" th:text="${match.bestUnderBook}">bet365</div>
+                        </div>
+                    </div>
+
+                    <div class="match-actions">
+                        <a href="/bets/new" class="action-btn primary-btn">Place Bet</a>
+                        <button class="action-btn quick-bet-btn"
+                                th:data-home-team="${match.homeTeam}"
+                                th:data-away-team="${match.awayTeam}"
+                                th:data-odds="${match.homeWinOdds}"
+                                th:data-sportsbook="${match.bestHomeBook}"
+                                data-sport="SOCCER"
+                                data-bet-type="Home Win">Quick Bet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Fixtures by League -->
+        <th:block th:each="entry : ${allFixtures}">
+            <div class="standings-section" th:if="${selectedLeague == null || selectedLeague == entry.key}">
+                <h2 class="standings-title" th:text="${entry.key.replace('_', ' ')}">League Name</h2>
+
+                <div class="matches-grid">
+                    <div th:each="match : ${entry.value}"
+                         th:class="${match.isLocalTeam()} ? 'match-card local-team' : 'match-card'">
+                        <span class="local-badge" th:if="${match.isLocalTeam()}">Missouri</span>
+                        <span class="league-badge" th:text="${match.league}">League</span>
+
+                        <div class="kickoff-time" th:if="${match.kickoffTime != null}">
+                            <span th:text="${#temporals.format(match.kickoffTime, 'MMM d, h:mm a')}">Jan 26, 7:00 PM</span>
+                        </div>
+
+                        <div class="match-teams">
+                            <div class="team">
+                                <div class="team-logo">
+                                    <img th:if="${match.homeTeamLogo}" th:src="${match.homeTeamLogo}" alt="Home">
+                                    <span th:unless="${match.homeTeamLogo}">H</span>
+                                </div>
+                                <div class="team-name" th:text="${match.homeTeam}">Home Team</div>
+                            </div>
+                            <div class="vs">VS</div>
+                            <div class="team">
+                                <div class="team-logo">
+                                    <img th:if="${match.awayTeamLogo}" th:src="${match.awayTeamLogo}" alt="Away">
+                                    <span th:unless="${match.awayTeamLogo}">A</span>
+                                </div>
+                                <div class="team-name" th:text="${match.awayTeam}">Away Team</div>
+                            </div>
+                        </div>
+
+                        <!-- 3-Way Odds -->
+                        <div class="odds-3way">
+                            <div class="odds-box home">
+                                <div class="odds-label">Home Win</div>
+                                <div class="odds-value" th:text="${match.homeWinOdds != null ? (match.homeWinOdds > 0 ? '+' + match.homeWinOdds.intValue() : match.homeWinOdds.intValue()) : 'N/A'}">+150</div>
+                                <div class="odds-book" th:text="${match.bestHomeBook}">-</div>
+                            </div>
+                            <div class="odds-box draw">
+                                <div class="odds-label">Draw</div>
+                                <div class="odds-value" th:text="${match.drawOdds != null ? (match.drawOdds > 0 ? '+' + match.drawOdds.intValue() : match.drawOdds.intValue()) : 'N/A'}">+240</div>
+                                <div class="odds-book" th:text="${match.bestDrawBook}">-</div>
+                            </div>
+                            <div class="odds-box away">
+                                <div class="odds-label">Away Win</div>
+                                <div class="odds-value" th:text="${match.awayWinOdds != null ? (match.awayWinOdds > 0 ? '+' + match.awayWinOdds.intValue() : match.awayWinOdds.intValue()) : 'N/A'}">+180</div>
+                                <div class="odds-book" th:text="${match.bestAwayBook}">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Totals -->
+                        <div class="goal-line" th:if="${match.goalLine != null}">
+                            Goals Line: <strong th:text="${match.goalLine}">2.5</strong>
+                        </div>
+                        <div class="totals-row" th:if="${match.overOdds != null || match.underOdds != null}">
+                            <div class="total-box">
+                                <div class="odds-label">Over</div>
+                                <div class="odds-value" th:text="${match.overOdds != null ? (match.overOdds > 0 ? '+' + match.overOdds.intValue() : match.overOdds.intValue()) : 'N/A'}">-110</div>
+                                <div class="odds-book" th:text="${match.bestOverBook}">-</div>
+                            </div>
+                            <div class="total-box">
+                                <div class="odds-label">Under</div>
+                                <div class="odds-value" th:text="${match.underOdds != null ? (match.underOdds > 0 ? '+' + match.underOdds.intValue() : match.underOdds.intValue()) : 'N/A'}">-110</div>
+                                <div class="odds-book" th:text="${match.bestUnderBook}">-</div>
+                            </div>
+                        </div>
+
+                        <div class="match-actions">
+                            <a href="/bets/new" class="action-btn primary-btn">Place Bet</a>
+                            <button class="action-btn quick-bet-btn"
+                                    th:data-home-team="${match.homeTeam}"
+                                    th:data-away-team="${match.awayTeam}"
+                                    th:data-odds="${match.homeWinOdds}"
+                                    th:data-sportsbook="${match.bestHomeBook}"
+                                    data-sport="SOCCER"
+                                    data-bet-type="Home Win">Quick Bet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+
+        <!-- Empty state -->
+        <div class="empty-state" th:if="${allFixtures.isEmpty()}">
+            <h3>No Soccer Games Available</h3>
+            <p>Check back later for upcoming matches with odds.</p>
+        </div>
+
+        <!-- Standings (if league selected) -->
+        <div class="standings-section" th:if="${!standings.isEmpty()}">
+            <h2 class="standings-title" th:text="${selectedLeague.replace('_', ' ')} + ' Standings'">League Standings</h2>
+
+            <table class="standings-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th>P</th>
+                        <th>W</th>
+                        <th>D</th>
+                        <th>L</th>
+                        <th>GD</th>
+                        <th>Pts</th>
+                        <th>Form</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="team : ${standings}">
+                        <td th:text="${team.position}">1</td>
+                        <td>
+                            <img th:if="${team.teamLogo}" th:src="${team.teamLogo}"
+                                 style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
+                            <span th:text="${team.teamName}">Team Name</span>
+                        </td>
+                        <td th:text="${team.played}">0</td>
+                        <td th:text="${team.won}">0</td>
+                        <td th:text="${team.drawn}">0</td>
+                        <td th:text="${team.lost}">0</td>
+                        <td th:text="${team.goalDifferenceFormatted}">0</td>
+                        <td style="font-weight: 900;" th:text="${team.points}">0</td>
+                        <td>
+                            <div class="form-display" th:if="${team.form != null}">
+                                <span th:each="result : ${#strings.toCharArray(team.form)}"
+                                      th:class="'form-result ' + ${result}"
+                                      th:text="${result}">W</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Legal Disclaimer -->
+        <div class="legal-disclaimer">
+            <strong>Gambling Responsibly:</strong> Only bet what you can afford to lose.
+            Odds displayed are from Missouri-licensed sportsbooks only (DraftKings, FanDuel, BetMGM, Caesars, bet365, Fanatics, Circa, theScore).
+            If you or someone you know has a gambling problem, call 1-800-522-4700.
+        </div>
+    </div>
+
+    <script>
+        // Quick Bet functionality using data attributes (Thymeleaf-safe)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.quick-bet-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const homeTeam = this.dataset.homeTeam;
+                    const awayTeam = this.dataset.awayTeam;
+                    const odds = this.dataset.odds;
+                    const sportsbook = this.dataset.sportsbook;
+                    const sport = this.dataset.sport;
+                    const betType = this.dataset.betType;
+
+                    const betData = {
+                        game: homeTeam + ' vs ' + awayTeam,
+                        sport: sport,
+                        pick: betType,
+                        odds: odds,
+                        sportsbook: sportsbook,
+                        timestamp: Date.now()
+                    };
+
+                    localStorage.setItem('quickBetData', JSON.stringify(betData));
+                    window.location.href = '/bets/new';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

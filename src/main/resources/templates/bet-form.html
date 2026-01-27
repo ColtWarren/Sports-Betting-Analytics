@@ -491,14 +491,15 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="sport">🏈 Sport</label>
-                        <select id="sport" name="sport" required onchange="calculateKelly()">
+                        <select id="sport" name="sport" required onchange="calculateKelly(); updateBetTypes();">
                             <option value="">Select Sport</option>
-                            <option value="NFL">NFL</option>
-                            <option value="NBA">NBA</option>
-                            <option value="MLB">MLB</option>
-                            <option value="NHL">NHL</option>
-                            <option value="NCAAF">NCAAF</option>
-                            <option value="NCAAB">NCAAB</option>
+                            <option value="NFL">🏈 NFL</option>
+                            <option value="NBA">🏀 NBA</option>
+                            <option value="MLB">⚾ MLB</option>
+                            <option value="NHL">🏒 NHL</option>
+                            <option value="NCAAF">🏈 NCAAF</option>
+                            <option value="NCAAB">🏀 NCAAB</option>
+                            <option value="SOCCER">⚽ Soccer</option>
                         </select>
                     </div>
                     
@@ -506,10 +507,19 @@
                         <label for="betType">📊 Bet Type</label>
                         <select id="betType" name="betType" required onchange="calculateKelly()">
                             <option value="">Select Type</option>
-                            <option value="MONEYLINE">Moneyline</option>
-                            <option value="SPREAD">Spread</option>
-                            <option value="TOTAL_OVER">Total Over</option>
-                            <option value="TOTAL_UNDER">Total Under</option>
+                            <!-- Standard bet types -->
+                            <option value="MONEYLINE" class="standard-type">Moneyline</option>
+                            <option value="SPREAD" class="standard-type">Spread</option>
+                            <option value="TOTAL_OVER" class="standard-type">Total Over</option>
+                            <option value="TOTAL_UNDER" class="standard-type">Total Under</option>
+                            <!-- Soccer-specific bet types -->
+                            <option value="HOME_WIN" class="soccer-type" style="display:none;">Home Win (1)</option>
+                            <option value="DRAW" class="soccer-type" style="display:none;">Draw (X)</option>
+                            <option value="AWAY_WIN" class="soccer-type" style="display:none;">Away Win (2)</option>
+                            <option value="OVER_GOALS" class="soccer-type" style="display:none;">Over Goals</option>
+                            <option value="UNDER_GOALS" class="soccer-type" style="display:none;">Under Goals</option>
+                            <option value="BTTS_YES" class="soccer-type" style="display:none;">Both Teams Score - Yes</option>
+                            <option value="BTTS_NO" class="soccer-type" style="display:none;">Both Teams Score - No</option>
                         </select>
                     </div>
                     
@@ -552,6 +562,10 @@
                             <option value="FANDUEL">FanDuel</option>
                             <option value="BETMGM">BetMGM</option>
                             <option value="CAESARS">Caesars</option>
+                            <option value="FANATICS">Fanatics</option>
+                            <option value="BET365">bet365</option>
+                            <option value="CIRCA_SPORTS">Circa Sports</option>
+                            <option value="THESCORE_BET">theScore Bet</option>
                             <option value="OTHER">Other</option>
                         </select>
                     </div>
@@ -695,11 +709,21 @@
                     const betData = JSON.parse(quickBetData);
 
                     // Pre-fill form fields
+                    const sportField = document.getElementById('sport');
                     const gameField = document.getElementById('eventName');
                     const pickField = document.getElementById('selection');
                     const stakeField = document.getElementById('stake');
                     const oddsField = document.getElementById('odds');
                     const sportsbookField = document.getElementById('sportsbookName');
+
+                    // Set sport FIRST (to show correct bet type options)
+                    if (sportField && betData.sport) {
+                        sportField.value = betData.sport;
+                        // Trigger updateBetTypes to show sport-specific options
+                        if (typeof updateBetTypes === 'function') {
+                            updateBetTypes();
+                        }
+                    }
 
                     // Fill in values
                     if (gameField && betData.game) gameField.value = betData.game;
@@ -715,6 +739,7 @@
                             'BetMGM': 'BETMGM',
                             'Caesars': 'CAESARS',
                             'bet365': 'BET365',
+                            'Fanatics': 'FANATICS',
                             'Circa Sports': 'CIRCA_SPORTS',
                             'theScore Bet': 'THESCORE_BET'
                         };
@@ -800,6 +825,41 @@
 
         // Load bankroll on page load
         loadBankroll();
+
+        // Update bet types based on selected sport
+        function updateBetTypes() {
+            const sport = document.getElementById('sport').value;
+            const betTypeSelect = document.getElementById('betType');
+            const standardTypes = document.querySelectorAll('.standard-type');
+            const soccerTypes = document.querySelectorAll('.soccer-type');
+
+            if (sport === 'SOCCER') {
+                // Show soccer types, hide standard types
+                standardTypes.forEach(opt => opt.style.display = 'none');
+                soccerTypes.forEach(opt => opt.style.display = 'block');
+
+                // Reset selection if current selection is not soccer type
+                const currentValue = betTypeSelect.value;
+                const soccerValues = ['HOME_WIN', 'DRAW', 'AWAY_WIN', 'OVER_GOALS', 'UNDER_GOALS', 'BTTS_YES', 'BTTS_NO'];
+                if (!soccerValues.includes(currentValue)) {
+                    betTypeSelect.value = '';
+                }
+            } else {
+                // Show standard types, hide soccer types
+                standardTypes.forEach(opt => opt.style.display = 'block');
+                soccerTypes.forEach(opt => opt.style.display = 'none');
+
+                // Reset selection if current selection is soccer type
+                const currentValue = betTypeSelect.value;
+                const standardValues = ['MONEYLINE', 'SPREAD', 'TOTAL_OVER', 'TOTAL_UNDER'];
+                if (!standardValues.includes(currentValue) && currentValue !== '') {
+                    betTypeSelect.value = '';
+                }
+            }
+        }
+
+        // Initialize bet types on page load
+        updateBetTypes();
     </script>
 </body>
 </html>
