@@ -482,6 +482,94 @@
             width: 300px;
             height: 300px;
         }
+
+        /* Weather Alert Styles */
+        .weather-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .weather-alert.alert-low {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.1));
+            border-color: #3b82f6;
+        }
+
+        .weather-alert.alert-medium {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1));
+            border-color: #f59e0b;
+        }
+
+        .weather-alert.alert-high {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.1));
+            border-color: #ef4444;
+        }
+
+        .weather-alert.alert-critical {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(239, 68, 68, 0.15));
+            border-color: #dc2626;
+            animation: pulse-critical 2s infinite;
+        }
+
+        @keyframes pulse-critical {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(220, 38, 38, 0.2); }
+        }
+
+        .weather-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .weather-content {
+            flex: 1;
+        }
+
+        .weather-content strong {
+            display: block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .weather-alert.alert-low .weather-content strong { color: #60a5fa; }
+        .weather-alert.alert-medium .weather-content strong { color: #fbbf24; }
+        .weather-alert.alert-high .weather-content strong { color: #f87171; }
+        .weather-alert.alert-critical .weather-content strong { color: #fca5a5; }
+
+        .weather-content p {
+            font-size: 13px;
+            color: #cbd5e1;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .weather-impact {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .weather-impact span {
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .weather-impact .impact-scoring {
+            color: #f87171;
+        }
+
+        .weather-impact .impact-recommendation {
+            color: #34d399;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -640,7 +728,9 @@
                     <div class="best-odds">
                         ${formatBestOdds(bet.bestOdds)}
                     </div>
-                    
+
+                    ${renderWeatherAlert(bet)}
+
                     <div class="analysis">
                         <div class="analysis-label">AI ANALYSIS</div>
                         <div class="analysis-text">
@@ -677,6 +767,55 @@
                 'SOCCER': '⚽'
             };
             return icons[sport] || '🎯';
+        }
+
+        function renderWeatherAlert(bet) {
+            // Only show weather alerts for outdoor sports
+            if (!bet.weatherImpact || !bet.hasWeatherImpact) {
+                return '';
+            }
+
+            const impact = bet.weatherImpact;
+            const alertLevel = (impact.alertLevel || 'MEDIUM').toLowerCase();
+
+            // Get weather icon based on conditions
+            let weatherIcon = '☁️';
+            if (impact.weatherData) {
+                const conditions = (impact.weatherData.conditions || '').toLowerCase();
+                if (conditions.includes('rain') || conditions.includes('drizzle')) {
+                    weatherIcon = '🌧️';
+                } else if (conditions.includes('snow')) {
+                    weatherIcon = '❄️';
+                } else if (conditions.includes('wind') || (impact.weatherData.windSpeed && impact.weatherData.windSpeed > 15)) {
+                    weatherIcon = '💨';
+                } else if (conditions.includes('clear') || conditions.includes('sun')) {
+                    weatherIcon = '☀️';
+                } else if (conditions.includes('cloud')) {
+                    weatherIcon = '☁️';
+                }
+            }
+
+            let impactHtml = '';
+            if (impact.scoringImpact && impact.scoringImpact !== 0) {
+                const scoringText = impact.scoringImpact > 0
+                    ? `+${impact.scoringImpact.toFixed(1)} pts`
+                    : `${impact.scoringImpact.toFixed(1)} pts`;
+                impactHtml += `<span class="impact-scoring">Scoring: ${scoringText}</span>`;
+            }
+            if (impact.recommendation && impact.recommendation !== 'NO_IMPACT') {
+                impactHtml += `<span class="impact-recommendation">Suggests: ${impact.recommendation}</span>`;
+            }
+
+            return `
+                <div class="weather-alert alert-${alertLevel}">
+                    <div class="weather-icon">${weatherIcon}</div>
+                    <div class="weather-content">
+                        <strong>WEATHER ALERT</strong>
+                        <p>${impact.reason || 'Weather conditions may affect this game'}</p>
+                        ${impactHtml ? `<div class="weather-impact">${impactHtml}</div>` : ''}
+                    </div>
+                </div>
+            `;
         }
         
         function getConfidenceClass(confidence) {

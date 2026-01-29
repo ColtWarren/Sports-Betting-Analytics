@@ -3,10 +3,13 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
 import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
+import com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
+import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -28,6 +31,9 @@ public class MultiSportBestBetsService {
 
     @Autowired
     private SoccerDataAggregatorService soccerDataAggregator;
+
+    @Autowired
+    private WeatherAnalysisService weatherAnalysisService;
 
     private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL", "SOCCER"};
     
@@ -144,6 +150,39 @@ public class MultiSportBestBetsService {
                         double kellyPercent = calculateKellyForBet(gameOdds, confidence);
                         bet.put("kellyPercent", kellyPercent);
 
+                        // Weather Analysis (for outdoor sports: NFL, CFB, MLB)
+                        if ("NFL".equals(sport) || "CFB".equals(sport) || "MLB".equals(sport)) {
+                            try {
+                                LocalDateTime gameTime = parseGameTime(game.get("gameTime"));
+                                WeatherImpact weatherImpact = weatherAnalysisService.analyzeGameWeather(
+                                    homeTeam, sport, gameTime != null ? gameTime : LocalDateTime.now().plusHours(3)
+                                );
+
+                                if (weatherImpact != null) {
+                                    bet.put("weatherImpact", weatherImpact);
+                                    bet.put("hasWeatherImpact", weatherImpact.getSignificantImpact());
+
+                                    // Adjust analysis with weather info
+                                    if (Boolean.TRUE.equals(weatherImpact.getSignificantImpact())) {
+                                        String weatherNote = "\n\n☁️ WEATHER ALERT: " + weatherImpact.getReason();
+                                        if (weatherImpact.getScoringImpact() != null) {
+                                            weatherNote += String.format(" | Expected: %+.1f pts", weatherImpact.getScoringImpact());
+                                        }
+                                        weatherNote += " | Suggests: " + weatherImpact.getRecommendation();
+                                        bet.put("analysis", analysis + weatherNote);
+
+                                        // Boost confidence if weather strongly supports the bet
+                                        if (weatherImpact.getConfidence() != null && weatherImpact.getConfidence() >= 7.0) {
+                                            confidence = Math.min(10.0, confidence + 0.5);
+                                            bet.put("confidence", confidence);
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Weather analysis error: " + e.getMessage());
+                            }
+                        }
+
                         sportBets.add(bet);
                     }
                     
@@ -246,6 +285,32 @@ public class MultiSportBestBetsService {
 
         } catch (Exception e) {
             return "See analysis";
+        }
+    }
+
+    /**
+     * Parse game time from various formats
+     */
+    private LocalDateTime parseGameTime(Object gameTimeObj) {
+        if (gameTimeObj == null) return null;
+
+        try {
+            if (gameTimeObj instanceof LocalDateTime) {
+                return (LocalDateTime) gameTimeObj;
+            }
+
+            String gameTimeStr = gameTimeObj.toString();
+
+            // Try ISO format first
+            if (gameTimeStr.contains("T")) {
+                return LocalDateTime.parse(gameTimeStr.split("\\.")[0]);
+            }
+
+            // Default: assume it's today or soon
+            return LocalDateTime.now().plusHours(3);
+
+        } catch (Exception e) {
+            return LocalDateTime.now().plusHours(3);
         }
     }
 
