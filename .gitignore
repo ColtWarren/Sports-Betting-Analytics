@@ -23,4 +23,14 @@ dependency-reduced-pom.xml
 
 # Application Properties with passwords
 application-local.properties
+
+# Environment files with secrets - NEVER COMMIT
 .env
+*.env
+.env.*
+!.env.example
+
+# Secret/credential directories
+**/secrets/
+**/credentials/
+**/private/
