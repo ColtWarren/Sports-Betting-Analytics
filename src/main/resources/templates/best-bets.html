@@ -570,6 +570,162 @@
             color: #34d399;
             font-weight: 600;
         }
+
+        /* Public Betting / Contrarian Alert Styles */
+        .public-betting-section {
+            margin: 15px 0;
+            padding: 14px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(139, 92, 246, 0.05));
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .public-betting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .public-betting-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #a78bfa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .contrarian-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .contrarian-badge.extreme {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            animation: pulse-extreme 1.5s infinite;
+        }
+
+        .contrarian-badge.strong {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .contrarian-badge.mild {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        @keyframes pulse-extreme {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 15px 3px rgba(239, 68, 68, 0.3); }
+        }
+
+        .betting-percentage-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .percentage-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .percentage-bar-label {
+            font-size: 11px;
+            color: #94a3b8;
+            width: 60px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .percentage-bar-container {
+            flex: 1;
+            height: 20px;
+            background: rgba(17, 24, 39, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        .percentage-bar-home {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            transition: width 0.5s ease;
+        }
+
+        .percentage-bar-away {
+            height: 100%;
+            background: linear-gradient(90deg, #ec4899, #f472b6);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            transition: width 0.5s ease;
+        }
+
+        .contrarian-recommendation {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contrarian-icon {
+            font-size: 24px;
+        }
+
+        .contrarian-text {
+            flex: 1;
+        }
+
+        .contrarian-text strong {
+            display: block;
+            font-size: 13px;
+            color: #f472b6;
+            margin-bottom: 2px;
+        }
+
+        .contrarian-text span {
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
+        .contrarian-edge {
+            text-align: right;
+        }
+
+        .contrarian-edge .edge-value {
+            font-size: 18px;
+            font-weight: 900;
+            color: #34d399;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .contrarian-edge .edge-label {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -729,6 +885,8 @@
                         ${formatBestOdds(bet.bestOdds)}
                     </div>
 
+                    ${renderPublicBetting(bet)}
+
                     ${renderWeatherAlert(bet)}
 
                     <div class="analysis">
@@ -817,7 +975,102 @@
                 </div>
             `;
         }
-        
+
+        function renderPublicBetting(bet) {
+            // Only render if we have public betting data
+            if (!bet.publicBettingData) {
+                return '';
+            }
+
+            const publicData = bet.publicBettingData;
+            const spreadContrarian = bet.spreadContrarian;
+            const totalsContrarian = bet.totalsContrarian;
+
+            // Get the percentages
+            const homeSpread = publicData.spreadHomePercent || 50;
+            const awaySpread = publicData.spreadAwayPercent || 50;
+            const overPercent = publicData.overPercent || 50;
+            const underPercent = publicData.underPercent || 50;
+
+            // Determine if there's a contrarian alert
+            let contrarianBadge = '';
+            let contrarianRec = '';
+
+            if (spreadContrarian && spreadContrarian.hasContrarianValue) {
+                const alertLevel = (spreadContrarian.alertLevel || 'mild').toLowerCase();
+                contrarianBadge = `<span class="contrarian-badge ${alertLevel}">🔥 ${alertLevel} FADE</span>`;
+
+                const icon = alertLevel === 'extreme' ? '🔥' : alertLevel === 'strong' ? '📊' : '📈';
+                contrarianRec = `
+                    <div class="contrarian-recommendation">
+                        <div class="contrarian-icon">${icon}</div>
+                        <div class="contrarian-text">
+                            <strong>FADE THE PUBLIC</strong>
+                            <span>Bet ${spreadContrarian.contrarianSide} - ${spreadContrarian.publicPercent}% public on other side</span>
+                        </div>
+                        <div class="contrarian-edge">
+                            <div class="edge-value">${spreadContrarian.historicalEdge?.toFixed(1) || '54.0'}%</div>
+                            <div class="edge-label">Historical Edge</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Check totals for additional contrarian value
+            let totalsAlert = '';
+            if (totalsContrarian && totalsContrarian.hasContrarianValue && totalsContrarian.publicPercent >= 70) {
+                const icon = totalsContrarian.alertLevel === 'EXTREME' ? '🔥' : '📊';
+                totalsAlert = `
+                    <div class="contrarian-recommendation" style="margin-top: 8px; background: rgba(99, 102, 241, 0.2);">
+                        <div class="contrarian-icon">${icon}</div>
+                        <div class="contrarian-text">
+                            <strong>TOTALS FADE</strong>
+                            <span>Bet ${totalsContrarian.contrarianSide} - ${totalsContrarian.publicPercent}% on ${totalsContrarian.contrarianSide === 'UNDER' ? 'OVER' : 'UNDER'}</span>
+                        </div>
+                        <div class="contrarian-edge">
+                            <div class="edge-value">${totalsContrarian.historicalEdge?.toFixed(1) || '54.0'}%</div>
+                            <div class="edge-label">Historical Edge</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="public-betting-section">
+                    <div class="public-betting-header">
+                        <span class="public-betting-title">📊 Public Betting</span>
+                        ${contrarianBadge}
+                    </div>
+                    <div class="betting-percentage-bars">
+                        <div class="percentage-bar-row">
+                            <span class="percentage-bar-label">Spread</span>
+                            <div class="percentage-bar-container">
+                                <div class="percentage-bar-home" style="width: ${homeSpread}%">
+                                    ${homeSpread}%
+                                </div>
+                                <div class="percentage-bar-away" style="width: ${awaySpread}%">
+                                    ${awaySpread}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="percentage-bar-row">
+                            <span class="percentage-bar-label">O/U</span>
+                            <div class="percentage-bar-container">
+                                <div class="percentage-bar-home" style="width: ${overPercent}%; background: linear-gradient(90deg, #10b981, #34d399);">
+                                    O ${overPercent}%
+                                </div>
+                                <div class="percentage-bar-away" style="width: ${underPercent}%; background: linear-gradient(90deg, #ef4444, #f87171);">
+                                    U ${underPercent}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ${contrarianRec}
+                    ${totalsAlert}
+                </div>
+            `;
+        }
+
         function getConfidenceClass(confidence) {
             if (confidence >= 8) return 'confidence-high';
             if (confidence >= 6) return 'confidence-medium';

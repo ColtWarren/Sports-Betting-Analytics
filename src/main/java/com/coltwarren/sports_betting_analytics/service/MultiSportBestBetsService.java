@@ -4,8 +4,11 @@ import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
 import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
 import com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService;
+import com.coltwarren.sports_betting_analytics.service.betting.PublicBettingService;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
+import com.coltwarren.sports_betting_analytics.model.betting.PublicBettingData;
+import com.coltwarren.sports_betting_analytics.model.betting.ContrarianValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +37,9 @@ public class MultiSportBestBetsService {
 
     @Autowired
     private WeatherAnalysisService weatherAnalysisService;
+
+    @Autowired
+    private PublicBettingService publicBettingService;
 
     private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL", "SOCCER"};
     
@@ -181,6 +187,49 @@ public class MultiSportBestBetsService {
                             } catch (Exception e) {
                                 System.err.println("Weather analysis error: " + e.getMessage());
                             }
+                        }
+
+                        // Public Betting Analysis (fade the public)
+                        try {
+                            // Determine if home team is favorite from odds
+                            boolean isHomeFavorite = determineHomeFavorite(gameOdds);
+                            String gameId = sport + "_" + homeTeam + "_" + awayTeam;
+
+                            PublicBettingData publicData = publicBettingService.getPublicBettingData(
+                                gameId, sport, homeTeam, awayTeam, isHomeFavorite
+                            );
+
+                            ContrarianValue spreadContrarian = publicBettingService.analyzeContrarianValue(
+                                publicData, homeTeam, awayTeam
+                            );
+                            ContrarianValue totalsContrarian = publicBettingService.analyzeTotalsContrarian(publicData);
+
+                            // Add public betting data to bet
+                            bet.put("publicBettingData", publicData);
+                            bet.put("spreadContrarian", spreadContrarian);
+                            bet.put("totalsContrarian", totalsContrarian);
+                            bet.put("hasContrarianValue",
+                                Boolean.TRUE.equals(spreadContrarian.getHasContrarianValue()) ||
+                                Boolean.TRUE.equals(totalsContrarian.getHasContrarianValue()));
+
+                            // Boost confidence for strong contrarian plays
+                            if (Boolean.TRUE.equals(spreadContrarian.getHasContrarianValue())) {
+                                String currentAnalysis = (String) bet.get("analysis");
+                                String contrarianNote = "\n\n📊 PUBLIC FADE: " + spreadContrarian.getReason();
+                                bet.put("analysis", currentAnalysis + contrarianNote);
+
+                                // Boost confidence based on alert level
+                                if ("EXTREME".equals(spreadContrarian.getAlertLevel())) {
+                                    confidence = Math.min(10.0, confidence + 1.0);
+                                    bet.put("confidence", confidence);
+                                } else if ("STRONG".equals(spreadContrarian.getAlertLevel())) {
+                                    confidence = Math.min(10.0, confidence + 0.5);
+                                    bet.put("confidence", confidence);
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            System.err.println("Public betting analysis error: " + e.getMessage());
                         }
 
                         sportBets.add(bet);
@@ -547,6 +596,38 @@ public class MultiSportBestBetsService {
             return 100.0 / (americanOdds + 100);
         } else {
             return Math.abs(americanOdds) / (Math.abs(americanOdds) + 100.0);
+        }
+    }
+
+    /**
+     * Determine if home team is the favorite based on odds
+     */
+    @SuppressWarnings("unchecked")
+    private boolean determineHomeFavorite(Map<String, Object> gameOdds) {
+        try {
+            Map<String, Object> bestOdds = (Map<String, Object>) gameOdds.get("bestOdds");
+            if (bestOdds == null) return true; // Default to home favorite
+
+            // Check spread first (negative spread = favorite)
+            if (bestOdds.containsKey("homeSpread")) {
+                Object spreadObj = bestOdds.get("homeSpread");
+                if (spreadObj instanceof Number) {
+                    return ((Number) spreadObj).doubleValue() < 0;
+                }
+            }
+
+            // Check moneyline (negative ML = favorite)
+            if (bestOdds.containsKey("homeML") && bestOdds.containsKey("awayML")) {
+                Object homeML = bestOdds.get("homeML");
+                Object awayML = bestOdds.get("awayML");
+                if (homeML instanceof Number && awayML instanceof Number) {
+                    return ((Number) homeML).intValue() < ((Number) awayML).intValue();
+                }
+            }
+
+            return true; // Default
+        } catch (Exception e) {
+            return true;
         }
     }
 }
