@@ -5,10 +5,12 @@ import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsServic
 import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
 import com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService;
 import com.coltwarren.sports_betting_analytics.service.betting.PublicBettingService;
+import com.coltwarren.sports_betting_analytics.service.injury.InjuryAnalysisService;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
 import com.coltwarren.sports_betting_analytics.model.betting.PublicBettingData;
 import com.coltwarren.sports_betting_analytics.model.betting.ContrarianValue;
+import com.coltwarren.sports_betting_analytics.model.injury.InjuryImpact;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +42,9 @@ public class MultiSportBestBetsService {
 
     @Autowired
     private PublicBettingService publicBettingService;
+
+    @Autowired
+    private InjuryAnalysisService injuryAnalysisService;
 
     private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL", "SOCCER"};
     
@@ -230,6 +235,65 @@ public class MultiSportBestBetsService {
 
                         } catch (Exception e) {
                             System.err.println("Public betting analysis error: " + e.getMessage());
+                        }
+
+                        // Injury Analysis
+                        try {
+                            Map<String, InjuryImpact> matchupInjuries = injuryAnalysisService.analyzeMatchupInjuries(
+                                sport, homeTeam, null, awayTeam, null
+                            );
+
+                            InjuryImpact homeInjuryImpact = matchupInjuries.get("home");
+                            InjuryImpact awayInjuryImpact = matchupInjuries.get("away");
+                            Double netInjuryAdvantage = injuryAnalysisService.getNetInjuryAdvantage(matchupInjuries);
+                            String worstSeverity = injuryAnalysisService.getWorstSeverity(matchupInjuries);
+
+                            bet.put("homeInjuryImpact", homeInjuryImpact);
+                            bet.put("awayInjuryImpact", awayInjuryImpact);
+                            bet.put("netInjuryAdvantage", netInjuryAdvantage);
+                            bet.put("injurySeverity", worstSeverity);
+                            bet.put("hasInjuryImpact",
+                                Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries()) ||
+                                Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries()));
+
+                            // Add injury info to analysis
+                            if (Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries()) ||
+                                Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries())) {
+
+                                String currentAnalysis = (String) bet.get("analysis");
+                                StringBuilder injuryNote = new StringBuilder("\n\n🏥 INJURY REPORT:");
+
+                                if (Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries())) {
+                                    injuryNote.append(String.format("\n  %s: %s (%.1f pts)",
+                                        homeTeam, homeInjuryImpact.getSummary(), homeInjuryImpact.getSpreadImpact()));
+                                }
+                                if (Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries())) {
+                                    injuryNote.append(String.format("\n  %s: %s (%.1f pts)",
+                                        awayTeam, awayInjuryImpact.getSummary(), awayInjuryImpact.getSpreadImpact()));
+                                }
+
+                                if (Math.abs(netInjuryAdvantage) >= 2.0) {
+                                    String advantageTeam = netInjuryAdvantage > 0 ? homeTeam : awayTeam;
+                                    injuryNote.append(String.format("\n  NET ADVANTAGE: %s +%.1f pts healthier",
+                                        advantageTeam, Math.abs(netInjuryAdvantage)));
+
+                                    // Boost confidence if injury advantage aligns with our bet
+                                    confidence = Math.min(10.0, confidence + 0.5);
+                                    bet.put("confidence", confidence);
+                                }
+
+                                bet.put("analysis", currentAnalysis + injuryNote.toString());
+
+                                // Set injury recommendation
+                                if (homeInjuryImpact.getBettingRecommendation() != null) {
+                                    bet.put("injuryRecommendation", homeInjuryImpact.getBettingRecommendation());
+                                } else if (awayInjuryImpact.getBettingRecommendation() != null) {
+                                    bet.put("injuryRecommendation", awayInjuryImpact.getBettingRecommendation());
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            System.err.println("Injury analysis error: " + e.getMessage());
                         }
 
                         sportBets.add(bet);

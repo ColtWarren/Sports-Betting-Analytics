@@ -726,6 +726,134 @@
             color: #94a3b8;
             text-transform: uppercase;
         }
+
+        /* Injury Alert Styles */
+        .injury-section {
+            margin: 15px 0;
+        }
+
+        .injury-alert {
+            border-radius: 10px;
+            padding: 14px;
+            color: white;
+            border-left: 4px solid;
+        }
+
+        .injury-alert.NONE {
+            display: none;
+        }
+
+        .injury-alert.MINOR {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+            border-color: #fbbf24;
+            color: #fef3c7;
+        }
+
+        .injury-alert.MODERATE {
+            background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(234, 88, 12, 0.15));
+            border-color: #f97316;
+            color: #fed7aa;
+        }
+
+        .injury-alert.SEVERE {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(239, 68, 68, 0.15));
+            border-color: #ef4444;
+            color: #fecaca;
+        }
+
+        .injury-alert.CRITICAL {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.25), rgba(185, 28, 28, 0.2));
+            border-color: #dc2626;
+            color: #fecaca;
+            animation: pulse-injury 2s infinite;
+        }
+
+        @keyframes pulse-injury {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(220, 38, 38, 0.2); }
+        }
+
+        .injury-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .injury-icon {
+            font-size: 20px;
+        }
+
+        .injury-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .severity-badge {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
+
+        .team-injuries {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .team-injuries .team-name {
+            font-weight: 700;
+            font-size: 13px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .team-injuries .injury-summary {
+            font-size: 12px;
+            opacity: 0.9;
+            display: block;
+        }
+
+        .team-injuries .spread-impact {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+            display: block;
+            opacity: 0.8;
+        }
+
+        .injury-recommendation {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .injury-net-advantage {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #6ee7b7;
+        }
+
+        .injury-net-advantage.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
     </style>
 </head>
 <body>
@@ -888,6 +1016,8 @@
                     ${renderPublicBetting(bet)}
 
                     ${renderWeatherAlert(bet)}
+
+                    ${renderInjuryAlert(bet)}
 
                     <div class="analysis">
                         <div class="analysis-label">AI ANALYSIS</div>
@@ -1067,6 +1197,81 @@
                     </div>
                     ${contrarianRec}
                     ${totalsAlert}
+                </div>
+            `;
+        }
+
+        function renderInjuryAlert(bet) {
+            // Only render if there's injury impact
+            if (!bet.hasInjuryImpact) {
+                return '';
+            }
+
+            const homeImpact = bet.homeInjuryImpact;
+            const awayImpact = bet.awayInjuryImpact;
+            const severity = bet.injurySeverity || 'NONE';
+            const netAdvantage = bet.netInjuryAdvantage || 0;
+
+            if (severity === 'NONE') {
+                return '';
+            }
+
+            let homeSection = '';
+            if (homeImpact && homeImpact.hasSignificantInjuries) {
+                homeSection = `
+                    <div class="team-injuries">
+                        <span class="team-name">${bet.homeTeam}</span>
+                        <span class="injury-summary">${homeImpact.summary || 'Injuries reported'}</span>
+                        <span class="spread-impact">Impact: ${homeImpact.spreadImpact?.toFixed(1) || '0.0'} pts</span>
+                    </div>
+                `;
+            }
+
+            let awaySection = '';
+            if (awayImpact && awayImpact.hasSignificantInjuries) {
+                awaySection = `
+                    <div class="team-injuries">
+                        <span class="team-name">${bet.awayTeam}</span>
+                        <span class="injury-summary">${awayImpact.summary || 'Injuries reported'}</span>
+                        <span class="spread-impact">Impact: ${awayImpact.spreadImpact?.toFixed(1) || '0.0'} pts</span>
+                    </div>
+                `;
+            }
+
+            let netAdvantageSection = '';
+            if (Math.abs(netAdvantage) >= 2.0) {
+                const advantageTeam = netAdvantage > 0 ? bet.homeTeam : bet.awayTeam;
+                const isNegative = netAdvantage < 0;
+                netAdvantageSection = `
+                    <div class="injury-net-advantage ${isNegative ? 'negative' : ''}">
+                        <span>📊</span>
+                        <span><strong>${advantageTeam}</strong> is ${Math.abs(netAdvantage).toFixed(1)} pts healthier</span>
+                    </div>
+                `;
+            }
+
+            let recommendation = '';
+            if (bet.injuryRecommendation) {
+                recommendation = `
+                    <div class="injury-recommendation">
+                        ${bet.injuryRecommendation}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="injury-section">
+                    <div class="injury-alert ${severity}">
+                        <div class="injury-header">
+                            <span class="injury-icon">🏥</span>
+                            <span class="injury-title">INJURY REPORT</span>
+                            <span class="severity-badge">${severity}</span>
+                        </div>
+                        ${homeSection}
+                        ${awaySection}
+                        ${netAdvantageSection}
+                        ${recommendation}
+                    </div>
                 </div>
             `;
         }
