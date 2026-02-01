@@ -15,10 +15,10 @@ import java.util.*;
 @Service
 public class CFBDataService {
 
-    @Value("${cfbd.api.key}")
+    @Value("${cfb.api.key:}")
     private String apiKey;
 
-    @Value("${cfbd.api.url}")
+    @Value("${cfb.api.url:https://api.collegefootballdata.com}")
     private String apiUrl;
 
     private final WebClient webClient;

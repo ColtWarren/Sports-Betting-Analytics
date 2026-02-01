@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: sports-betting-analytics
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - ODDS_API_KEY=${ODDS_API_KEY}
+      - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - CFB_API_KEY=${CFB_API_KEY:-}
+      - CBB_API_KEY=${CBB_API_KEY:-}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/betting
+      - SPRING_DATASOURCE_USERNAME=betting
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-betting123}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - betting-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: betting-postgres
+    environment:
+      - POSTGRES_DB=betting
+      - POSTGRES_USER=betting
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-betting123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U betting -d betting"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - betting-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  betting-network:
+    driver: bridge

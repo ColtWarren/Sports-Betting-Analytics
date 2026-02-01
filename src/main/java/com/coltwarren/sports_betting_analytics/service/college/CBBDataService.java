@@ -23,10 +23,10 @@ import java.util.*;
 @Service
 public class CBBDataService {
 
-    @Value("${cbb.api.key}")
+    @Value("${cbb.api.key:}")
     private String apiKey;
 
-    @Value("${cbb.api.url}")
+    @Value("${cbb.api.url:https://api.collegebasketballdata.com}")
     private String apiUrl;
 
     private final WebClient webClient;

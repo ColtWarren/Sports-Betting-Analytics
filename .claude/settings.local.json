@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "SlashCommand(/init)",
-      "Bash(./mvnw clean compile)"
+      "Bash(./mvnw clean compile)",
+      "Bash(git push:*)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []
