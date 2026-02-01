@@ -430,6 +430,107 @@
             display: block;
         }
 
+        /* xG Analysis Section (Soccer only) */
+        .xg-analysis {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .xg-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        .xg-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .xg-team {
+            background: rgba(17, 24, 39, 0.6);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .xg-team-name {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .xg-stat {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e0e7ff;
+        }
+
+        .xg-status {
+            font-size: 11px;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .xg-status.overperforming {
+            color: #f59e0b;
+        }
+
+        .xg-status.underperforming {
+            color: #10b981;
+        }
+
+        .xg-status.neutral {
+            color: #94a3b8;
+        }
+
+        .xg-projected {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .xg-projected-label {
+            font-size: 12px;
+            color: #a5b4fc;
+        }
+
+        .xg-projected-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e0e7ff;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .xg-signal {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .xg-signal.fade {
+            background: rgba(245, 158, 11, 0.15);
+            border-left: 3px solid #f59e0b;
+            color: #fbbf24;
+        }
+
+        .xg-signal.bet-for {
+            background: rgba(16, 185, 129, 0.15);
+            border-left: 3px solid #10b981;
+            color: #34d399;
+        }
+
         /* Action Buttons Container */
         .bet-actions {
             display: flex;
@@ -1040,6 +1141,8 @@
 
                     ${renderInjuryAlert(bet)}
 
+                    ${renderXGAnalysis(bet)}
+
                     <div class="analysis">
                         <div class="analysis-label">AI ANALYSIS</div>
                         <div class="analysis-text">
@@ -1293,6 +1396,89 @@
                         ${netAdvantageSection}
                         ${recommendation}
                     </div>
+                </div>
+            `;
+        }
+
+        function renderXGAnalysis(bet) {
+            // Only show for soccer
+            if (bet.sport !== 'SOCCER') {
+                return '';
+            }
+
+            // Check if we have xG data
+            if (!bet.xgAnalysis) {
+                return '';
+            }
+
+            const xg = bet.xgAnalysis;
+            const homeStats = xg.homeXGStats || {};
+            const awayStats = xg.awayXGStats || {};
+
+            // Home team status
+            const homeStatus = homeStats.performanceStatus || 'NEUTRAL';
+            const homeStatusClass = homeStatus.toLowerCase();
+            const homeStatusDisplay = homeStatus === 'OVERPERFORMING' ? '↑ Overperforming' :
+                                      homeStatus === 'UNDERPERFORMING' ? '↓ Underperforming' : '→ Neutral';
+
+            // Away team status
+            const awayStatus = awayStats.performanceStatus || 'NEUTRAL';
+            const awayStatusClass = awayStatus.toLowerCase();
+            const awayStatusDisplay = awayStatus === 'OVERPERFORMING' ? '↑ Overperforming' :
+                                      awayStatus === 'UNDERPERFORMING' ? '↓ Underperforming' : '→ Neutral';
+
+            // Signal message
+            let signalSection = '';
+            if (homeStats.bettingSignal === 'FADE') {
+                signalSection = `
+                    <div class="xg-signal fade">
+                        ⚠️ ${bet.homeTeam} overperforming xG by ${homeStats.goalsVsXG?.toFixed(1) || '0'} goals - consider FADE
+                    </div>
+                `;
+            } else if (homeStats.bettingSignal === 'BET_FOR') {
+                signalSection = `
+                    <div class="xg-signal bet-for">
+                        ✅ ${bet.homeTeam} underperforming xG - due for positive regression
+                    </div>
+                `;
+            }
+            if (awayStats.bettingSignal === 'FADE') {
+                signalSection += `
+                    <div class="xg-signal fade">
+                        ⚠️ ${bet.awayTeam} overperforming xG by ${awayStats.goalsVsXG?.toFixed(1) || '0'} goals - consider FADE
+                    </div>
+                `;
+            } else if (awayStats.bettingSignal === 'BET_FOR') {
+                signalSection += `
+                    <div class="xg-signal bet-for">
+                        ✅ ${bet.awayTeam} underperforming xG - due for positive regression
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="xg-analysis">
+                    <div class="xg-header">
+                        <span>⚽</span>
+                        <span>xG ANALYSIS</span>
+                    </div>
+                    <div class="xg-grid">
+                        <div class="xg-team">
+                            <div class="xg-team-name">${bet.homeTeam}</div>
+                            <div class="xg-stat">${homeStats.xGPerGame?.toFixed(2) || '0.00'} xG/game</div>
+                            <div class="xg-status ${homeStatusClass}">${homeStatusDisplay}</div>
+                        </div>
+                        <div class="xg-team">
+                            <div class="xg-team-name">${bet.awayTeam}</div>
+                            <div class="xg-stat">${awayStats.xGPerGame?.toFixed(2) || '0.00'} xG/game</div>
+                            <div class="xg-status ${awayStatusClass}">${awayStatusDisplay}</div>
+                        </div>
+                    </div>
+                    <div class="xg-projected">
+                        <span class="xg-projected-label">Projected Total Goals</span>
+                        <span class="xg-projected-value">${xg.projectedTotal?.toFixed(1) || '2.5'}</span>
+                    </div>
+                    ${signalSection}
                 </div>
             `;
         }

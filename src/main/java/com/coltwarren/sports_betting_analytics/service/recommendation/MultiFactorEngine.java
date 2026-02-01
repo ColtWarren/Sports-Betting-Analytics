@@ -3,7 +3,9 @@ package com.coltwarren.sports_betting_analytics.service.recommendation;
 import com.coltwarren.sports_betting_analytics.model.recommendation.*;
 import com.coltwarren.sports_betting_analytics.model.pattern.BettingPattern;
 import com.coltwarren.sports_betting_analytics.model.pattern.PatternMatch;
+import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
 import com.coltwarren.sports_betting_analytics.service.pattern.PatternMatchingService;
+import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,11 +32,15 @@ public class MultiFactorEngine {
     @Autowired
     private PatternMatchingService patternMatchingService;
 
+    @Autowired
+    private XGDataService xgDataService;
+
     // Factor weights (sum to 1.0)
-    private static final double WEIGHT_PATTERN = 0.30;      // Historical patterns most important
+    private static final double WEIGHT_PATTERN = 0.25;      // Historical patterns
     private static final double WEIGHT_VALUE = 0.25;        // Pure odds value
-    private static final double WEIGHT_INJURY = 0.20;       // Injury impact
-    private static final double WEIGHT_PUBLIC = 0.15;       // Contrarian value
+    private static final double WEIGHT_XG = 0.15;           // Expected Goals (soccer)
+    private static final double WEIGHT_INJURY = 0.15;       // Injury impact
+    private static final double WEIGHT_PUBLIC = 0.10;       // Contrarian value
     private static final double WEIGHT_WEATHER = 0.10;      // Weather (when applicable)
 
     // Thresholds
@@ -67,6 +73,7 @@ public class MultiFactorEngine {
         rec.setInjuryFactor(analyzeInjuryFactor(game));
         rec.setPatternFactor(analyzePatternFactor(game));
         rec.setValueFactor(analyzeValueFactor(game));
+        rec.setXgFactor(analyzeXGFactor(game));
 
         // Combine factors
         combineFactors(rec);
@@ -322,6 +329,56 @@ public class MultiFactorEngine {
     }
 
     /**
+     * Analyze Expected Goals (xG) factor - soccer only
+     */
+    private FactorAnalysis analyzeXGFactor(GameInput game) {
+        FactorAnalysis factor = new FactorAnalysis("Expected Goals (xG)");
+        factor.setWeight(WEIGHT_XG);
+
+        // Only applicable for soccer
+        String sport = game.getSport() != null ? game.getSport().toUpperCase() : "";
+        String league = game.getLeague() != null ? game.getLeague().toUpperCase() : "";
+
+        boolean isSoccer = "SOCCER".equals(sport) ||
+                          "EPL".equals(league) ||
+                          league.contains("LIGA") ||
+                          league.contains("SERIE") ||
+                          league.contains("BUNDESLIGA") ||
+                          league.contains("LIGUE");
+
+        if (!isSoccer) {
+            factor.setIsApplicable(false);
+            factor.setReason("xG analysis only available for soccer");
+            return factor;
+        }
+
+        try {
+            MatchXGAnalysis xgAnalysis = xgDataService.analyzeMatch(
+                game.getHomeTeam(), game.getAwayTeam(), game.getLeague());
+
+            if (xgAnalysis == null || "INSUFFICIENT_DATA".equals(xgAnalysis.getXgRecommendation())) {
+                factor.setIsApplicable(false);
+                factor.setReason("Insufficient xG data for these teams");
+                return factor;
+            }
+
+            factor.setIsApplicable(true);
+            factor.setRawScore(xgAnalysis.getXgConfidence());
+            factor.setWeightedScore(xgAnalysis.getXgConfidence() * WEIGHT_XG);
+            factor.setRecommendation("BET_" + xgAnalysis.getXgRecommendation());
+            factor.setReason(xgAnalysis.getXgReason());
+            factor.setAlertLevel(xgAnalysis.getAlertLevel());
+
+        } catch (Exception e) {
+            log.warn("Error analyzing xG: {}", e.getMessage());
+            factor.setIsApplicable(false);
+            factor.setReason("xG analysis unavailable");
+        }
+
+        return factor;
+    }
+
+    /**
      * Combine all factors into final scores
      */
     private void combineFactors(MultiFactorRecommendation rec) {
@@ -330,7 +387,8 @@ public class MultiFactorEngine {
             rec.getPublicBettingFactor(),
             rec.getInjuryFactor(),
             rec.getPatternFactor(),
-            rec.getValueFactor()
+            rec.getValueFactor(),
+            rec.getXgFactor()
         );
 
         // Count applicable factors
@@ -392,6 +450,7 @@ public class MultiFactorEngine {
         List<FactorAnalysis> factors = List.of(
             rec.getPatternFactor(),
             rec.getValueFactor(),
+            rec.getXgFactor(),
             rec.getInjuryFactor(),
             rec.getPublicBettingFactor(),
             rec.getWeatherFactor()
@@ -505,6 +564,9 @@ public class MultiFactorEngine {
         }
         if (rec.getValueFactor().getIsApplicable()) {
             insights.add("💰 " + rec.getValueFactor().getReason());
+        }
+        if (rec.getXgFactor().getIsApplicable()) {
+            insights.add("⚽ " + rec.getXgFactor().getReason());
         }
 
         rec.setKeyInsights(insights);

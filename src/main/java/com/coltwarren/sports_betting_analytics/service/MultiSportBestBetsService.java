@@ -11,6 +11,8 @@ import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
 import com.coltwarren.sports_betting_analytics.model.betting.PublicBettingData;
 import com.coltwarren.sports_betting_analytics.model.betting.ContrarianValue;
 import com.coltwarren.sports_betting_analytics.model.injury.InjuryImpact;
+import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
+import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +47,9 @@ public class MultiSportBestBetsService {
 
     @Autowired
     private InjuryAnalysisService injuryAnalysisService;
+
+    @Autowired
+    private XGDataService xgDataService;
 
     private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL", "SOCCER"};
     
@@ -594,6 +599,45 @@ public class MultiSportBestBetsService {
                 bestOdds.put("awayWinBook", fixture.getBestAwayBook());
             }
             bet.put("bestOdds", bestOdds);
+
+            // Add xG analysis for soccer
+            try {
+                MatchXGAnalysis xgAnalysis = xgDataService.analyzeMatch(
+                    fixture.getHomeTeam(), fixture.getAwayTeam(), league);
+                if (xgAnalysis != null) {
+                    Map<String, Object> xgData = new HashMap<>();
+                    xgData.put("projectedTotal", xgAnalysis.getProjectedTotal());
+                    xgData.put("xgRecommendation", xgAnalysis.getXgRecommendation());
+                    xgData.put("xgConfidence", xgAnalysis.getXgConfidence());
+                    xgData.put("xgReason", xgAnalysis.getXgReason());
+
+                    // Home team xG stats
+                    if (xgAnalysis.getHomeXGStats() != null) {
+                        Map<String, Object> homeXG = new HashMap<>();
+                        homeXG.put("xGPerGame", xgAnalysis.getHomeXGStats().getXGPerGame());
+                        homeXG.put("goalsVsXG", xgAnalysis.getHomeXGStats().getGoalsVsXG());
+                        homeXG.put("performanceStatus", xgAnalysis.getHomeXGStats().getPerformanceStatus());
+                        homeXG.put("bettingSignal", xgAnalysis.getHomeXGStats().getBettingSignal());
+                        homeXG.put("regressionLikelihood", xgAnalysis.getHomeXGStats().getRegressionLikelihood());
+                        xgData.put("homeXGStats", homeXG);
+                    }
+
+                    // Away team xG stats
+                    if (xgAnalysis.getAwayXGStats() != null) {
+                        Map<String, Object> awayXG = new HashMap<>();
+                        awayXG.put("xGPerGame", xgAnalysis.getAwayXGStats().getXGPerGame());
+                        awayXG.put("goalsVsXG", xgAnalysis.getAwayXGStats().getGoalsVsXG());
+                        awayXG.put("performanceStatus", xgAnalysis.getAwayXGStats().getPerformanceStatus());
+                        awayXG.put("bettingSignal", xgAnalysis.getAwayXGStats().getBettingSignal());
+                        awayXG.put("regressionLikelihood", xgAnalysis.getAwayXGStats().getRegressionLikelihood());
+                        xgData.put("awayXGStats", awayXG);
+                    }
+
+                    bet.put("xgAnalysis", xgData);
+                }
+            } catch (Exception xgError) {
+                System.err.println("Error adding xG analysis: " + xgError.getMessage());
+            }
 
             // AI analysis
             String analysis = String.format(

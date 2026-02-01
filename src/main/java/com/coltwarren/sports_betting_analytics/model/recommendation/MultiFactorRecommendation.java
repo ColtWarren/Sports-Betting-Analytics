@@ -35,6 +35,7 @@ public class MultiFactorRecommendation {
     private FactorAnalysis injuryFactor;
     private FactorAnalysis patternFactor;
     private FactorAnalysis valueFactor;  // Pure odds value
+    private FactorAnalysis xgFactor;     // Expected Goals (soccer only)
 
     // Combined analysis
     private Double combinedScore;        // 0-100 scale
@@ -88,6 +89,7 @@ public class MultiFactorRecommendation {
         if (injuryFactor != null && injuryFactor.getIsApplicable()) factors.add(injuryFactor);
         if (patternFactor != null && patternFactor.getIsApplicable()) factors.add(patternFactor);
         if (valueFactor != null && valueFactor.getIsApplicable()) factors.add(valueFactor);
+        if (xgFactor != null && xgFactor.getIsApplicable()) factors.add(xgFactor);
         return factors;
     }
 }
