@@ -237,16 +237,37 @@
         .sport-nhl { background: #000000; }
         .sport-soccer { background: linear-gradient(135deg, #2E7D32, #4CAF50); }
 
-        /* Soccer-specific odds display */
-        .soccer-odds {
-            background: linear-gradient(135deg, rgba(46, 125, 50, 0.15), rgba(76, 175, 80, 0.15));
-            border-left: 3px solid #4CAF50;
+        /* Soccer 3-way odds grid - matches regular odds styling */
+        .soccer-odds-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
         }
 
-        .soccer-odds .odds-label {
-            color: #81C784;
+        .soccer-odds-grid .odds-item {
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
-        
+
+        /* Highlighted recommended bet */
+        .odds-item.recommended {
+            border: 2px solid #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .odds-item.recommended .odds-label {
+            color: #10b981;
+        }
+
+        .odds-item.recommended .odds-value {
+            color: #10b981;
+        }
+
         .confidence-badge {
             display: flex;
             align-items: center;
@@ -992,7 +1013,7 @@
                     <div class="bet-header">
                         <span class="sport-badge sport-${bet.sport.toLowerCase()}">${getSportIcon(bet.sport)} ${bet.sport}</span>
                         <span class="confidence-badge ${getConfidenceClass(bet.confidence)}">
-                            ⭐ ${bet.confidence}/10
+                            ⭐ ${Number(bet.confidence).toFixed(2)}/10
                         </span>
                     </div>
                     
@@ -1298,18 +1319,62 @@
 
             let html = '';
 
-            // Soccer 3-way betting format (has 'outcome' field)
+            // Soccer 3-way betting format (has all 3 outcomes)
+            if (odds.homeWinOdds !== undefined || odds.drawOdds !== undefined || odds.awayWinOdds !== undefined) {
+                html = '<div class="soccer-odds-grid">';
+
+                // Home Win
+                const isHomeRecommended = odds.outcome === 'HOME_WIN';
+                const homeOdds = odds.homeWinOdds !== undefined ? formatOdds(odds.homeWinOdds) : 'N/A';
+                const homeBook = odds.homeWinBook || 'N/A';
+                html += `
+                    <div class="odds-item ${isHomeRecommended ? 'recommended' : ''}">
+                        <div class="odds-label">Best Home Win${isHomeRecommended ? ' ★' : ''}</div>
+                        <div class="odds-value">${homeOdds}</div>
+                        <div class="odds-book">${homeBook}</div>
+                    </div>
+                `;
+
+                // Draw
+                const isDrawRecommended = odds.outcome === 'DRAW';
+                const drawOdds = odds.drawOdds !== undefined ? formatOdds(odds.drawOdds) : 'N/A';
+                const drawBook = odds.drawBook || 'N/A';
+                html += `
+                    <div class="odds-item ${isDrawRecommended ? 'recommended' : ''}">
+                        <div class="odds-label">Best Draw${isDrawRecommended ? ' ★' : ''}</div>
+                        <div class="odds-value">${drawOdds}</div>
+                        <div class="odds-book">${drawBook}</div>
+                    </div>
+                `;
+
+                // Away Win
+                const isAwayRecommended = odds.outcome === 'AWAY_WIN';
+                const awayOdds = odds.awayWinOdds !== undefined ? formatOdds(odds.awayWinOdds) : 'N/A';
+                const awayBook = odds.awayWinBook || 'N/A';
+                html += `
+                    <div class="odds-item ${isAwayRecommended ? 'recommended' : ''}">
+                        <div class="odds-label">Best Away Win${isAwayRecommended ? ' ★' : ''}</div>
+                        <div class="odds-value">${awayOdds}</div>
+                        <div class="odds-book">${awayBook}</div>
+                    </div>
+                `;
+
+                html += '</div>';
+                return html;
+            }
+
+            // Legacy fallback: single soccer outcome (for backwards compatibility)
             if (odds.outcome) {
                 const outcomeLabel = {
-                    'HOME_WIN': 'Home Win',
-                    'DRAW': 'Draw',
-                    'AWAY_WIN': 'Away Win'
+                    'HOME_WIN': 'Best Home Win',
+                    'DRAW': 'Best Draw',
+                    'AWAY_WIN': 'Best Away Win'
                 }[odds.outcome] || odds.outcome;
 
-                const bookDisplay = odds.book || 'No MO books';
+                const bookDisplay = odds.book || 'N/A';
                 html += `
-                    <div class="odds-item soccer-odds">
-                        <div class="odds-label">${outcomeLabel}</div>
+                    <div class="odds-item recommended">
+                        <div class="odds-label">${outcomeLabel} ★</div>
                         <div class="odds-value">${formatOdds(odds.odds)}</div>
                         <div class="odds-book">${bookDisplay}</div>
                     </div>

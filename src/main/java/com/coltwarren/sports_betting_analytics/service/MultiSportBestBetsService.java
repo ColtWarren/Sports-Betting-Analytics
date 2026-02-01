@@ -575,11 +575,24 @@ public class MultiSportBestBetsService {
             bet.put("kellyPercent", kellyPercentage);
             bet.put("isLocalTeam", fixture.isLocalTeam());
 
-            // Create best odds map
+            // Create best odds map with all 3 soccer outcomes
             Map<String, Object> bestOdds = new HashMap<>();
             bestOdds.put("odds", odds.intValue());
             bestOdds.put("book", sportsbook);
             bestOdds.put("outcome", outcome);
+            // Include all 3 outcomes for display
+            if (fixture.getHomeWinOdds() != null) {
+                bestOdds.put("homeWinOdds", fixture.getHomeWinOdds().intValue());
+                bestOdds.put("homeWinBook", fixture.getBestHomeBook());
+            }
+            if (fixture.getDrawOdds() != null) {
+                bestOdds.put("drawOdds", fixture.getDrawOdds().intValue());
+                bestOdds.put("drawBook", fixture.getBestDrawBook());
+            }
+            if (fixture.getAwayWinOdds() != null) {
+                bestOdds.put("awayWinOdds", fixture.getAwayWinOdds().intValue());
+                bestOdds.put("awayWinBook", fixture.getBestAwayBook());
+            }
             bet.put("bestOdds", bestOdds);
 
             // AI analysis
