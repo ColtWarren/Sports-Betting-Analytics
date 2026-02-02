@@ -7,6 +7,9 @@ pom.xml.next
 release.properties
 dependency-reduced-pom.xml
 
+# Build artifacts
+*.jar
+
 # IDE
 .idea/
 *.iml
@@ -26,6 +29,8 @@ application-local.properties
 
 # Environment files with secrets - NEVER COMMIT
 .env
+.env.local
+.env.production
 *.env
 .env.*
 !.env.example
