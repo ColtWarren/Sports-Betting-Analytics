@@ -21,13 +21,11 @@ WORKDIR /app
 # Copy the built JAR
 COPY --from=build /app/target/*.jar app.jar
 
-# Railway uses PORT environment variable
-ENV PORT=8080
-EXPOSE ${PORT}
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/health/live || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health/live || exit 1
 
-# Run the application
-ENTRYPOINT ["java", "-Dserver.port=${PORT}", "-jar", "app.jar"]
+# Run the JAR that's at /app/app.jar (not target/*.jar!)
+ENTRYPOINT ["java", "-Xmx512m", "-Dserver.port=8080", "-jar", "app.jar"]
