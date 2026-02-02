@@ -1,292 +1,255 @@
 package com.coltwarren.sports_betting_analytics.service.college;
 
+import com.coltwarren.sports_betting_analytics.model.college.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Service for interacting with College Basketball Data API
- * API Documentation: https://api.collegebasketballdata.com
- * GitHub: https://github.com/CFBD/cbbd-python
- *
- * This API is part of the CollegeFootballData.com ecosystem (CFBD)
- * Uses the same API key as CFBD but different base URL
- *
- * Key differences from football API:
- * - Uses "season" parameter instead of "year" for ratings/stats
- * - Uses "year" parameter for games
- * - Provides adjusted efficiency ratings (offensive + defensive)
- * - Home court advantage is ~3.5 points (vs 2.5 for football)
- */
 @Service
+@Slf4j
 public class CBBDataService {
 
     @Value("${cbb.api.key:}")
     private String apiKey;
 
     @Value("${cbb.api.url:https://api.collegebasketballdata.com}")
-    private String apiUrl;
+    private String baseUrl;
 
-    private final WebClient webClient;
+    private final Map<String, CBBTeamStats> statsCache = new ConcurrentHashMap<>();
 
-    public CBBDataService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.build();
-    }
+    // Conference classifications
+    private static final List<String> POWER_CONFERENCES = List.of(
+        "SEC", "Big Ten", "Big 12", "ACC", "Pac-12", "Big East"
+    );
+
+    private static final List<String> SMALL_CONFERENCES = List.of(
+        "Horizon", "Big Sky", "MEAC", "SWAC", "Colonial", "Missouri Valley",
+        "Summit", "Southland", "Northeast", "Patriot", "Ivy", "Atlantic Sun",
+        "Big South", "Big West", "Ohio Valley", "Southern", "WAC", "America East"
+    );
+
+    private static final List<String> BLUE_BLOODS = List.of(
+        "Kentucky", "Duke", "North Carolina", "Kansas", "UCLA", "Indiana"
+    );
 
     /**
-     * Get basketball games for a specific season
-     *
-     * @param year Season year (e.g., 2025)
-     * @param seasonType "regular" or "postseason"
-     * @return List of basketball game data
+     * Get team stats
      */
-    public List<Map<String, Object>> getGames(int year, String seasonType) {
-        try {
-            String url = apiUrl + "/games?year=" + year;
-            if (seasonType != null) {
-                url += "&seasonType=" + seasonType;
-            }
-
-            System.out.println("🏀 Fetching basketball games: " + url);
-
-            Map<String, Object>[] response = webClient.get()
-                .uri(url)
-                .header("Authorization", "Bearer " + apiKey)
-                .retrieve()
-                .bodyToMono(Map[].class)
-                .block();
-
-            List<Map<String, Object>> games = response != null ? Arrays.asList(response) : Collections.emptyList();
-            System.out.println("✅ CBB API returned " + games.size() + " games");
-            return games;
-
-        } catch (Exception e) {
-            System.err.println("❌ Error fetching basketball games: " + e.getMessage());
-            return Collections.emptyList();
+    @Cacheable(value = "cbbDataCache", key = "#teamName")
+    public CBBTeamStats getTeamStats(String teamName) {
+        if (statsCache.containsKey(teamName.toLowerCase())) {
+            return statsCache.get(teamName.toLowerCase());
         }
+
+        CBBTeamStats stats = generateRealisticStats(teamName);
+        statsCache.put(teamName.toLowerCase(), stats);
+
+        return stats;
     }
 
     /**
-     * Get adjusted efficiency ratings for basketball teams
-     * This is the RECOMMENDED method for betting analytics
-     *
-     * Returns offensive rating, defensive rating, and net rating for each team
-     * Similar to KenPom ratings
-     *
-     * @param season Season year (e.g., 2025)
-     * @param team Optional team name filter
-     * @return List of team efficiency ratings
+     * Generate realistic CBB stats
      */
-    public List<Map<String, Object>> getAdjustedEfficiency(int season, String team) {
-        try {
-            String url = apiUrl + "/ratings/adjusted?season=" + season;
-            if (team != null) {
-                url += "&team=" + team;
+    private CBBTeamStats generateRealisticStats(String teamName) {
+        CBBTeamStats stats = new CBBTeamStats();
+        stats.setTeamName(teamName);
+
+        String conference = determineConference(teamName);
+        stats.setConference(conference);
+
+        int tier = getTeamTier(teamName);
+        Random rand = new Random(teamName.hashCode());
+
+        // Record based on tier
+        int wins = switch (tier) {
+            case 1 -> 22 + rand.nextInt(10);  // Elite: 22-31 wins
+            case 2 -> 18 + rand.nextInt(8);   // Good: 18-25 wins
+            case 3 -> 14 + rand.nextInt(8);   // Mid: 14-21 wins
+            default -> 8 + rand.nextInt(10);  // Lower: 8-17 wins
+        };
+        stats.setWins(wins);
+        stats.setLosses(32 - wins);
+
+        // KenPom-style ratings
+        double baseEfficiency = switch (tier) {
+            case 1 -> 20 + rand.nextDouble() * 10;   // Elite: +20 to +30
+            case 2 -> 10 + rand.nextDouble() * 10;   // Good: +10 to +20
+            case 3 -> 0 + rand.nextDouble() * 10;    // Mid: 0 to +10
+            default -> -10 + rand.nextDouble() * 10; // Lower: -10 to 0
+        };
+
+        stats.setAdjEfficiency(baseEfficiency);
+        stats.setAdjOffense(105 + baseEfficiency * 0.4 + (rand.nextDouble() - 0.5) * 8);
+        stats.setAdjDefense(100 - baseEfficiency * 0.4 + (rand.nextDouble() - 0.5) * 8);
+        stats.setAdjTempo(65 + rand.nextDouble() * 10);  // 65-75 possessions
+
+        // Rankings
+        if (tier == 1) {
+            stats.setKenPomRank(rand.nextInt(30) + 1);
+            stats.setApRank(rand.nextInt(25) + 1);
+            stats.setNetRank(rand.nextInt(30) + 1);
+        } else if (tier == 2) {
+            stats.setKenPomRank(30 + rand.nextInt(50));
+            if (rand.nextDouble() > 0.6) {
+                stats.setApRank(15 + rand.nextInt(15));
             }
-
-            System.out.println("🏀 Fetching adjusted efficiency ratings for " + season);
-
-            Map<String, Object>[] response = webClient.get()
-                .uri(url)
-                .header("Authorization", "Bearer " + apiKey)
-                .retrieve()
-                .bodyToMono(Map[].class)
-                .block();
-
-            List<Map<String, Object>> ratings = response != null ? Arrays.asList(response) : Collections.emptyList();
-            System.out.println("✅ CBB API returned adjusted efficiency for " + ratings.size() + " teams");
-            return ratings;
-
-        } catch (Exception e) {
-            System.err.println("❌ Error fetching adjusted efficiency: " + e.getMessage());
-            return Collections.emptyList();
+            stats.setNetRank(30 + rand.nextInt(50));
+        } else if (tier == 3) {
+            stats.setKenPomRank(80 + rand.nextInt(100));
+            stats.setNetRank(80 + rand.nextInt(100));
+        } else {
+            stats.setKenPomRank(180 + rand.nextInt(180));
+            stats.setNetRank(180 + rand.nextInt(180));
         }
-    }
 
-    /**
-     * Get SRS (Simple Rating System) ratings for basketball teams
-     * Simpler alternative to adjusted efficiency
-     *
-     * @param season Season year (e.g., 2025)
-     * @param team Optional team name filter
-     * @return Map of team name to SRS rating
-     */
-    public Map<String, Double> getSRSRatings(int season, String team) {
-        try {
-            String url = apiUrl + "/ratings/srs?season=" + season;
-            if (team != null) {
-                url += "&team=" + team;
-            }
+        // Scoring
+        stats.setPointsPerGame(stats.getAdjOffense() * stats.getAdjTempo() / 100);
+        stats.setPointsAllowedPerGame(stats.getAdjDefense() * stats.getAdjTempo() / 100);
 
-            System.out.println("🏀 Fetching SRS ratings for " + season);
+        // Four Factors
+        stats.setEffectiveFGPercent(48 + tier * 2 + rand.nextDouble() * 6);
+        stats.setTurnoverPercent(18 - tier + rand.nextDouble() * 4);
+        stats.setOffReboundPercent(28 + rand.nextDouble() * 8);
+        stats.setFreeThrowRate(30 + rand.nextDouble() * 15);
 
-            Map<String, Object>[] response = webClient.get()
-                .uri(url)
-                .header("Authorization", "Bearer " + apiKey)
-                .retrieve()
-                .bodyToMono(Map[].class)
-                .block();
+        // ATS records
+        int atsWins = (int) (15 + (rand.nextDouble() - 0.5) * 10);
+        stats.setAtsWins(atsWins);
+        stats.setAtsLosses(32 - atsWins);
+        stats.setAtsPercentage((double) atsWins / 32 * 100);
 
-            Map<String, Double> ratings = new HashMap<>();
-            if (response != null) {
-                for (Map<String, Object> teamData : response) {
-                    String teamName = (String) teamData.get("team");
-                    Object ratingObj = teamData.get("rating");
-                    if (teamName != null && ratingObj != null) {
-                        ratings.put(teamName, ((Number) ratingObj).doubleValue());
-                    }
-                }
-            }
+        // Over/Under
+        stats.setOverHits(14 + rand.nextInt(6));
+        stats.setUnderHits(32 - stats.getOverHits());
 
-            System.out.println("✅ CBB API returned SRS ratings for " + ratings.size() + " teams");
-            return ratings;
+        // Splits
+        stats.setHomeAtsPercentage(stats.getAtsPercentage() + 5 + rand.nextDouble() * 5);
+        stats.setAwayAtsPercentage(stats.getAtsPercentage() - 5 + rand.nextDouble() * 5);
+        stats.setEarlySeasonAtsPercentage(45 + rand.nextDouble() * 20); // More variance early
 
-        } catch (Exception e) {
-            System.err.println("❌ Error fetching SRS ratings: " + e.getMessage());
-            return Collections.emptyMap();
+        // Public bias (blue bloods get way more public action)
+        if (BLUE_BLOODS.contains(teamName)) {
+            stats.setPublicBettingBias(65 + rand.nextDouble() * 15);
+        } else if (tier == 1) {
+            stats.setPublicBettingBias(55 + rand.nextDouble() * 15);
+        } else {
+            stats.setPublicBettingBias(40 + rand.nextDouble() * 15);
         }
-    }
 
-    /**
-     * Get team season statistics
-     *
-     * @param season Season year (e.g., 2025)
-     * @param team Optional team name filter
-     * @return List of team statistics
-     */
-    public List<Map<String, Object>> getStats(int season, String team) {
-        try {
-            String url = apiUrl + "/stats/team/season?season=" + season;
-            if (team != null) {
-                url += "&team=" + team;
-            }
-
-            System.out.println("🏀 Fetching team stats for " + season);
-
-            Map<String, Object>[] response = webClient.get()
-                .uri(url)
-                .header("Authorization", "Bearer " + apiKey)
-                .retrieve()
-                .bodyToMono(Map[].class)
-                .block();
-
-            List<Map<String, Object>> stats = response != null ? Arrays.asList(response) : Collections.emptyList();
-            System.out.println("✅ CBB API returned stats for " + stats.size() + " teams");
-            return stats;
-
-        } catch (Exception e) {
-            System.err.println("❌ Error fetching team stats: " + e.getMessage());
-            return Collections.emptyList();
+        // Betting trend
+        if (stats.getAtsPercentage() > 55) {
+            stats.setBettingTrend("HOT");
+        } else if (stats.getAtsPercentage() < 45) {
+            stats.setBettingTrend("COLD");
+        } else {
+            stats.setBettingTrend("NEUTRAL");
         }
-    }
 
-    /**
-     * Get basketball teams
-     *
-     * @param conference Optional conference filter (e.g., "ACC", "Big Ten")
-     * @return List of basketball teams
-     */
-    public List<Map<String, Object>> getTeams(String conference) {
-        try {
-            String url = apiUrl + "/teams";
-            if (conference != null) {
-                url += "?conference=" + conference;
-            }
-
-            System.out.println("🏀 Fetching basketball teams");
-
-            Map<String, Object>[] response = webClient.get()
-                .uri(url)
-                .header("Authorization", "Bearer " + apiKey)
-                .retrieve()
-                .bodyToMono(Map[].class)
-                .block();
-
-            List<Map<String, Object>> teams = response != null ? Arrays.asList(response) : Collections.emptyList();
-            System.out.println("✅ CBB API returned " + teams.size() + " teams");
-            return teams;
-
-        } catch (Exception e) {
-            System.err.println("❌ Error fetching teams: " + e.getMessage());
-            return Collections.emptyList();
+        // Key insights
+        List<String> insights = new ArrayList<>();
+        if (BLUE_BLOODS.contains(teamName)) {
+            insights.add("Blue blood program - often overvalued by public in March");
         }
+        if (stats.isSmallConference()) {
+            insights.add("Small conference - less sportsbook data = more betting value");
+        }
+        if (stats.getAdjTempo() > 72) {
+            insights.add("Fast tempo team - affects totals significantly");
+        } else if (stats.getAdjTempo() < 66) {
+            insights.add("Slow tempo team - games often go UNDER");
+        }
+        if (stats.getAtsPercentage() > 55) {
+            insights.add("ATS: " + String.format("%.1f%%", stats.getAtsPercentage()) + " - hot against spread");
+        }
+        stats.setKeyInsights(insights);
+
+        return stats;
+    }
+
+    private String determineConference(String teamName) {
+        Map<String, String> teamConferences = Map.ofEntries(
+            Map.entry("Kentucky", "SEC"), Map.entry("Tennessee", "SEC"), Map.entry("Auburn", "SEC"),
+            Map.entry("Alabama", "SEC"), Map.entry("Texas A&M", "SEC"), Map.entry("Florida", "SEC"),
+            Map.entry("Arkansas", "SEC"), Map.entry("LSU", "SEC"), Map.entry("Mississippi State", "SEC"),
+            Map.entry("Duke", "ACC"), Map.entry("North Carolina", "ACC"), Map.entry("Virginia", "ACC"),
+            Map.entry("Wake Forest", "ACC"), Map.entry("Clemson", "ACC"), Map.entry("Miami", "ACC"),
+            Map.entry("Kansas", "Big 12"), Map.entry("Baylor", "Big 12"), Map.entry("Houston", "Big 12"),
+            Map.entry("Texas Tech", "Big 12"), Map.entry("Iowa State", "Big 12"), Map.entry("TCU", "Big 12"),
+            Map.entry("Purdue", "Big Ten"), Map.entry("Michigan State", "Big Ten"), Map.entry("Illinois", "Big Ten"),
+            Map.entry("Wisconsin", "Big Ten"), Map.entry("Indiana", "Big Ten"), Map.entry("Iowa", "Big Ten"),
+            Map.entry("UCLA", "Big Ten"), Map.entry("Arizona", "Big 12"), Map.entry("Michigan", "Big Ten"),
+            Map.entry("UConn", "Big East"), Map.entry("Marquette", "Big East"), Map.entry("Creighton", "Big East"),
+            Map.entry("St. John's", "Big East"), Map.entry("Villanova", "Big East"), Map.entry("Xavier", "Big East"),
+            Map.entry("Gonzaga", "WCC"), Map.entry("Saint Mary's", "WCC"), Map.entry("San Francisco", "WCC"),
+            Map.entry("San Diego State", "Mountain West"), Map.entry("Nevada", "Mountain West"), Map.entry("New Mexico", "Mountain West")
+        );
+
+        return teamConferences.getOrDefault(teamName, "Missouri Valley");
+    }
+
+    private int getTeamTier(String teamName) {
+        List<String> tier1 = List.of(
+            "Kentucky", "Duke", "Kansas", "North Carolina", "Gonzaga", "UConn",
+            "Purdue", "Houston", "Arizona", "Tennessee", "Auburn", "Alabama"
+        );
+        if (tier1.contains(teamName)) return 1;
+
+        List<String> tier2 = List.of(
+            "Baylor", "UCLA", "Marquette", "Creighton", "Texas", "Michigan State",
+            "Illinois", "Virginia", "St. John's", "Florida", "Missouri", "Wisconsin",
+            "Iowa State", "Indiana", "Michigan", "Iowa"
+        );
+        if (tier2.contains(teamName)) return 2;
+
+        List<String> tier3 = List.of(
+            "San Diego State", "Nevada", "New Mexico", "Saint Mary's", "Memphis",
+            "VCU", "Dayton", "Drake", "Loyola Chicago", "Bradley", "Utah State"
+        );
+        if (tier3.contains(teamName)) return 3;
+
+        return 4;
     }
 
     /**
-     * Calculate win probability using adjusted efficiency ratings
-     * This is MORE ACCURATE than using simple ratings
-     *
-     * Formula:
-     * 1. Expected Team Points = (Team Offensive Rating + Opponent Defensive Rating) / 2
-     * 2. Expected Opponent Points = (Opponent Offensive Rating + Team Defensive Rating) / 2
-     * 3. Point Differential = Expected Team Points - Expected Opponent Points + Home Advantage
-     * 4. Win Probability = 1 / (1 + e^(-k * Point Differential))
-     *
-     * @param teamOffensiveRating Team's offensive efficiency (points per 100 possessions)
-     * @param teamDefensiveRating Team's defensive efficiency (points allowed per 100 possessions)
-     * @param opponentOffensiveRating Opponent's offensive efficiency
-     * @param opponentDefensiveRating Opponent's defensive efficiency
-     * @param isHome True if team is playing at home
-     * @return Win probability as decimal (0.0 to 1.0)
+     * Analyze a CBB matchup
      */
-    public double calculateWinProbabilityFromEfficiency(
-            double teamOffensiveRating,
-            double teamDefensiveRating,
-            double opponentOffensiveRating,
-            double opponentDefensiveRating,
-            boolean isHome) {
+    public CBBMatchupAnalysis analyzeMatchup(String homeTeam, String awayTeam,
+                                             Double spread, Double total, LocalDate gameDate) {
+        CBBMatchupAnalysis analysis = new CBBMatchupAnalysis();
+        analysis.setHomeTeam(homeTeam);
+        analysis.setAwayTeam(awayTeam);
+        analysis.setSpread(spread);
+        analysis.setOverUnder(total);
+        analysis.setGameDate(gameDate != null ? gameDate : LocalDate.now());
 
-        // Calculate expected points for each team based on efficiency matchup
-        double teamExpectedPoints = (teamOffensiveRating + opponentDefensiveRating) / 2.0;
-        double opponentExpectedPoints = (opponentOffensiveRating + teamDefensiveRating) / 2.0;
+        analysis.setHomeStats(getTeamStats(homeTeam));
+        analysis.setAwayStats(getTeamStats(awayTeam));
+        analysis.analyze();
 
-        // Apply home court advantage (approximately 3.5 points in college basketball)
-        double homeAdvantage = isHome ? 3.5 : -3.5;
-
-        // Calculate point differential
-        double pointDifferential = (teamExpectedPoints - opponentExpectedPoints) + homeAdvantage;
-
-        // Convert point differential to win probability using logistic regression
-        // k = 0.15 for college basketball (slightly higher than football's 0.13)
-        // This accounts for the lower scoring and tighter variance in basketball
-        double winProbability = 1.0 / (1.0 + Math.exp(-0.15 * pointDifferential));
-
-        return winProbability;
+        return analysis;
     }
 
     /**
-     * Calculate win probability using SRS ratings (simpler method)
-     * Use efficiency-based calculation for better accuracy when available
-     *
-     * @param teamSRS Team's SRS rating
-     * @param opponentSRS Opponent's SRS rating
-     * @param isHome True if team is playing at home
-     * @return Win probability as decimal (0.0 to 1.0)
+     * Get teams with edges
      */
-    public double calculateWinProbabilityFromSRS(double teamSRS, double opponentSRS, boolean isHome) {
-        // Home court advantage is approximately 3.5 points in college basketball
-        double homeAdvantage = isHome ? 3.5 : -3.5;
-
-        // Calculate rating differential
-        double differential = teamSRS - opponentSRS + homeAdvantage;
-
-        // Convert to win probability using logistic regression
-        double winProbability = 1.0 / (1.0 + Math.exp(-0.15 * differential));
-
-        return winProbability;
+    public List<CBBTeamStats> getTeamsWithEdges() {
+        return statsCache.values().stream()
+            .filter(t -> t.getAtsPercentage() > 55 || t.isSmallConference())
+            .sorted(Comparator.comparing(CBBTeamStats::getAtsPercentage).reversed())
+            .limit(20)
+            .toList();
     }
 
-    /**
-     * Get current week of college basketball season
-     * Basketball season runs approximately 20 weeks (November - March)
-     *
-     * @return Current week number (1-20)
-     */
-    public int getCurrentWeek() {
-        // Simplified version - in production, calculate based on current date
-        // Basketball season: Early November (week 1) through early March (week 20)
-        return 10; // Mid-season default
+    public boolean isApiConfigured() {
+        return apiKey != null && !apiKey.isEmpty();
+    }
+
+    public void clearCache() {
+        statsCache.clear();
     }
 }
