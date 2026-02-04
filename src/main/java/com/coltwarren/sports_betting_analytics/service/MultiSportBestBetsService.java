@@ -66,14 +66,19 @@ public class MultiSportBestBetsService {
                 futures.add(future);
             }
             
-            // Collect all bets from all sports
+            // Collect all bets from all sports (gracefully skip any that fail)
             List<Map<String, Object>> allBets = new ArrayList<>();
-            for (Future<List<Map<String, Object>>> future : futures) {
+            for (int i = 0; i < futures.size(); i++) {
+                String sport = SPORTS[i];
                 try {
-                    List<Map<String, Object>> sportBets = future.get(30, TimeUnit.SECONDS);
-                    allBets.addAll(sportBets);
+                    List<Map<String, Object>> sportBets = futures.get(i).get(30, TimeUnit.SECONDS);
+                    if (sportBets != null) {
+                        allBets.addAll(sportBets);
+                    }
+                } catch (TimeoutException e) {
+                    System.err.println("Timeout fetching " + sport + " bets - skipping");
                 } catch (Exception e) {
-                    System.err.println("Error getting sport bets: " + e.getMessage());
+                    System.err.println("Error fetching " + sport + " bets (skipping): " + e.getMessage());
                 }
             }
             

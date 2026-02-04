@@ -69,8 +69,8 @@ public class MultiSportOddsService {
         "score"
     );
     
-    public MultiSportOddsService() {
-        this.oddsClient = WebClient.builder()
+    public MultiSportOddsService(WebClient.Builder webClientBuilder) {
+        this.oddsClient = webClientBuilder
             .baseUrl("https://api.the-odds-api.com/v4")
             .build();
     }
