@@ -180,19 +180,21 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
     /**
      * Get win rate (percentage of bets won)
      * Returns value between 0 and 1 (e.g., 0.55 = 55% win rate)
-     * 
+     * Returns null if no settled bets exist (prevents division by zero)
+     *
      * @return Win rate as decimal
      */
-    @Query("SELECT CAST(COUNT(CASE WHEN b.status = 'WON' THEN 1 END) AS double) / COUNT(b) FROM Bet b WHERE b.status IN ('WON', 'LOST')")
+    @Query("SELECT CAST(COUNT(CASE WHEN b.status = 'WON' THEN 1 END) AS double) / NULLIF(COUNT(b), 0) FROM Bet b WHERE b.status IN ('WON', 'LOST')")
     Double calculateWinRate();
     
     /**
      * Calculate ROI (Return on Investment)
      * ROI = Total Profit / Total Stake
-     * 
+     * Returns null if no settled bets exist (prevents division by zero)
+     *
      * @return ROI as decimal (e.g., 0.05 = 5% ROI)
      */
-    @Query("SELECT SUM(b.profitLoss) / SUM(b.stake) FROM Bet b WHERE b.profitLoss IS NOT NULL")
+    @Query("SELECT SUM(b.profitLoss) / NULLIF(SUM(b.stake), 0) FROM Bet b WHERE b.profitLoss IS NOT NULL")
     Double calculateROI();
     
     /**
