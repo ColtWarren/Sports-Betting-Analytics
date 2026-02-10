@@ -51,7 +51,7 @@ public class MultiSportBestBetsService {
     @Autowired
     private XGDataService xgDataService;
 
-    private static final String[] SPORTS = {"NFL", "CFB", "NBA", "CBB", "MLB", "NHL", "SOCCER"};
+    private static final String[] SPORTS = {"NFL", "CFB", "NBA", "WNBA", "CBB", "MLB", "NHL", "SOCCER"};
     
     public List<Map<String, Object>> getBestBetsAcrossAllSports() {
         try {
