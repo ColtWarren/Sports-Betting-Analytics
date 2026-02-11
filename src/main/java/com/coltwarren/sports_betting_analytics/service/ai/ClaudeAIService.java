@@ -47,7 +47,7 @@ public class ClaudeAIService {
             2. Estimate the TRUE probability of this outcome
             3. Calculate Expected Value
             4. Determine if this is +EV
-            
+            %s
             PROVIDE (keep it brief):
             - Implied Probability: X%%
             - Estimated True Probability: X%%
@@ -55,7 +55,7 @@ public class ClaudeAIService {
             - Recommendation: TAKE IT or SKIP IT
             - Reasoning: 2-3 sentences
             """,
-            sport, eventName, betType, selection, yourOdds, stake);
+            sport, eventName, betType, selection, yourOdds, stake, getSportContext(sport));
         
         return callClaudeAPI(prompt);
     }
@@ -104,6 +104,32 @@ public class ClaudeAIService {
         return callClaudeAPI(prompt);
     }
     
+    private String getSportContext(String sport) {
+        if ("WNBA".equalsIgnoreCase(sport)) {
+            return """
+
+                WOMEN'S BASKETBALL (WNBA) CONTEXT:
+                - Star player impact is outsized (A'ja Wilson, Caitlin Clark, Breanna Stewart can shift lines 3-5 pts)
+                - Shorter 40-game season means rest days and back-to-backs matter significantly more
+                - Smaller league (12 teams) - team chemistry and roster continuity are critical factors
+                - Betting markets are less efficient than NBA - potential edges exist in spreads and totals
+                - Check injury/rest status of star players before estimating probability
+                """;
+        } else if ("WCBB".equalsIgnoreCase(sport)) {
+            return """
+
+                WOMEN'S COLLEGE BASKETBALL (WCBB) CONTEXT:
+                - Dominant programs (South Carolina, UConn) create lopsided matchups - watch for inflated lines
+                - Tournament seed implications significantly affect late-season motivation
+                - Conference strength varies widely - cross-conference matchups often mispriced
+                - Historic programs (UConn, Tennessee) attract public money disproportionately
+                - Betting markets are significantly less efficient than men's CBB - larger edges available
+                - The Caitlin Clark effect has increased betting volume but lines remain soft
+                """;
+        }
+        return "";
+    }
+
     public String callClaudeAPI(String prompt) {
         try {
             Map<String, Object> requestBody = Map.of(

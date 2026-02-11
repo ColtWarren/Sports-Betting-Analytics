@@ -3,11 +3,14 @@ package com.coltwarren.sports_betting_analytics.service.ai;
 import com.coltwarren.sports_betting_analytics.service.WeatherService;
 import com.coltwarren.sports_betting_analytics.service.EspnService;
 import com.coltwarren.sports_betting_analytics.service.StatsService;
+import com.coltwarren.sports_betting_analytics.service.wnba.WNBADataService;
+import com.coltwarren.sports_betting_analytics.service.college.WNCAAWDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -19,16 +22,22 @@ public class MatchupAnalyzerService {
     private final WeatherService weatherService;
     private final EspnService espnService;
     private final StatsService statsService;
-    
+    private final WNBADataService wnbaDataService;
+    private final WNCAAWDataService wcbbDataService;
+
     @Autowired
     public MatchupAnalyzerService(@Value("${claude.api.key}") String apiKey,
                                    WeatherService weatherService,
                                    EspnService espnService,
-                                   StatsService statsService) {
+                                   StatsService statsService,
+                                   WNBADataService wnbaDataService,
+                                   WNCAAWDataService wcbbDataService) {
         this.apiKey = apiKey;
         this.weatherService = weatherService;
         this.espnService = espnService;
         this.statsService = statsService;
+        this.wnbaDataService = wnbaDataService;
+        this.wcbbDataService = wcbbDataService;
         this.webClient = WebClient.builder()
             .baseUrl("https://api.anthropic.com/v1")
             .defaultHeader("x-api-key", apiKey)
@@ -188,16 +197,25 @@ public class MatchupAnalyzerService {
             }
         }
         
+        // Women's basketball context
+        StringBuilder womensBasketballInfo = new StringBuilder();
+        String detectedSport = detectSportFromGame(game);
+        if ("WNBA".equals(detectedSport)) {
+            womensBasketballInfo.append(buildWNBAContext(game));
+        } else if ("WCBB".equals(detectedSport)) {
+            womensBasketballInfo.append(buildWCBBContext(game));
+        }
+
         return String.format("""
             You are a professional sports betting analyst. Analyze this betting opportunity:
-            
+
             GAME: %s
             BET TYPE: %s
             SELECTION: %s
             BEST ODDS: %s (best available)
             WORST ODDS: %s (worst available)
             MARKET VALUE: %.0f points (spread between books)
-            %s%s%s
+            %s%s%s%s
             
             Provide a detailed matchup analysis in this format:
             
@@ -224,15 +242,129 @@ public class MatchupAnalyzerService {
             
             Keep it concise, actionable, and data-focused. Only use verified statistics provided above.
             """, 
-            game, betType, selection, 
+            game, betType, selection,
             formatOdds(bestOdds), formatOdds(worstOdds), valuePoints,
             weatherInfo.toString(),
             injuryInfo.toString(),
             statsInfo.toString(),
+            womensBasketballInfo.toString(),
             formatOdds(bestOdds)
         );
     }
     
+    /**
+     * Detect sport type from game string by matching known team names
+     */
+    private String detectSportFromGame(String game) {
+        if (game == null) return "";
+        String gameLower = game.toLowerCase();
+
+        // WNBA team identifiers
+        List<String> wnbaTeams = List.of(
+            "aces", "liberty", "sun", "lynx", "storm", "mercury",
+            "sky", "fever", "sparks", "wings", "dream", "mystics",
+            "las vegas", "new york liberty", "connecticut sun", "minnesota lynx",
+            "seattle storm", "phoenix mercury", "chicago sky", "indiana fever",
+            "los angeles sparks", "dallas wings", "atlanta dream", "washington mystics"
+        );
+        for (String team : wnbaTeams) {
+            if (gameLower.contains(team)) return "WNBA";
+        }
+
+        // WCBB - detect via known women's college basketball indicators
+        // If the game string contains "wcbb", "women's", or "(W)" markers
+        if (gameLower.contains("wcbb") || gameLower.contains("women's") ||
+            gameLower.contains("(w)") || gameLower.contains("wbb")) {
+            return "WCBB";
+        }
+
+        return "";
+    }
+
+    /**
+     * Build WNBA-specific context with live team data
+     */
+    private String buildWNBAContext(String game) {
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("""
+
+            WOMEN'S BASKETBALL (WNBA) MARKET INSIGHT:
+            - WNBA betting markets are LESS EFFICIENT than NBA - edges are larger and more frequent
+            - Star player availability is critical (A'ja Wilson, Caitlin Clark, Breanna Stewart shift lines 3-5 pts)
+            - Shorter 40-game season - rest days and back-to-backs matter significantly more than NBA
+            - 12-team league means team chemistry and roster continuity are outsized factors
+            """);
+
+        // Pull team stats if possible
+        try {
+            String[] parts = game.split("@|vs|VS");
+            if (parts.length == 2) {
+                String team1 = parts[0].trim();
+                String team2 = parts[1].trim();
+
+                Map<String, Object> stats1 = wnbaDataService.getTeamStats(team1);
+                Map<String, Object> stats2 = wnbaDataService.getTeamStats(team2);
+
+                if (stats1 != null) {
+                    ctx.append(String.format("WNBA DATA - %s: %.1f PPG, ATS %d-%d (%.1f%%)\n",
+                        team1, stats1.get("pointsPerGame"),
+                        stats1.get("atsWins"), stats1.get("atsLosses"), stats1.get("atsPercentage")));
+                }
+                if (stats2 != null) {
+                    ctx.append(String.format("WNBA DATA - %s: %.1f PPG, ATS %d-%d (%.1f%%)\n",
+                        team2, stats2.get("pointsPerGame"),
+                        stats2.get("atsWins"), stats2.get("atsLosses"), stats2.get("atsPercentage")));
+                }
+            }
+        } catch (Exception e) {
+            // Stats unavailable - context still useful without them
+        }
+
+        return ctx.toString();
+    }
+
+    /**
+     * Build WCBB-specific context with live team data
+     */
+    private String buildWCBBContext(String game) {
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("""
+
+            WOMEN'S COLLEGE BASKETBALL (WCBB) MARKET INSIGHT:
+            - WCBB betting markets are SIGNIFICANTLY less efficient than men's CBB - largest edges in basketball
+            - Dominant programs (South Carolina, UConn) create lopsided matchups - watch for inflated lines
+            - Historic powerhouses (UConn, Tennessee) attract disproportionate public money
+            - Conference strength varies widely - cross-conference matchups are often mispriced
+            - Tournament seed implications drive late-season motivation differences
+            - The Caitlin Clark effect has increased betting volume but lines remain soft
+            """);
+
+        // Pull team ratings if possible
+        try {
+            int season = wcbbDataService.getCurrentSeason();
+            List<Map<String, Object>> ratings = wcbbDataService.getTeamRatings(season);
+
+            String[] parts = game.split("@|vs|VS");
+            if (parts.length == 2) {
+                String team1 = parts[0].trim();
+                String team2 = parts[1].trim();
+
+                for (Map<String, Object> rating : ratings) {
+                    String teamName = (String) rating.get("team");
+                    if (teamName != null && (team1.contains(teamName) || teamName.contains(team1) ||
+                                             team2.contains(teamName) || teamName.contains(team2))) {
+                        ctx.append(String.format("WCBB DATA - %s: SRS %.1f, Conference: %s\n",
+                            teamName, rating.get("srs"), rating.get("conference")));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Stats unavailable - context still useful without them
+        }
+
+        return ctx.toString();
+    }
+
     private String formatOdds(int odds) {
         return odds > 0 ? "+" + odds : String.valueOf(odds);
     }

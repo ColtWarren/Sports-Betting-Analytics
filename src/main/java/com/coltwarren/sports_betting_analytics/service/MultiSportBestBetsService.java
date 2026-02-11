@@ -6,6 +6,8 @@ import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregat
 import com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService;
 import com.coltwarren.sports_betting_analytics.service.betting.PublicBettingService;
 import com.coltwarren.sports_betting_analytics.service.injury.InjuryAnalysisService;
+import com.coltwarren.sports_betting_analytics.service.wnba.WNBADataService;
+import com.coltwarren.sports_betting_analytics.service.college.WNCAAWDataService;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
 import com.coltwarren.sports_betting_analytics.model.betting.PublicBettingData;
@@ -51,7 +53,13 @@ public class MultiSportBestBetsService {
     @Autowired
     private XGDataService xgDataService;
 
-    private static final String[] SPORTS = {"NFL", "CFB", "NBA", "WNBA", "CBB", "MLB", "NHL", "SOCCER"};
+    @Autowired
+    private WNBADataService wnbaDataService;
+
+    @Autowired
+    private WNCAAWDataService wcbbDataService;
+
+    private static final String[] SPORTS = {"NFL", "CFB", "NBA", "WNBA", "CBB", "WCBB", "MLB", "NHL", "SOCCER"};
     
     public List<Map<String, Object>> getBestBetsAcrossAllSports() {
         try {
@@ -348,23 +356,93 @@ public class MultiSportBestBetsService {
     
     private String getQuickAnalysis(String sport, String homeTeam, String awayTeam) {
         try {
-            String prompt = String.format(
-                "Quick betting analysis for %s game: %s vs %s.\n\n" +
-                "Provide:\n" +
-                "1. Recommended bet (spread/total/ML)\n" +
-                "2. Confidence score (1-10)\n" +
-                "3. Brief 2-sentence reason\n\n" +
-                "Format: RECOMMENDATION: [bet] | CONFIDENCE: [score] | REASON: [reason]",
+            StringBuilder prompt = new StringBuilder();
+            prompt.append(String.format(
+                "Quick betting analysis for %s game: %s vs %s.\n\n",
                 sport, awayTeam, homeTeam
-            );
-            
-            String analysis = claudeAIService.callClaudeAPI(prompt);
+            ));
+
+            // Add women's basketball context
+            if ("WNBA".equals(sport)) {
+                prompt.append(getWNBAQuickContext(homeTeam, awayTeam));
+            } else if ("WCBB".equals(sport)) {
+                prompt.append(getWCBBQuickContext(homeTeam, awayTeam));
+            }
+
+            prompt.append("Provide:\n");
+            prompt.append("1. Recommended bet (spread/total/ML)\n");
+            prompt.append("2. Confidence score (1-10)\n");
+            prompt.append("3. Brief 2-sentence reason\n\n");
+            prompt.append("Format: RECOMMENDATION: [bet] | CONFIDENCE: [score] | REASON: [reason]");
+
+            String analysis = claudeAIService.callClaudeAPI(prompt.toString());
             return analysis != null ? analysis : "No analysis available";
-            
+
         } catch (Exception e) {
             System.err.println("Error getting AI analysis: " + e.getMessage());
             return "Analysis unavailable";
         }
+    }
+
+    private String getWNBAQuickContext(String homeTeam, String awayTeam) {
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("WNBA CONTEXT: Markets are less efficient than NBA - edges are more frequent. ");
+        ctx.append("Star availability (Wilson, Clark, Stewart) shifts lines 3-5 pts. ");
+        ctx.append("Rest days critical in 40-game season.\n");
+
+        try {
+            Map<String, Object> homeStats = wnbaDataService.getTeamStats(homeTeam);
+            Map<String, Object> awayStats = wnbaDataService.getTeamStats(awayTeam);
+
+            if (homeStats != null) {
+                ctx.append(String.format("%s: %d-%d, %.1f PPG, ATS %.1f%%, Trend: %s\n",
+                    homeTeam, homeStats.get("wins"), homeStats.get("losses"),
+                    homeStats.get("pointsPerGame"), homeStats.get("atsPercentage"),
+                    homeStats.get("bettingTrend")));
+            }
+            if (awayStats != null) {
+                ctx.append(String.format("%s: %d-%d, %.1f PPG, ATS %.1f%%, Trend: %s\n",
+                    awayTeam, awayStats.get("wins"), awayStats.get("losses"),
+                    awayStats.get("pointsPerGame"), awayStats.get("atsPercentage"),
+                    awayStats.get("bettingTrend")));
+            }
+        } catch (Exception e) {
+            // Stats unavailable - context still useful
+        }
+
+        ctx.append("\n");
+        return ctx.toString();
+    }
+
+    private String getWCBBQuickContext(String homeTeam, String awayTeam) {
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("WCBB CONTEXT: Women's college basketball markets are significantly less efficient - largest edges in basketball betting. ");
+        ctx.append("Watch for inflated lines on dominant programs (South Carolina, UConn). ");
+        ctx.append("Historic powerhouses attract disproportionate public money.\n");
+
+        try {
+            int season = wcbbDataService.getCurrentSeason();
+            Map<String, Object> homeStats = wcbbDataService.getTeamStats(homeTeam, season);
+            Map<String, Object> awayStats = wcbbDataService.getTeamStats(awayTeam, season);
+
+            if (homeStats != null) {
+                ctx.append(String.format("%s: %d-%d, %.1f PPG, ATS %.1f%%, SRS: %.1f, Trend: %s\n",
+                    homeTeam, homeStats.get("wins"), homeStats.get("losses"),
+                    homeStats.get("pointsPerGame"), homeStats.get("atsPercentage"),
+                    homeStats.get("srsRating"), homeStats.get("bettingTrend")));
+            }
+            if (awayStats != null) {
+                ctx.append(String.format("%s: %d-%d, %.1f PPG, ATS %.1f%%, SRS: %.1f, Trend: %s\n",
+                    awayTeam, awayStats.get("wins"), awayStats.get("losses"),
+                    awayStats.get("pointsPerGame"), awayStats.get("atsPercentage"),
+                    awayStats.get("srsRating"), awayStats.get("bettingTrend")));
+            }
+        } catch (Exception e) {
+            // Stats unavailable - context still useful
+        }
+
+        ctx.append("\n");
+        return ctx.toString();
     }
     
     private double extractConfidence(String analysis) {

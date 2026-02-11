@@ -106,7 +106,7 @@ public class AdvancedEVCalculator {
         return result;
     }
     
-    private String buildEVPrompt(String sport, String event, String selection, 
+    private String buildEVPrompt(String sport, String event, String selection,
                                   int odds, String betType, String context) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional sports betting analyst. ");
@@ -119,12 +119,30 @@ public class AdvancedEVCalculator {
         if (context != null && !context.isEmpty()) {
             prompt.append("Additional Context: ").append(context).append("\n");
         }
+
+        // Women's basketball context
+        if ("WNBA".equalsIgnoreCase(sport)) {
+            prompt.append("\nWNBA CONTEXT:\n");
+            prompt.append("- Star player impact is outsized (A'ja Wilson, Caitlin Clark, Breanna Stewart can shift lines 3-5 pts)\n");
+            prompt.append("- Shorter 40-game season - rest days and back-to-backs matter significantly more\n");
+            prompt.append("- 12-team league - team chemistry and roster continuity are critical\n");
+            prompt.append("- Betting markets are less efficient than NBA - potential edges in spreads and totals\n");
+            prompt.append("- Check star player rest/injury status before estimating probability\n");
+        } else if ("WCBB".equalsIgnoreCase(sport)) {
+            prompt.append("\nWCBB CONTEXT:\n");
+            prompt.append("- Dominant programs (South Carolina, UConn) create lopsided matchups - watch for inflated lines\n");
+            prompt.append("- Tournament seed implications affect late-season motivation\n");
+            prompt.append("- Conference strength varies widely - cross-conference matchups often mispriced\n");
+            prompt.append("- Historic powerhouses (UConn, Tennessee) attract public money disproportionately\n");
+            prompt.append("- Markets are significantly less efficient than men's CBB - larger edges available\n");
+        }
+
         prompt.append("\nProvide:\n");
         prompt.append("1. Your estimated win probability (as a percentage)\n");
         prompt.append("2. Key factors influencing this probability\n");
         prompt.append("3. Confidence level in this estimate\n\n");
         prompt.append("Format your response starting with: 'ESTIMATED PROBABILITY: XX%'");
-        
+
         return prompt.toString();
     }
     
