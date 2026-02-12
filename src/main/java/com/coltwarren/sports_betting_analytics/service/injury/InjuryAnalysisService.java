@@ -85,6 +85,17 @@ public class InjuryAnalysisService {
         "D", 2.0
     );
 
+    // WNBA: Higher impact than NBA because 12-team league means star players are more critical
+    private static final Map<String, Double> WNBA_POSITION_IMPACT = Map.of(
+        "PG", 5.0,   // Star PGs (Clark, Ionescu) have outsized impact in smaller league
+        "SG", 4.0,
+        "SF", 4.0,
+        "PF", 3.5,
+        "C", 4.5,    // Elite centers (Wilson, Stewart) dominate both ends
+        "G", 4.0,
+        "F", 3.5
+    );
+
     /**
      * Analyze injuries for a team and calculate betting impact
      */
@@ -301,7 +312,10 @@ public class InjuryAnalysisService {
 
         if (sport.equalsIgnoreCase("NFL") || sport.equalsIgnoreCase("CFB")) {
             return NFL_POSITION_IMPACT.getOrDefault(upperPos, 1.0);
-        } else if (sport.equalsIgnoreCase("NBA") || sport.equalsIgnoreCase("CBB")) {
+        } else if (sport.equalsIgnoreCase("WNBA")) {
+            return WNBA_POSITION_IMPACT.getOrDefault(upperPos, 4.0);
+        } else if (sport.equalsIgnoreCase("NBA") || sport.equalsIgnoreCase("CBB") ||
+                   sport.equalsIgnoreCase("WCBB")) {
             return NBA_POSITION_IMPACT.getOrDefault(upperPos, 3.0);
         } else if (sport.equalsIgnoreCase("MLB")) {
             return MLB_POSITION_IMPACT.getOrDefault(upperPos, 1.0);

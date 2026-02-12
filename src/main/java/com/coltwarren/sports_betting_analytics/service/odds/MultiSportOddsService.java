@@ -183,9 +183,14 @@ public class MultiSportOddsService {
                 return "americanfootball_ncaaf";
             case "NBA":
                 return "basketball_nba";
+            case "WNBA":
+                return "basketball_wnba";
             case "CBB":
             case "COLLEGE-BASKETBALL":
                 return "basketball_ncaab";
+            case "WCBB":
+            case "WOMENS-COLLEGE-BASKETBALL":
+                return "basketball_wncaab";
             case "MLB":
                 return "baseball_mlb";
             case "NHL":
