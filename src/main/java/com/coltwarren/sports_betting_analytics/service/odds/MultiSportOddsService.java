@@ -248,30 +248,40 @@ public class MultiSportOddsService {
                         List<Map<String, Object>> outcomes = (List<Map<String, Object>>) market.get("outcomes");
                         
                         if ("h2h".equals(marketKey)) {
-                            // Moneyline
+                            // Moneyline - explicitly match both teams
+                            String homeTeam = (String) game.get("home_team");
+                            String awayTeam = (String) game.get("away_team");
                             for (Map<String, Object> outcome : outcomes) {
                                 String team = (String) outcome.get("name");
                                 Integer price = (Integer) outcome.get("price");
-                                
-                                if (team.equals(game.get("home_team"))) {
+
+                                if (team != null && homeTeam != null && team.equalsIgnoreCase(homeTeam)) {
                                     bookmakerOdds.put("homeML", price);
-                                } else {
+                                } else if (team != null && awayTeam != null && team.equalsIgnoreCase(awayTeam)) {
                                     bookmakerOdds.put("awayML", price);
+                                } else {
+                                    System.err.println("⚠️ ML outcome team '" + team +
+                                        "' doesn't match home '" + homeTeam + "' or away '" + awayTeam + "'");
                                 }
                             }
                         } else if ("spreads".equals(marketKey)) {
-                            // Spread
+                            // Spread - explicitly match both teams
+                            String homeTeam = (String) game.get("home_team");
+                            String awayTeam = (String) game.get("away_team");
                             for (Map<String, Object> outcome : outcomes) {
                                 String team = (String) outcome.get("name");
                                 Number point = (Number) outcome.get("point");
                                 Integer price = (Integer) outcome.get("price");
-                                
-                                if (team.equals(game.get("home_team"))) {
+
+                                if (team != null && homeTeam != null && team.equalsIgnoreCase(homeTeam)) {
                                     bookmakerOdds.put("homeSpread", point.doubleValue());
                                     bookmakerOdds.put("homeSpreadOdds", price);
-                                } else {
+                                } else if (team != null && awayTeam != null && team.equalsIgnoreCase(awayTeam)) {
                                     bookmakerOdds.put("awaySpread", point.doubleValue());
                                     bookmakerOdds.put("awaySpreadOdds", price);
+                                } else {
+                                    System.err.println("⚠️ Spread outcome team '" + team +
+                                        "' doesn't match home '" + homeTeam + "' or away '" + awayTeam + "'");
                                 }
                             }
                         } else if ("totals".equals(marketKey)) {
@@ -352,17 +362,17 @@ public class MultiSportOddsService {
             }
             
             if (bookmaker.containsKey("homeSpreadOdds")) {
-                int homeSpread = (Integer) bookmaker.get("homeSpreadOdds");
-                if (homeSpread > bestHomeSpread) {
-                    bestHomeSpread = homeSpread;
+                int homeSpreadOdds = (Integer) bookmaker.get("homeSpreadOdds");
+                if (homeSpreadOdds > bestHomeSpread) {
+                    bestHomeSpread = homeSpreadOdds;
                     bestHomeSpreadBook = bookmakerName;
                 }
             }
-            
+
             if (bookmaker.containsKey("awaySpreadOdds")) {
-                int awaySpread = (Integer) bookmaker.get("awaySpreadOdds");
-                if (awaySpread > bestAwaySpread) {
-                    bestAwaySpread = awaySpread;
+                int awaySpreadOdds = (Integer) bookmaker.get("awaySpreadOdds");
+                if (awaySpreadOdds > bestAwaySpread) {
+                    bestAwaySpread = awaySpreadOdds;
                     bestAwaySpreadBook = bookmakerName;
                 }
             }
@@ -397,11 +407,24 @@ public class MultiSportOddsService {
         if (bestHomeSpread != Integer.MIN_VALUE) {
             bestOdds.put("homeSpreadOdds", bestHomeSpread);
             bestOdds.put("homeSpreadBook", bestHomeSpreadBook);
+            // Include the spread point value from the best book's data
+            for (Map<String, Object> bookmaker : allBookmakerOdds) {
+                if (bestHomeSpreadBook.equals(bookmaker.get("bookmaker")) && bookmaker.containsKey("homeSpread")) {
+                    bestOdds.put("homeSpread", bookmaker.get("homeSpread"));
+                    break;
+                }
+            }
         }
-        
+
         if (bestAwaySpread != Integer.MIN_VALUE) {
             bestOdds.put("awaySpreadOdds", bestAwaySpread);
             bestOdds.put("awaySpreadBook", bestAwaySpreadBook);
+            for (Map<String, Object> bookmaker : allBookmakerOdds) {
+                if (bestAwaySpreadBook.equals(bookmaker.get("bookmaker")) && bookmaker.containsKey("awaySpread")) {
+                    bestOdds.put("awaySpread", bookmaker.get("awaySpread"));
+                    break;
+                }
+            }
         }
         
         if (bestOver != Integer.MIN_VALUE) {
