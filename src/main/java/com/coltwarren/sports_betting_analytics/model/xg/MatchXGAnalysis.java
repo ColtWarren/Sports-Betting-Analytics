@@ -44,16 +44,33 @@ public class MatchXGAnalysis {
             return;
         }
 
-        // Calculate advantages
-        this.homeXGAdvantage = (homeXGStats.getXGPerGame() != null ? homeXGStats.getXGPerGame() : 0)
-                            - (awayXGStats.getXGAgainstPerGame() != null ? awayXGStats.getXGAgainstPerGame() : 0);
-        this.awayXGAdvantage = (awayXGStats.getXGPerGame() != null ? awayXGStats.getXGPerGame() : 0)
-                            - (homeXGStats.getXGAgainstPerGame() != null ? homeXGStats.getXGAgainstPerGame() : 0);
+        // Per-game averages
+        double homeXG = homeXGStats.getXGPerGame() != null ? homeXGStats.getXGPerGame() : 1.2;
+        double homeXGA = homeXGStats.getXGAgainstPerGame() != null ? homeXGStats.getXGAgainstPerGame() : 1.3;
+        double awayXG = awayXGStats.getXGPerGame() != null ? awayXGStats.getXGPerGame() : 1.2;
+        double awayXGA = awayXGStats.getXGAgainstPerGame() != null ? awayXGStats.getXGAgainstPerGame() : 1.3;
 
-        // Project goals (simplified model)
-        this.projectedHomeGoals = homeXGAdvantage + 1.3; // Home advantage ~0.3 goals
-        this.projectedAwayGoals = awayXGAdvantage + 1.0;
+        // Calculate advantages (kept for regression analysis)
+        this.homeXGAdvantage = homeXG - awayXGA;
+        this.awayXGAdvantage = awayXG - homeXGA;
+
+        // Project goals: average of attack strength and opponent defensive weakness
+        this.projectedHomeGoals = (homeXG + awayXGA) / 2.0 + 0.15; // +0.15 home advantage
+        this.projectedAwayGoals = (awayXG + homeXGA) / 2.0;
         this.projectedTotal = projectedHomeGoals + projectedAwayGoals;
+
+        // Sanity check: clamp to realistic league averages (min ~2.0, max ~5.5 total goals)
+        if (this.projectedTotal < 2.0) {
+            double scale = 2.0 / this.projectedTotal;
+            this.projectedHomeGoals *= scale;
+            this.projectedAwayGoals *= scale;
+            this.projectedTotal = 2.0;
+        } else if (this.projectedTotal > 5.5) {
+            double scale = 5.5 / this.projectedTotal;
+            this.projectedHomeGoals *= scale;
+            this.projectedAwayGoals *= scale;
+            this.projectedTotal = 5.5;
+        }
 
         // Analyze regression
         analyzeRegression();
