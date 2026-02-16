@@ -456,10 +456,10 @@ public class MultiSportBestBetsService {
                 }
             }
             
-            return 7.0; // Default
-            
+            return 5.0; // Below threshold - parse failures get filtered out
+
         } catch (Exception e) {
-            return 7.0;
+            return 5.0;
         }
     }
     
@@ -621,8 +621,17 @@ public class MultiSportBestBetsService {
         if (odds == null) return;
 
         try {
-            // Get AI prediction probability for this outcome
-            double winProbability = getSoccerAIProbability(fixture, outcome);
+            // Compute xG analysis first - used for both Poisson probability and display
+            MatchXGAnalysis xgAnalysis = null;
+            try {
+                xgAnalysis = xgDataService.analyzeMatch(
+                    fixture.getHomeTeam(), fixture.getAwayTeam(), league);
+            } catch (Exception e) {
+                System.err.println("xG analysis unavailable: " + e.getMessage());
+            }
+
+            // Get model probability for this outcome (Poisson from xG when available)
+            double winProbability = getSoccerAIProbability(fixture, outcome, xgAnalysis);
 
             // Convert American odds to decimal
             double decimalOdds = americanToDecimal(odds.intValue());
@@ -637,8 +646,17 @@ public class MultiSportBestBetsService {
             double kellyFraction = (winProbability * decimalOdds - 1) / (decimalOdds - 1);
             double kellyPercentage = Math.max(0, Math.min(kellyFraction * 25, 5.0)); // Quarter Kelly, max 5%
 
-            // Calculate confidence score (1-10)
-            double confidence = Math.min(10, 6 + (expectedValue * 20)); // Higher EV = higher confidence
+            // Calculate confidence from edge certainty, not raw EV
+            double impliedProbability = 1.0 / decimalOdds;
+            double edge = winProbability - impliedProbability;
+            double confidence = 5.0 + (edge * 100);  // +1 confidence per 1% edge
+            // Cap for longshots - high EV on longshots is inherently less reliable
+            if (odds.intValue() > 400) {
+                confidence = Math.min(confidence, 8.0);
+            } else if (odds.intValue() > 200) {
+                confidence = Math.min(confidence, 9.0);
+            }
+            confidence = Math.min(Math.max(confidence, 1.0), 10.0);
 
             // Only include bets with decent confidence
             if (confidence < 6.0) return;
@@ -678,43 +696,35 @@ public class MultiSportBestBetsService {
             }
             bet.put("bestOdds", bestOdds);
 
-            // Add xG analysis for soccer
-            try {
-                MatchXGAnalysis xgAnalysis = xgDataService.analyzeMatch(
-                    fixture.getHomeTeam(), fixture.getAwayTeam(), league);
-                if (xgAnalysis != null) {
-                    Map<String, Object> xgData = new HashMap<>();
-                    xgData.put("projectedTotal", xgAnalysis.getProjectedTotal());
-                    xgData.put("xgRecommendation", xgAnalysis.getXgRecommendation());
-                    xgData.put("xgConfidence", xgAnalysis.getXgConfidence());
-                    xgData.put("xgReason", xgAnalysis.getXgReason());
+            // Add xG analysis for display (already computed above)
+            if (xgAnalysis != null) {
+                Map<String, Object> xgData = new HashMap<>();
+                xgData.put("projectedTotal", xgAnalysis.getProjectedTotal());
+                xgData.put("xgRecommendation", xgAnalysis.getXgRecommendation());
+                xgData.put("xgConfidence", xgAnalysis.getXgConfidence());
+                xgData.put("xgReason", xgAnalysis.getXgReason());
 
-                    // Home team xG stats
-                    if (xgAnalysis.getHomeXGStats() != null) {
-                        Map<String, Object> homeXG = new HashMap<>();
-                        homeXG.put("xGPerGame", xgAnalysis.getHomeXGStats().getXGPerGame());
-                        homeXG.put("goalsVsXG", xgAnalysis.getHomeXGStats().getGoalsVsXG());
-                        homeXG.put("performanceStatus", xgAnalysis.getHomeXGStats().getPerformanceStatus());
-                        homeXG.put("bettingSignal", xgAnalysis.getHomeXGStats().getBettingSignal());
-                        homeXG.put("regressionLikelihood", xgAnalysis.getHomeXGStats().getRegressionLikelihood());
-                        xgData.put("homeXGStats", homeXG);
-                    }
-
-                    // Away team xG stats
-                    if (xgAnalysis.getAwayXGStats() != null) {
-                        Map<String, Object> awayXG = new HashMap<>();
-                        awayXG.put("xGPerGame", xgAnalysis.getAwayXGStats().getXGPerGame());
-                        awayXG.put("goalsVsXG", xgAnalysis.getAwayXGStats().getGoalsVsXG());
-                        awayXG.put("performanceStatus", xgAnalysis.getAwayXGStats().getPerformanceStatus());
-                        awayXG.put("bettingSignal", xgAnalysis.getAwayXGStats().getBettingSignal());
-                        awayXG.put("regressionLikelihood", xgAnalysis.getAwayXGStats().getRegressionLikelihood());
-                        xgData.put("awayXGStats", awayXG);
-                    }
-
-                    bet.put("xgAnalysis", xgData);
+                if (xgAnalysis.getHomeXGStats() != null) {
+                    Map<String, Object> homeXG = new HashMap<>();
+                    homeXG.put("xGPerGame", xgAnalysis.getHomeXGStats().getXGPerGame());
+                    homeXG.put("goalsVsXG", xgAnalysis.getHomeXGStats().getGoalsVsXG());
+                    homeXG.put("performanceStatus", xgAnalysis.getHomeXGStats().getPerformanceStatus());
+                    homeXG.put("bettingSignal", xgAnalysis.getHomeXGStats().getBettingSignal());
+                    homeXG.put("regressionLikelihood", xgAnalysis.getHomeXGStats().getRegressionLikelihood());
+                    xgData.put("homeXGStats", homeXG);
                 }
-            } catch (Exception xgError) {
-                System.err.println("Error adding xG analysis: " + xgError.getMessage());
+
+                if (xgAnalysis.getAwayXGStats() != null) {
+                    Map<String, Object> awayXG = new HashMap<>();
+                    awayXG.put("xGPerGame", xgAnalysis.getAwayXGStats().getXGPerGame());
+                    awayXG.put("goalsVsXG", xgAnalysis.getAwayXGStats().getGoalsVsXG());
+                    awayXG.put("performanceStatus", xgAnalysis.getAwayXGStats().getPerformanceStatus());
+                    awayXG.put("bettingSignal", xgAnalysis.getAwayXGStats().getBettingSignal());
+                    awayXG.put("regressionLikelihood", xgAnalysis.getAwayXGStats().getRegressionLikelihood());
+                    xgData.put("awayXGStats", awayXG);
+                }
+
+                bet.put("xgAnalysis", xgData);
             }
 
             // AI analysis
@@ -735,9 +745,9 @@ public class MultiSportBestBetsService {
     }
 
     /**
-     * Get AI-predicted probability for a soccer outcome
+     * Get model probability for a soccer outcome using Poisson xG model when available
      */
-    private double getSoccerAIProbability(SoccerFixture fixture, String outcome) {
+    private double getSoccerAIProbability(SoccerFixture fixture, String outcome, MatchXGAnalysis xgAnalysis) {
         Double odds = switch (outcome) {
             case "HOME_WIN" -> fixture.getHomeWinOdds();
             case "DRAW" -> fixture.getDrawOdds();
@@ -747,21 +757,58 @@ public class MultiSportBestBetsService {
 
         if (odds == null) return 0.0;
 
-        // Start with implied probability from odds
         double impliedProb = oddsToImpliedProbability(odds.intValue());
 
-        // Adjust based on factors
-        // Home advantage: +5% for home wins
+        // Use xG-based Poisson model when available
+        if (xgAnalysis != null && xgAnalysis.getProjectedHomeGoals() != null
+                && xgAnalysis.getProjectedAwayGoals() != null) {
+            double poissonProb = calculatePoissonOutcomeProbability(
+                xgAnalysis.getProjectedHomeGoals(),
+                xgAnalysis.getProjectedAwayGoals(),
+                outcome);
+
+            // Blend: 70% model, 30% market (respect market efficiency)
+            double blendedProb = (poissonProb * 0.7) + (impliedProb * 0.3);
+            return Math.max(0.05, Math.min(0.80, blendedProb));
+        }
+
+        // Fallback: implied probability with proportional adjustments
         if ("HOME_WIN".equals(outcome)) {
-            impliedProb += 0.03;
+            impliedProb += impliedProb * 0.10;
         }
-
-        // Missouri local teams: slight boost for home games
         if (fixture.isLocalTeam() && "HOME_WIN".equals(outcome)) {
-            impliedProb += 0.02;
+            impliedProb += impliedProb * 0.05;
         }
-
         return Math.max(0.05, Math.min(0.80, impliedProb));
+    }
+
+    /**
+     * Calculate win/draw/loss probability from projected goals using Poisson distribution
+     */
+    private double calculatePoissonOutcomeProbability(double homeXG, double awayXG, String outcome) {
+        int maxGoals = 8;
+        double prob = 0.0;
+
+        for (int h = 0; h <= maxGoals; h++) {
+            for (int a = 0; a <= maxGoals; a++) {
+                double matchProb = poissonProbability(homeXG, h) * poissonProbability(awayXG, a);
+                switch (outcome) {
+                    case "HOME_WIN" -> { if (h > a) prob += matchProb; }
+                    case "DRAW" -> { if (h == a) prob += matchProb; }
+                    case "AWAY_WIN" -> { if (a > h) prob += matchProb; }
+                }
+            }
+        }
+        return prob;
+    }
+
+    /**
+     * Poisson probability: P(X=k) = e^(-λ) * λ^k / k!
+     */
+    private double poissonProbability(double lambda, int k) {
+        double factorial = 1;
+        for (int i = 2; i <= k; i++) factorial *= i;
+        return Math.exp(-lambda) * Math.pow(lambda, k) / factorial;
     }
 
     /**
