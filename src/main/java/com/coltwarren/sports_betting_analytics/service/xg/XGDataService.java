@@ -93,14 +93,14 @@ public class XGDataService {
             case 1 -> 1.8 + rand.nextDouble() * 0.4;  // Elite: 1.8-2.2 xG/game
             case 2 -> 1.4 + rand.nextDouble() * 0.4;  // Good: 1.4-1.8
             case 3 -> 1.1 + rand.nextDouble() * 0.3;  // Mid: 1.1-1.4
-            default -> 1.0 + rand.nextDouble() * 0.3; // Lower: 1.0-1.3
+            default -> 0.8 + rand.nextDouble() * 0.3; // Lower: 0.8-1.1
         };
 
         double baseXGA = switch (tier) {
             case 1 -> 0.8 + rand.nextDouble() * 0.3;  // Elite concede less
             case 2 -> 1.1 + rand.nextDouble() * 0.3;
             case 3 -> 1.3 + rand.nextDouble() * 0.3;
-            default -> 1.4 + rand.nextDouble() * 0.3; // Lower: 1.4-1.7
+            default -> 1.6 + rand.nextDouble() * 0.4; // Lower: 1.6-2.0
         };
 
         stats.setXGFor(baseXG * stats.getMatchesPlayed());

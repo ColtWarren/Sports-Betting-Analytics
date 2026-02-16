@@ -637,7 +637,14 @@ public class MultiSportBestBetsService {
             double decimalOdds = americanToDecimal(odds.intValue());
 
             // Calculate Expected Value
-            double expectedValue = (winProbability * decimalOdds) - 1.0;
+            double rawExpectedValue = (winProbability * decimalOdds) - 1.0;
+            // Cap EV at realistic maximum - no liquid market has 25%+ edges
+            double expectedValue = Math.min(rawExpectedValue, 0.25);
+            if (rawExpectedValue > 0.25) {
+                System.out.println("⚠️ EV capped: " + String.format("%.1f", rawExpectedValue * 100) +
+                    "% → 25% for " + fixture.getHomeTeam() + " vs " + fixture.getAwayTeam() +
+                    " (" + outcome + ")");
+            }
 
             // Only proceed if positive EV (or close to it for high-confidence picks)
             if (expectedValue < -0.02) return; // Allow small negative EV for top picks
@@ -730,10 +737,9 @@ public class MultiSportBestBetsService {
             // AI analysis
             String analysis = String.format(
                 "RECOMMENDATION: %s | CONFIDENCE: %.1f | REASON: %s with %.1f%% implied probability. " +
-                "EV: %.2f%%. %s",
+                "EV: %.2f%%.",
                 recommendation, confidence, outcome,
-                (1.0 / decimalOdds) * 100, expectedValue * 100,
-                fixture.isLocalTeam() ? "Missouri local team game!" : ""
+                (1.0 / decimalOdds) * 100, expectedValue * 100
             );
             bet.put("analysis", analysis);
 
@@ -767,17 +773,23 @@ public class MultiSportBestBetsService {
                 xgAnalysis.getProjectedAwayGoals(),
                 outcome);
 
-            // Blend: 70% model, 30% market (respect market efficiency)
-            double blendedProb = (poissonProb * 0.7) + (impliedProb * 0.3);
+            // Dynamic blend: trust market more for longshots where xG model is less reliable
+            double modelWeight = 0.30;
+            double marketWeight = 0.70;
+            if (odds.intValue() > 600) {
+                modelWeight = 0.15;
+                marketWeight = 0.85;
+            } else if (odds.intValue() > 400) {
+                modelWeight = 0.20;
+                marketWeight = 0.80;
+            }
+            double blendedProb = (poissonProb * modelWeight) + (impliedProb * marketWeight);
             return Math.max(0.05, Math.min(0.80, blendedProb));
         }
 
-        // Fallback: implied probability with proportional adjustments
+        // Fallback: implied probability with proportional home advantage
         if ("HOME_WIN".equals(outcome)) {
             impliedProb += impliedProb * 0.10;
-        }
-        if (fixture.isLocalTeam() && "HOME_WIN".equals(outcome)) {
-            impliedProb += impliedProb * 0.05;
         }
         return Math.max(0.05, Math.min(0.80, impliedProb));
     }
