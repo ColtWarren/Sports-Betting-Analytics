@@ -93,14 +93,14 @@ public class XGDataService {
             case 1 -> 1.8 + rand.nextDouble() * 0.4;  // Elite: 1.8-2.2 xG/game
             case 2 -> 1.4 + rand.nextDouble() * 0.4;  // Good: 1.4-1.8
             case 3 -> 1.1 + rand.nextDouble() * 0.3;  // Mid: 1.1-1.4
-            default -> 0.8 + rand.nextDouble() * 0.3; // Lower: 0.8-1.1
+            default -> 1.0 + rand.nextDouble() * 0.3; // Lower: 1.0-1.3
         };
 
         double baseXGA = switch (tier) {
             case 1 -> 0.8 + rand.nextDouble() * 0.3;  // Elite concede less
             case 2 -> 1.1 + rand.nextDouble() * 0.3;
             case 3 -> 1.3 + rand.nextDouble() * 0.3;
-            default -> 1.5 + rand.nextDouble() * 0.4;
+            default -> 1.4 + rand.nextDouble() * 0.3; // Lower: 1.4-1.7
         };
 
         stats.setXGFor(baseXG * stats.getMatchesPlayed());
@@ -147,12 +147,23 @@ public class XGDataService {
             return 2;
         }
 
+        // Tier 2: Strong clubs (continued - Ligue 1, MLS)
+        if (name.contains("monaco") || name.contains("marseille") ||
+            name.contains("atlanta") || name.contains("atlanta united") ||
+            name.contains("cincinnati") || name.contains("fc cincinnati")) {
+            return 2;
+        }
+
         // Tier 3: Mid-table
         if (name.contains("west ham") || name.contains("brighton") ||
             name.contains("wolves") || name.contains("crystal palace") ||
             name.contains("fulham") || name.contains("bournemouth") ||
             name.contains("sevilla") || name.contains("villarreal") ||
-            name.contains("roma") || name.contains("lazio")) {
+            name.contains("roma") || name.contains("lazio") ||
+            name.contains("nice") || name.contains("lens") ||
+            name.contains("rennes") || name.contains("lyon") ||
+            name.contains("st. louis") || name.contains("st louis") ||
+            name.contains("charlotte")) {
             return 3;
         }
 
