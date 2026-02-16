@@ -160,8 +160,32 @@ public class MultiSportBestBetsService {
                         continue;
                     }
                     
-                    // Quick AI analysis
-                    String analysis = getQuickAnalysis(sport, homeTeam, awayTeam);
+                    // Gather injury data BEFORE AI analysis so AI can factor it in
+                    String injuryContext = "";
+                    Map<String, InjuryImpact> matchupInjuries = null;
+                    try {
+                        matchupInjuries = injuryAnalysisService.analyzeMatchupInjuries(
+                            sport, homeTeam, null, awayTeam, null
+                        );
+                        InjuryImpact homeInj = matchupInjuries.get("home");
+                        InjuryImpact awayInj = matchupInjuries.get("away");
+
+                        StringBuilder injCtx = new StringBuilder();
+                        if (Boolean.TRUE.equals(homeInj.getHasSignificantInjuries())) {
+                            injCtx.append(String.format("%s INJURIES: %s (%.1f pts spread impact)\n",
+                                homeTeam, homeInj.getSummary(), homeInj.getSpreadImpact()));
+                        }
+                        if (Boolean.TRUE.equals(awayInj.getHasSignificantInjuries())) {
+                            injCtx.append(String.format("%s INJURIES: %s (%.1f pts spread impact)\n",
+                                awayTeam, awayInj.getSummary(), awayInj.getSpreadImpact()));
+                        }
+                        injuryContext = injCtx.toString();
+                    } catch (Exception e) {
+                        System.err.println("Pre-analysis injury fetch error: " + e.getMessage());
+                    }
+
+                    // Quick AI analysis (now with injury context)
+                    String analysis = getQuickAnalysis(sport, homeTeam, awayTeam, injuryContext);
                     double confidence = extractConfidence(analysis);
                     
                     if (confidence >= 7.0) {
@@ -255,63 +279,27 @@ public class MultiSportBestBetsService {
                             System.err.println("Public betting analysis error: " + e.getMessage());
                         }
 
-                        // Injury Analysis
-                        try {
-                            Map<String, InjuryImpact> matchupInjuries = injuryAnalysisService.analyzeMatchupInjuries(
-                                sport, homeTeam, null, awayTeam, null
-                            );
+                        // Store injury metadata (already fetched before AI analysis)
+                        if (matchupInjuries != null) {
+                            try {
+                                InjuryImpact homeInjuryImpact = matchupInjuries.get("home");
+                                InjuryImpact awayInjuryImpact = matchupInjuries.get("away");
+                                Double netInjuryAdvantage = injuryAnalysisService.getNetInjuryAdvantage(matchupInjuries);
+                                String worstSeverity = injuryAnalysisService.getWorstSeverity(matchupInjuries);
 
-                            InjuryImpact homeInjuryImpact = matchupInjuries.get("home");
-                            InjuryImpact awayInjuryImpact = matchupInjuries.get("away");
-                            Double netInjuryAdvantage = injuryAnalysisService.getNetInjuryAdvantage(matchupInjuries);
-                            String worstSeverity = injuryAnalysisService.getWorstSeverity(matchupInjuries);
+                                bet.put("homeInjuryImpact", homeInjuryImpact);
+                                bet.put("awayInjuryImpact", awayInjuryImpact);
+                                bet.put("netInjuryAdvantage", netInjuryAdvantage);
+                                bet.put("injurySeverity", worstSeverity);
+                                bet.put("hasInjuryImpact",
+                                    Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries()) ||
+                                    Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries()));
 
-                            bet.put("homeInjuryImpact", homeInjuryImpact);
-                            bet.put("awayInjuryImpact", awayInjuryImpact);
-                            bet.put("netInjuryAdvantage", netInjuryAdvantage);
-                            bet.put("injurySeverity", worstSeverity);
-                            bet.put("hasInjuryImpact",
-                                Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries()) ||
-                                Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries()));
-
-                            // Add injury info to analysis
-                            if (Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries()) ||
-                                Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries())) {
-
-                                String currentAnalysis = (String) bet.get("analysis");
-                                StringBuilder injuryNote = new StringBuilder("\n\n🏥 INJURY REPORT:");
-
-                                if (Boolean.TRUE.equals(homeInjuryImpact.getHasSignificantInjuries())) {
-                                    injuryNote.append(String.format("\n  %s: %s (%.1f pts)",
-                                        homeTeam, homeInjuryImpact.getSummary(), homeInjuryImpact.getSpreadImpact()));
-                                }
-                                if (Boolean.TRUE.equals(awayInjuryImpact.getHasSignificantInjuries())) {
-                                    injuryNote.append(String.format("\n  %s: %s (%.1f pts)",
-                                        awayTeam, awayInjuryImpact.getSummary(), awayInjuryImpact.getSpreadImpact()));
-                                }
-
-                                if (Math.abs(netInjuryAdvantage) >= 2.0) {
-                                    String advantageTeam = netInjuryAdvantage > 0 ? homeTeam : awayTeam;
-                                    injuryNote.append(String.format("\n  NET ADVANTAGE: %s +%.1f pts healthier",
-                                        advantageTeam, Math.abs(netInjuryAdvantage)));
-
-                                    // Boost confidence if injury advantage aligns with our bet
-                                    confidence = Math.min(10.0, confidence + 0.5);
-                                    bet.put("confidence", confidence);
-                                }
-
-                                bet.put("analysis", currentAnalysis + injuryNote.toString());
-
-                                // Set injury recommendation
-                                if (homeInjuryImpact.getBettingRecommendation() != null) {
-                                    bet.put("injuryRecommendation", homeInjuryImpact.getBettingRecommendation());
-                                } else if (awayInjuryImpact.getBettingRecommendation() != null) {
-                                    bet.put("injuryRecommendation", awayInjuryImpact.getBettingRecommendation());
-                                }
+                                // Note: injury recommendations are already factored into
+                                // the AI analysis via injuryContext - no separate append needed
+                            } catch (Exception e) {
+                                System.err.println("Injury metadata error: " + e.getMessage());
                             }
-
-                        } catch (Exception e) {
-                            System.err.println("Injury analysis error: " + e.getMessage());
                         }
 
                         sportBets.add(bet);
@@ -354,13 +342,20 @@ public class MultiSportBestBetsService {
         return t1.contains(t2) || t2.contains(t1);
     }
     
-    private String getQuickAnalysis(String sport, String homeTeam, String awayTeam) {
+    private String getQuickAnalysis(String sport, String homeTeam, String awayTeam, String injuryContext) {
         try {
             StringBuilder prompt = new StringBuilder();
             prompt.append(String.format(
                 "Quick betting analysis for %s game: %s vs %s.\n\n",
                 sport, awayTeam, homeTeam
             ));
+
+            // Add injury context so AI factors it into its recommendation
+            if (injuryContext != null && !injuryContext.isEmpty()) {
+                prompt.append("INJURY REPORT (factor this into your recommendation):\n");
+                prompt.append(injuryContext);
+                prompt.append("\n");
+            }
 
             // Add women's basketball context
             if ("WNBA".equals(sport)) {

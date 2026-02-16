@@ -253,32 +253,52 @@ public class InjuryAnalysisService {
     }
 
     private boolean matchesTeam(PlayerInjury injury, String teamName, String teamId) {
+        // Prefer exact teamId match when available
         if (teamId != null && injury.getTeamId() != null && injury.getTeamId().equals(teamId)) {
             return true;
         }
 
-        if (teamName == null || injury.getTeam() == null) {
+        // Guard: reject null or empty team names
+        if (teamName == null || teamName.isBlank() ||
+            injury.getTeam() == null || injury.getTeam().isBlank()) {
             return false;
         }
 
-        String normalizedTeamName = teamName.toLowerCase();
-        String normalizedInjuryTeam = injury.getTeam().toLowerCase();
+        String normalizedTeamName = teamName.toLowerCase().trim();
+        String normalizedInjuryTeam = injury.getTeam().toLowerCase().trim();
 
-        // Direct match
-        if (normalizedInjuryTeam.contains(normalizedTeamName) ||
-            normalizedTeamName.contains(normalizedInjuryTeam)) {
+        // Exact match (case-insensitive)
+        if (normalizedInjuryTeam.equals(normalizedTeamName)) {
             return true;
         }
 
-        // Handle city/nickname variations (e.g., "Kansas City Chiefs" vs "Chiefs")
-        String[] teamParts = normalizedTeamName.split("\\s+");
-        for (String part : teamParts) {
-            if (part.length() > 3 && normalizedInjuryTeam.contains(part)) {
-                return true;
-            }
+        // One fully contains the other, but only if the shorter string is
+        // substantial enough (>5 chars) to avoid false positives like contains("")
+        if (normalizedTeamName.length() > 5 && normalizedInjuryTeam.contains(normalizedTeamName)) {
+            return true;
+        }
+        if (normalizedInjuryTeam.length() > 5 && normalizedTeamName.contains(normalizedInjuryTeam)) {
+            return true;
+        }
+
+        // Last-word (nickname) matching: compare the LAST word of each name
+        // e.g., "Utah Jazz" -> "Jazz", "Memphis Grizzlies" -> "Grizzlies"
+        // This avoids false positives from shared city names ("Los Angeles")
+        String teamNickname = getLastWord(normalizedTeamName);
+        String injuryNickname = getLastWord(normalizedInjuryTeam);
+
+        if (teamNickname.length() > 3 && teamNickname.equals(injuryNickname)) {
+            log.debug("Fuzzy match (nickname): '{}' matched '{}' via nickname '{}'",
+                      teamName, injury.getTeam(), teamNickname);
+            return true;
         }
 
         return false;
+    }
+
+    private String getLastWord(String name) {
+        String[] parts = name.split("\\s+");
+        return parts.length > 0 ? parts[parts.length - 1] : name;
     }
 
     private boolean isSignificantStatus(String status) {
