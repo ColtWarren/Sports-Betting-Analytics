@@ -76,6 +76,13 @@ public class Bet {
     @Column
     private Boolean w2gIssued = false; // User manually marks when they receive form
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     // Constructors
     public Bet() {
         this.status = "PENDING";
@@ -193,6 +200,12 @@ public class Bet {
 
     public Boolean getW2gIssued() { return w2gIssued; }
     public void setW2gIssued(Boolean w2gIssued) { this.w2gIssued = w2gIssued; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     @Override
     public String toString() {

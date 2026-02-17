@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.repository.BankrollRepository;
 import com.coltwarren.sports_betting_analytics.model.Bankroll;
+import com.coltwarren.sports_betting_analytics.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,54 +18,79 @@ public class BankrollService {
     
     private final BankrollRepository bankrollRepository;
     private final BetService betService;
-    
+    private final UserContextService userContextService;
+
     @Autowired
-    public BankrollService(BankrollRepository bankrollRepository, BetService betService) {
+    public BankrollService(BankrollRepository bankrollRepository, BetService betService,
+                           UserContextService userContextService) {
         this.bankrollRepository = bankrollRepository;
         this.betService = betService;
+        this.userContextService = userContextService;
+    }
+
+    private User requireCurrentUser() {
+        return userContextService.getCurrentUser()
+            .orElseThrow(() -> new RuntimeException("Authentication required"));
     }
     
     public Bankroll recordDeposit(BigDecimal amount, String notes) {
         Bankroll bankroll = new Bankroll(amount, "DEPOSIT");
         bankroll.setNotes(notes);
+        bankroll.setUser(requireCurrentUser());
         return bankrollRepository.save(bankroll);
     }
     
     public Bankroll recordWithdrawal(BigDecimal amount, String notes) {
         Bankroll bankroll = new Bankroll(amount.negate(), "WITHDRAWAL");
         bankroll.setNotes(notes);
+        bankroll.setUser(requireCurrentUser());
         return bankrollRepository.save(bankroll);
     }
     
     public BigDecimal getCurrentBankroll() {
-        BigDecimal totalDeposits = bankrollRepository.getTotalDeposits();
-        BigDecimal totalWithdrawals = bankrollRepository.getTotalWithdrawals();
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return BigDecimal.ZERO;
+        List<Bankroll> transactions = bankrollRepository.findByUserId(userId);
+        BigDecimal totalTransactions = transactions.stream()
+            .map(Bankroll::getAmount)
+            .filter(a -> a != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal profitLoss = betService.calculateTotalProfitLoss();
-        
-        if (totalDeposits == null) totalDeposits = BigDecimal.ZERO;
-        if (totalWithdrawals == null) totalWithdrawals = BigDecimal.ZERO;
-        if (profitLoss == null) profitLoss = BigDecimal.ZERO;
-        
-        return totalDeposits.subtract(totalWithdrawals).add(profitLoss);
+        return totalTransactions.add(profitLoss);
     }
     
     public Map<String, Object> getBankrollStats() {
         Map<String, Object> stats = new HashMap<>();
-        
-        BigDecimal totalDeposits = bankrollRepository.getTotalDeposits();
-        BigDecimal totalWithdrawals = bankrollRepository.getTotalWithdrawals();
+
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) {
+            stats.put("currentBankroll", BigDecimal.ZERO);
+            stats.put("totalDeposits", BigDecimal.ZERO);
+            stats.put("totalWithdrawals", BigDecimal.ZERO);
+            stats.put("profitLoss", BigDecimal.ZERO);
+            stats.put("trueROI", BigDecimal.ZERO);
+            stats.put("growth", BigDecimal.ZERO);
+            return stats;
+        }
+
+        List<Bankroll> transactions = bankrollRepository.findByUserId(userId);
+        BigDecimal totalDeposits = transactions.stream()
+            .filter(t -> "DEPOSIT".equals(t.getTransactionType()))
+            .map(Bankroll::getAmount)
+            .filter(a -> a != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalWithdrawals = transactions.stream()
+            .filter(t -> "WITHDRAWAL".equals(t.getTransactionType()))
+            .map(t -> t.getAmount().abs())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal profitLoss = betService.calculateTotalProfitLoss();
         BigDecimal currentBankroll = getCurrentBankroll();
-        
-        if (totalDeposits == null) totalDeposits = BigDecimal.ZERO;
-        if (totalWithdrawals == null) totalWithdrawals = BigDecimal.ZERO;
-        if (profitLoss == null) profitLoss = BigDecimal.ZERO;
-        
+
         stats.put("currentBankroll", currentBankroll);
         stats.put("totalDeposits", totalDeposits);
         stats.put("totalWithdrawals", totalWithdrawals);
         stats.put("profitLoss", profitLoss);
-        
+
         // Calculate true ROI (profit / deposits)
         if (totalDeposits.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal trueROI = profitLoss
@@ -74,7 +100,7 @@ public class BankrollService {
         } else {
             stats.put("trueROI", BigDecimal.ZERO);
         }
-        
+
         // Calculate growth percentage
         BigDecimal startingBankroll = totalDeposits.subtract(totalWithdrawals);
         if (startingBankroll.compareTo(BigDecimal.ZERO) > 0) {
@@ -86,21 +112,29 @@ public class BankrollService {
         } else {
             stats.put("growth", BigDecimal.ZERO);
         }
-        
+
         return stats;
     }
     
     public List<Bankroll> getAllTransactions() {
-        return bankrollRepository.findAllByOrderByRecordedAtDesc();
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return bankrollRepository.findByUserIdOrderByRecordedAtDesc(userId);
     }
     
     public BigDecimal getStartingBankroll() {
-        BigDecimal totalDeposits = bankrollRepository.getTotalDeposits();
-        BigDecimal totalWithdrawals = bankrollRepository.getTotalWithdrawals();
-        
-        if (totalDeposits == null) totalDeposits = BigDecimal.ZERO;
-        if (totalWithdrawals == null) totalWithdrawals = BigDecimal.ZERO;
-        
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return BigDecimal.ZERO;
+        List<Bankroll> transactions = bankrollRepository.findByUserId(userId);
+        BigDecimal totalDeposits = transactions.stream()
+            .filter(t -> "DEPOSIT".equals(t.getTransactionType()))
+            .map(Bankroll::getAmount)
+            .filter(a -> a != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalWithdrawals = transactions.stream()
+            .filter(t -> "WITHDRAWAL".equals(t.getTransactionType()))
+            .map(t -> t.getAmount().abs())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         return totalDeposits.subtract(totalWithdrawals);
     }
 }

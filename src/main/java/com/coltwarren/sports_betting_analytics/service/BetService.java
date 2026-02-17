@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,15 +30,14 @@ public class BetService {
 
     private final BetRepository betRepository;
     private final TaxReportService taxReportService;
+    private final UserContextService userContextService;
 
-    /**
-     * Constructor injection (recommended over @Autowired on fields)
-     * Spring automatically injects BetRepository and TaxReportService
-     */
     @Autowired
-    public BetService(BetRepository betRepository, TaxReportService taxReportService) {
+    public BetService(BetRepository betRepository, TaxReportService taxReportService,
+                      UserContextService userContextService) {
         this.betRepository = betRepository;
         this.taxReportService = taxReportService;
+        this.userContextService = userContextService;
     }
     
     // ============================================
@@ -51,10 +51,8 @@ public class BetService {
      * @return Saved bet (with generated ID)
      */
     public Bet createBet(Bet bet) {
-        // Validate bet before saving
         validateBet(bet);
-        
-        // Save to database
+        bet.setUser(requireCurrentUser());
         return betRepository.save(bet);
     }
     
@@ -74,6 +72,7 @@ public class BetService {
                         BigDecimal stake, BigDecimal odds, String sportsbookName) {
         
         Bet bet = new Bet(sport, eventName, betType, selection, stake, odds, sportsbookName);
+        bet.setUser(requireCurrentUser());
         return betRepository.save(bet);
     }
     
@@ -87,7 +86,9 @@ public class BetService {
      * @return List of all bets
      */
     public List<Bet> getAllBets() {
-        return betRepository.findAll();
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserIdOrderByPlacedAtDesc(userId);
     }
     
     /**
@@ -97,7 +98,9 @@ public class BetService {
      * @return Optional containing bet if found
      */
     public Optional<Bet> getBetById(Long id) {
-        return betRepository.findById(id);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return Optional.empty();
+        return betRepository.findByIdAndUserId(id, userId);
     }
     
     /**
@@ -106,7 +109,9 @@ public class BetService {
      * @return List of pending bets
      */
     public List<Bet> getPendingBets() {
-        return betRepository.findByStatus("PENDING");
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserIdAndStatus(userId, "PENDING");
     }
     
     /**
@@ -115,7 +120,12 @@ public class BetService {
      * @return List of settled bets
      */
     public List<Bet> getSettledBets() {
-        return betRepository.findByStatusIn(List.of("WON", "LOST", "PUSH"));
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        List<Bet> userBets = betRepository.findByUserId(userId);
+        return userBets.stream()
+            .filter(b -> List.of("WON", "LOST", "PUSH").contains(b.getStatus()))
+            .toList();
     }
     
     /**
@@ -125,7 +135,11 @@ public class BetService {
      * @return List of bets from that sportsbook
      */
     public List<Bet> getBetsBySportsbook(String sportsbookName) {
-        return betRepository.findBySportsbookName(sportsbookName);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserId(userId).stream()
+            .filter(b -> sportsbookName.equals(b.getSportsbookName()))
+            .toList();
     }
     
     /**
@@ -135,7 +149,11 @@ public class BetService {
      * @return List of bets on that sport
      */
     public List<Bet> getBetsBySport(String sport) {
-        return betRepository.findBySport(sport);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserId(userId).stream()
+            .filter(b -> sport.equals(b.getSport()))
+            .toList();
     }
     
     /**
@@ -145,7 +163,11 @@ public class BetService {
      * @return List of bets of that type
      */
     public List<Bet> getBetsByType(String betType) {
-        return betRepository.findByBetType(betType);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserId(userId).stream()
+            .filter(b -> betType.equals(b.getBetType()))
+            .toList();
     }
     
     /**
@@ -156,7 +178,11 @@ public class BetService {
      * @return List of bets in that range
      */
     public List<Bet> getBetsByDateRange(LocalDateTime start, LocalDateTime end) {
-        return betRepository.findByPlacedAtBetween(start, end);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserId(userId).stream()
+            .filter(b -> b.getPlacedAt() != null && !b.getPlacedAt().isBefore(start) && !b.getPlacedAt().isAfter(end))
+            .toList();
     }
     
     /**
@@ -165,7 +191,9 @@ public class BetService {
      * @return List of recent bets (ordered by date)
      */
     public List<Bet> getRecentBets() {
-        return betRepository.findRecentBets();
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
+        return betRepository.findByUserIdOrderByPlacedAtDesc(userId);
     }
     
     // ============================================
@@ -181,7 +209,8 @@ public class BetService {
      * @throws RuntimeException if bet not found
      */
     public Bet updateBet(Long id, Bet updatedBet) {
-        Bet existingBet = betRepository.findById(id)
+        User currentUser = requireCurrentUser();
+        Bet existingBet = betRepository.findByIdAndUserId(id, currentUser.getId())
             .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
         
         // Update fields (only if not null)
@@ -205,7 +234,7 @@ public class BetService {
      * @throws RuntimeException if bet not found
      */
     public Bet markBetAsWon(Long id) {
-        Bet bet = betRepository.findById(id)
+        Bet bet = betRepository.findByIdAndUserId(id, requireCurrentUser().getId())
             .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
 
         bet.markAsWon();
@@ -225,7 +254,7 @@ public class BetService {
      * @throws RuntimeException if bet not found
      */
     public Bet markBetAsLost(Long id) {
-        Bet bet = betRepository.findById(id)
+        Bet bet = betRepository.findByIdAndUserId(id, requireCurrentUser().getId())
             .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
         
         bet.markAsLost();
@@ -240,7 +269,7 @@ public class BetService {
      * @throws RuntimeException if bet not found
      */
     public Bet markBetAsPush(Long id) {
-        Bet bet = betRepository.findById(id)
+        Bet bet = betRepository.findByIdAndUserId(id, requireCurrentUser().getId())
             .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
         
         bet.markAsPush();
@@ -255,7 +284,7 @@ public class BetService {
      * @return Updated bet
      */
     public Bet updateClosingOdds(Long id, BigDecimal closingOdds) {
-        Bet bet = betRepository.findById(id)
+        Bet bet = betRepository.findByIdAndUserId(id, requireCurrentUser().getId())
             .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
         
         bet.setClosingOdds(closingOdds);
@@ -289,9 +318,9 @@ public class BetService {
      * @throws RuntimeException if bet not found
      */
     public void deleteBet(Long id) {
-        if (!betRepository.existsById(id)) {
-            throw new RuntimeException("Bet not found with id: " + id);
-        }
+        User currentUser = requireCurrentUser();
+        betRepository.findByIdAndUserId(id, currentUser.getId())
+            .orElseThrow(() -> new RuntimeException("Bet not found with id: " + id));
         betRepository.deleteById(id);
     }
     
@@ -316,8 +345,10 @@ public class BetService {
      * @return Total profit (positive) or loss (negative)
      */
     public BigDecimal calculateTotalProfitLoss() {
-        BigDecimal total = betRepository.calculateTotalProfitLoss();
-        return total != null ? total : BigDecimal.ZERO;
+        return getAllBets().stream()
+            .map(Bet::getProfitLoss)
+            .filter(pl -> pl != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
     /**
@@ -327,8 +358,10 @@ public class BetService {
      * @return Profit/loss for that sportsbook
      */
     public BigDecimal calculateProfitLossBySportsbook(String sportsbookName) {
-        BigDecimal total = betRepository.calculateProfitLossBySportsbook(sportsbookName);
-        return total != null ? total : BigDecimal.ZERO;
+        return getAllBets().stream()
+            .filter(b -> sportsbookName.equals(b.getSportsbookName()) && b.getProfitLoss() != null)
+            .map(Bet::getProfitLoss)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
     /**
@@ -338,8 +371,10 @@ public class BetService {
      * @return Profit/loss for that sport
      */
     public BigDecimal calculateProfitLossBySport(String sport) {
-        BigDecimal total = betRepository.calculateProfitLossBySport(sport);
-        return total != null ? total : BigDecimal.ZERO;
+        return getAllBets().stream()
+            .filter(b -> sport.equals(b.getSport()) && b.getProfitLoss() != null)
+            .map(Bet::getProfitLoss)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
     /**
@@ -348,8 +383,12 @@ public class BetService {
      * @return Win rate as percentage (0-100)
      */
     public Double calculateWinRate() {
-        Double winRate = betRepository.calculateWinRate();
-        return winRate != null ? winRate * 100 : 0.0;
+        List<Bet> settled = getAllBets().stream()
+            .filter(b -> "WON".equals(b.getStatus()) || "LOST".equals(b.getStatus()))
+            .toList();
+        if (settled.isEmpty()) return 0.0;
+        long won = settled.stream().filter(b -> "WON".equals(b.getStatus())).count();
+        return (double) won / settled.size() * 100;
     }
     
     /**
@@ -358,8 +397,14 @@ public class BetService {
      * @return ROI as percentage (e.g., 5.0 = 5%)
      */
     public Double calculateROI() {
-        Double roi = betRepository.calculateROI();
-        return roi != null ? roi * 100 : 0.0;
+        List<Bet> bets = getAllBets().stream()
+            .filter(b -> b.getProfitLoss() != null && b.getStake() != null)
+            .toList();
+        if (bets.isEmpty()) return 0.0;
+        BigDecimal totalProfit = bets.stream().map(Bet::getProfitLoss).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalStake = bets.stream().map(Bet::getStake).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (totalStake.compareTo(BigDecimal.ZERO) == 0) return 0.0;
+        return totalProfit.divide(totalStake, 4, java.math.RoundingMode.HALF_UP).doubleValue() * 100;
     }
     
     /**
@@ -368,8 +413,10 @@ public class BetService {
      * @return Total stake across all bets
      */
     public BigDecimal calculateTotalStaked() {
-        BigDecimal total = betRepository.calculateTotalStaked();
-        return total != null ? total : BigDecimal.ZERO;
+        return getAllBets().stream()
+            .map(Bet::getStake)
+            .filter(s -> s != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
     /**
@@ -379,7 +426,9 @@ public class BetService {
      * @return Number of bets with that status
      */
     public long countBetsByStatus(String status) {
-        return betRepository.countByStatus(status);
+        return getAllBets().stream()
+            .filter(b -> status.equals(b.getStatus()))
+            .count();
     }
     
     /**
@@ -389,7 +438,9 @@ public class BetService {
      * @return Number of bets at that sportsbook
      */
     public long countBetsBySportsbook(String sportsbookName) {
-        return betRepository.countBySportsbookName(sportsbookName);
+        return getAllBets().stream()
+            .filter(b -> sportsbookName.equals(b.getSportsbookName()))
+            .count();
     }
     
     /**
@@ -398,7 +449,15 @@ public class BetService {
      * @return List of sportsbooks ordered by profit (best first)
      */
     public List<String> getBestPerformingSportsbooks() {
-        return betRepository.findBestPerformingSportsbooks();
+        return getAllBets().stream()
+            .filter(b -> b.getProfitLoss() != null)
+            .collect(java.util.stream.Collectors.groupingBy(
+                Bet::getSportsbookName,
+                java.util.stream.Collectors.reducing(BigDecimal.ZERO, Bet::getProfitLoss, BigDecimal::add)))
+            .entrySet().stream()
+            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .map(java.util.Map.Entry::getKey)
+            .toList();
     }
     
     /**
@@ -407,7 +466,15 @@ public class BetService {
      * @return List of sports ordered by profit (best first)
      */
     public List<String> getMostProfitableSports() {
-        return betRepository.findMostProfitableSports();
+        return getAllBets().stream()
+            .filter(b -> b.getProfitLoss() != null)
+            .collect(java.util.stream.Collectors.groupingBy(
+                Bet::getSport,
+                java.util.stream.Collectors.reducing(BigDecimal.ZERO, Bet::getProfitLoss, BigDecimal::add)))
+            .entrySet().stream()
+            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .map(java.util.Map.Entry::getKey)
+            .toList();
     }
     
     /**
@@ -439,6 +506,11 @@ public class BetService {
      * @param bet - Bet to validate
      * @throws IllegalArgumentException if validation fails
      */
+    private User requireCurrentUser() {
+        return userContextService.getCurrentUser()
+            .orElseThrow(() -> new RuntimeException("Authentication required"));
+    }
+
     private void validateBet(Bet bet) {
         if (bet.getStake() == null || bet.getStake().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Stake must be greater than zero");

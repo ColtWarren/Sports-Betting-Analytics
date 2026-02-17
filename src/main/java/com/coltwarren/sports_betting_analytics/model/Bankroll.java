@@ -26,6 +26,13 @@ public class Bankroll {
     
     @Column(name = "related_bet_id")
     private Long relatedBetId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     
     // Constructors
     public Bankroll() {
@@ -86,4 +93,10 @@ public class Bankroll {
     public void setRelatedBetId(Long relatedBetId) {
         this.relatedBetId = relatedBetId;
     }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

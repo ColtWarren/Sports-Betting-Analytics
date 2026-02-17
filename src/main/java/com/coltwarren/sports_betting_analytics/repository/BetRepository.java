@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * BetRepository - Data Access Layer for Bet Entity
@@ -117,7 +118,19 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
      * @return List of bets that beat (or didn't beat) closing line
      */
     List<Bet> findByBeatClosingLine(Boolean beatClosingLine);
-    
+
+    // ============================================
+    // USER-SCOPED QUERIES
+    // ============================================
+
+    List<Bet> findByUserId(Long userId);
+
+    List<Bet> findByUserIdAndStatus(Long userId, String status);
+
+    List<Bet> findByUserIdOrderByPlacedAtDesc(Long userId);
+
+    Optional<Bet> findByIdAndUserId(Long id, Long userId);
+
     /**
      * Find bets with stake greater than or equal to amount
      * Generated SQL: SELECT * FROM bets WHERE stake >= ?

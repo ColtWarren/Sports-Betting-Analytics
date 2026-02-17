@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface W2GFormRepository extends JpaRepository<W2GForm, Long> {
@@ -26,4 +27,14 @@ public interface W2GFormRepository extends JpaRepository<W2GForm, Long> {
     // Get total W-2G winnings for a tax year
     @Query("SELECT COALESCE(SUM(w.netWinnings), 0) FROM W2GForm w WHERE w.taxYear = ?1")
     java.math.BigDecimal getTotalW2GWinnings(Integer taxYear);
+
+    // ============================================
+    // USER-SCOPED QUERIES
+    // ============================================
+
+    List<W2GForm> findByUserId(Long userId);
+
+    List<W2GForm> findByUserIdAndTaxYear(Long userId, Integer taxYear);
+
+    Optional<W2GForm> findByIdAndUserId(Long id, Long userId);
 }

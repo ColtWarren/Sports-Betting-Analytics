@@ -22,4 +22,14 @@ public interface BankrollRepository extends JpaRepository<Bankroll, Long> {
     
     @Query("SELECT SUM(b.amount) FROM Bankroll b WHERE b.transactionType = 'WITHDRAWAL'")
     BigDecimal getTotalWithdrawals();
+
+    // ============================================
+    // USER-SCOPED QUERIES
+    // ============================================
+
+    List<Bankroll> findByUserId(Long userId);
+
+    List<Bankroll> findByUserIdOrderByRecordedAtDesc(Long userId);
+
+    Optional<Bankroll> findTopByUserIdOrderByRecordedAtDesc(Long userId);
 }
