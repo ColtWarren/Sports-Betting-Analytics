@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.model.W2GForm;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.repository.W2GFormRepository;
@@ -23,13 +24,25 @@ public class TaxReportService {
     @Autowired
     private W2GFormRepository w2gFormRepository;
 
+    @Autowired
+    private UserContextService userContextService;
+
+    private User requireCurrentUser() {
+        return userContextService.getCurrentUser()
+            .orElseThrow(() -> new RuntimeException("Authentication required"));
+    }
+
     /**
      * Get all settled bets for a specific tax year
      */
     public List<Bet> getBetsForTaxYear(int year) {
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return List.of();
         LocalDateTime start = LocalDateTime.of(year, 1, 1, 0, 0);
         LocalDateTime end = LocalDateTime.of(year, 12, 31, 23, 59);
-        return betRepository.findBySettledAtBetween(start, end);
+        return betRepository.findBySettledAtBetween(start, end).stream()
+            .filter(b -> b.getUser() != null && userId.equals(b.getUser().getId()))
+            .toList();
     }
 
     /**
@@ -120,7 +133,10 @@ public class TaxReportService {
         summary.put("w2gBetCount", w2gBets.size());
         summary.put("w2gBets", w2gBets);
 
-        List<W2GForm> w2gForms = w2gFormRepository.findByTaxYear(year);
+        Long userId = userContextService.getCurrentUserId();
+        List<W2GForm> w2gForms = userId != null
+            ? w2gFormRepository.findByUserIdAndTaxYear(userId, year)
+            : List.of();
         summary.put("w2gFormsReceived", w2gForms.stream().filter(W2GForm::getFormReceived).count());
         summary.put("w2gFormsPending", w2gForms.stream().filter(f -> !f.getFormReceived()).count());
 
@@ -151,6 +167,9 @@ public class TaxReportService {
                     bet.getSportsbookName(),
                     bet.getTaxYear()
                 );
+                if (bet.getUser() != null) {
+                    form.setUser(bet.getUser());
+                }
                 w2gFormRepository.save(form);
             }
         }
