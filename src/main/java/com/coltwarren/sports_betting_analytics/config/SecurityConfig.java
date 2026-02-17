@@ -17,10 +17,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Phase 1: Permit all endpoints - no lockdown yet
-            // Phase 5 will restrict endpoints to authenticated users
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                // Public routes - no auth required
+                .requestMatchers("/", "/login", "/login/**").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                .requestMatchers("/best-bets").permitAll()
+                .requestMatchers("/api/health").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
+                .requestMatchers("/error").permitAll()
+                // Everything else requires authentication
+                .anyRequest().authenticated()
             )
 
             // OAuth2 login with Google
@@ -29,7 +36,7 @@ public class SecurityConfig {
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )
-                .defaultSuccessUrl("/", true)
+                .defaultSuccessUrl("/dashboard", true)
                 .failureUrl("/login?error=true")
             )
 
