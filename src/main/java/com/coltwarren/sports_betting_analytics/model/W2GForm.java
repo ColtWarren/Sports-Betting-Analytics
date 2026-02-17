@@ -16,6 +16,10 @@ public class W2GForm {
     @Column(name = "bet_id")
     private Long betId; // Reference to the bet that triggered this W-2G
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(name = "date_won", nullable = false)
     private LocalDate dateWon;
 
@@ -209,4 +213,7 @@ public class W2GForm {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }
