@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -150,7 +150,11 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
         }
-        
+
+        .header-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; position: relative; z-index: 1; }
+        .logout-btn { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 14px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; }
+        .logout-btn:hover { background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -439,7 +443,12 @@
         <header>
             <h1>💰 BANKROLL</h1>
             <p class="subtitle">Professional Money Management</p>
-            <a href="/" class="back-btn">← Command Center</a>
+            <div class="header-bar">
+                <a href="/" class="back-btn">← Command Center</a>
+                <form th:action="@{/logout}" method="post" style="margin:0;" sec:authorize="isAuthenticated()">
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+            </div>
         </header>
         
         <div class="stats-grid">

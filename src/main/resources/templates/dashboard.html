@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -471,6 +471,47 @@
         .badge-pending {
             animation: pulse 2s infinite;
         }
+
+        .user-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-bar img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(99, 102, 241, 0.5);
+        }
+
+        .user-bar .user-name {
+            color: #94a3b8;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .user-bar .logout-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-bar .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -478,7 +519,15 @@
         <header>
             <h1>⚡ COMMAND CENTER</h1>
             <p class="subtitle">Sports Betting Analytics Platform</p>
-            
+
+            <div class="user-bar" sec:authorize="isAuthenticated()">
+                <img th:src="${#authentication.principal.attributes['picture']}" alt="Profile" />
+                <span class="user-name" th:text="${#authentication.principal.attributes['name']}">User</span>
+                <form th:action="@{/logout}" method="post" style="margin:0;">
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+            </div>
+
             <div class="nav-grid">
                 <a href="/bets/new" class="nav-btn"><span>➕ New Bet</span></a>
                 <a href="/active-bets" class="nav-btn"><span>🎯 Active Bets</span></a>
