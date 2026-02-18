@@ -31,7 +31,7 @@ public class CacheEvictionService {
     @Scheduled(fixedRate = 300000) // 5 minutes
     public void evictOddsCache() {
         evictCache(CacheConfig.ODDS_CACHE);
-        log.debug("Odds cache evicted");
+        log.trace("Odds cache evicted");
     }
 
     /**
@@ -40,7 +40,7 @@ public class CacheEvictionService {
     @Scheduled(fixedRate = 1800000) // 30 minutes
     public void evictWeatherCache() {
         evictCache(CacheConfig.WEATHER_CACHE);
-        log.debug("Weather cache evicted");
+        log.trace("Weather cache evicted");
     }
 
     /**
@@ -49,7 +49,7 @@ public class CacheEvictionService {
     @Scheduled(fixedRate = 3600000) // 1 hour
     public void evictXGCache() {
         evictCache(CacheConfig.XG_CACHE);
-        log.debug("xG cache evicted");
+        log.trace("xG cache evicted");
     }
 
     /**
@@ -58,7 +58,7 @@ public class CacheEvictionService {
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void evictInjuriesCache() {
         evictCache(CacheConfig.INJURIES_CACHE);
-        log.debug("Injuries cache evicted");
+        log.trace("Injuries cache evicted");
     }
 
     /**
@@ -67,7 +67,7 @@ public class CacheEvictionService {
     @Scheduled(fixedRate = 600000) // 10 minutes
     public void evictPublicBettingCache() {
         evictCache(CacheConfig.PUBLIC_BETTING_CACHE);
-        log.debug("Public betting cache evicted");
+        log.trace("Public betting cache evicted");
     }
 
     /**
@@ -86,7 +86,7 @@ public class CacheEvictionService {
     @Scheduled(fixedRate = 300000) // 5 minutes
     public void evictBestBetsCache() {
         evictCache(CacheConfig.BEST_BETS_CACHE);
-        log.debug("Best bets cache evicted");
+        log.trace("Best bets cache evicted");
     }
 
     /**
@@ -97,7 +97,7 @@ public class CacheEvictionService {
     public void evictCollegeDataCache() {
         evictCache(CacheConfig.CFB_DATA_CACHE);
         evictCache(CacheConfig.CBB_DATA_CACHE);
-        log.debug("College sports data cache evicted (CFB, CBB)");
+        log.trace("College sports data cache evicted (CFB, CBB)");
     }
 
     /**
