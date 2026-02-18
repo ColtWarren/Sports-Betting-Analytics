@@ -25,7 +25,7 @@ public class DashboardController {
         this.bankrollService = bankrollService;
     }
     
-    @GetMapping("/")
+    @GetMapping({"/", "/dashboard"})
     public String home(Model model) {
         List<Bet> allBets = betService.getAllBets();
         List<Bet> pendingBets = betService.getPendingBets();
