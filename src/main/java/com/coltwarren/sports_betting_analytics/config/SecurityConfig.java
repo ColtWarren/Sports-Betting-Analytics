@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,8 +12,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
+    @Autowired(required = false)
     private CustomOAuth2UserService customOAuth2UserService;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
+    private String googleClientId;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -22,7 +26,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/login/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers("/best-bets").permitAll()
-                .requestMatchers("/api/health").permitAll()
+                .requestMatchers("/api/health", "/api/health/**").permitAll()
                 .requestMatchers("/api/best-bets", "/api/best-bets/**").permitAll()
                 .requestMatchers("/api/odds", "/api/odds/**").permitAll()
                 .requestMatchers("/api/soccer", "/api/soccer/**").permitAll()
@@ -31,18 +35,28 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 // Everything else requires authentication
                 .anyRequest().authenticated()
-            )
+            );
 
-            // OAuth2 login with Google
-            .oauth2Login(oauth2 -> oauth2
+        // Only configure OAuth2 if Google credentials are present
+        boolean oauthConfigured = googleClientId != null && !googleClientId.isBlank() && !"none".equals(googleClientId);
+        if (oauthConfigured) {
+            http.oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )
                 .defaultSuccessUrl("/dashboard", true)
                 .failureUrl("/login?error=true")
-            )
+            );
+        } else {
+            // No OAuth2 configured - use form login as fallback
+            http.formLogin(form -> form
+                .loginPage("/login")
+                .permitAll()
+            );
+        }
 
+        http
             // Logout
             .logout(logout -> logout
                 .logoutUrl("/logout")
@@ -51,7 +65,7 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
             )
 
-            // CSRF protection (enabled by default, disable for REST API endpoints)
+            // CSRF protection (disable for REST API endpoints)
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/**")
             )
