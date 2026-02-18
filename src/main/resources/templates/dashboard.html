@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -520,9 +520,9 @@
             <h1>⚡ COMMAND CENTER</h1>
             <p class="subtitle">Sports Betting Analytics Platform</p>
 
-            <div class="user-bar" sec:authorize="isAuthenticated()">
-                <img th:src="${#authentication.principal.attributes['picture']}" alt="Profile" />
-                <span class="user-name" th:text="${#authentication.principal.attributes['name']}">User</span>
+            <div class="user-bar" th:if="${isAuthenticated}">
+                <img th:src="${userPicture}" alt="Profile" />
+                <span class="user-name" th:text="${userName}">User</span>
                 <form th:action="@{/logout}" method="post" style="margin:0;">
                     <button type="submit" class="logout-btn">Logout</button>
                 </form>

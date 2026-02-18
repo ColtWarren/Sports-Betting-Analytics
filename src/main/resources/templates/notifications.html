@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -369,7 +369,7 @@
             <p class="subtitle">Never Miss a +EV Opportunity</p>
             <div class="header-bar">
                 <a href="/" class="back-btn">← Command Center</a>
-                <form th:action="@{/logout}" method="post" style="margin:0;" sec:authorize="isAuthenticated()">
+                <form th:action="@{/logout}" method="post" style="margin:0;" th:if="${isAuthenticated}">
                     <button type="submit" class="logout-btn">Logout</button>
                 </form>
             </div>
