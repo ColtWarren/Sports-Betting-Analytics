@@ -12,7 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired(required = false)
+    @Autowired
     private CustomOAuth2UserService customOAuth2UserService;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
