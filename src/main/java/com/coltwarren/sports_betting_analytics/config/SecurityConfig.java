@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Autowired
-    private CustomOAuth2UserService customOAuth2UserService;
+    private CustomOAuth2UserService oAuth2SuccessHandler;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
@@ -42,10 +42,7 @@ public class SecurityConfig {
         if (oauthConfigured) {
             http.oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
-                .userInfoEndpoint(userInfo -> userInfo
-                    .userService(customOAuth2UserService)
-                )
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler(oAuth2SuccessHandler)
                 .failureUrl("/login?error=true")
             );
         } else {
@@ -67,7 +64,7 @@ public class SecurityConfig {
 
             // CSRF protection (disable for REST API endpoints)
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")
+                .ignoringRequestMatchers("/api/**", "/logout")
             )
 
             // Session management
