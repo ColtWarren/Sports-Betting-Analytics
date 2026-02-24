@@ -64,7 +64,7 @@ public class Bet {
     
     private Boolean beatClosingLine;
     
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     @Column(length = 100)
