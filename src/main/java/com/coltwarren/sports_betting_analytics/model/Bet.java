@@ -116,8 +116,14 @@ public class Bet {
     
     public void markAsWon() {
         this.status = "WON";
-        this.actualPayout = this.potentialPayout;
-        this.profitLoss = this.actualPayout.subtract(this.stake);
+        if (this.actualPayout == null) {
+            this.actualPayout = this.potentialPayout;
+        }
+        if (this.actualPayout != null && this.stake != null) {
+            this.profitLoss = this.actualPayout.subtract(this.stake);
+        } else {
+            this.profitLoss = BigDecimal.ZERO;
+        }
         this.settledAt = LocalDateTime.now();
         // Check if this win triggers W-2G
         checkIfTriggersW2G();
