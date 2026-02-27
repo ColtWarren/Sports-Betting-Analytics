@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.repository.query.Param;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -127,9 +129,35 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
 
     List<Bet> findByUserIdAndStatus(Long userId, String status);
 
+    List<Bet> findByUserIdAndStatusIn(Long userId, List<String> statuses);
+
+    List<Bet> findByUserIdAndSportsbookName(Long userId, String sportsbookName);
+
+    List<Bet> findByUserIdAndSport(Long userId, String sport);
+
+    List<Bet> findByUserIdAndBetType(Long userId, String betType);
+
+    List<Bet> findByUserIdAndPlacedAtBetween(Long userId, LocalDateTime start, LocalDateTime end);
+
     List<Bet> findByUserIdOrderByPlacedAtDesc(Long userId);
 
     Optional<Bet> findByIdAndUserId(Long id, Long userId);
+
+    long countByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
+
+    @Query("SELECT SUM(b.profitLoss) FROM Bet b WHERE b.user.id = :userId AND b.profitLoss IS NOT NULL")
+    BigDecimal calculateTotalProfitLossByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT SUM(b.stake) FROM Bet b WHERE b.user.id = :userId AND b.stake IS NOT NULL")
+    BigDecimal calculateTotalStakedByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT CAST(COUNT(CASE WHEN b.status = 'WON' THEN 1 END) AS double) / NULLIF(COUNT(b), 0) FROM Bet b WHERE b.user.id = :userId AND b.status IN ('WON', 'LOST')")
+    Double calculateWinRateByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT SUM(b.profitLoss) / NULLIF(SUM(b.stake), 0) FROM Bet b WHERE b.user.id = :userId AND b.profitLoss IS NOT NULL")
+    Double calculateROIByUserId(@Param("userId") Long userId);
+
+    long countByUserId(Long userId);
 
     /**
      * Find bets with stake greater than or equal to amount

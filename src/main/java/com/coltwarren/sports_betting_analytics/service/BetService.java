@@ -116,63 +116,54 @@ public class BetService {
     
     /**
      * Get all settled bets (won, lost, pushed)
-     * 
+     *
      * @return List of settled bets
      */
     public List<Bet> getSettledBets() {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        List<Bet> userBets = betRepository.findByUserId(userId);
-        return userBets.stream()
-            .filter(b -> List.of("WON", "LOST", "PUSH").contains(b.getStatus()))
-            .toList();
+        return betRepository.findByUserIdAndStatusIn(userId, List.of("WON", "LOST", "PUSH"));
     }
-    
+
     /**
      * Get bets from a specific sportsbook
-     * 
+     *
      * @param sportsbookName - Sportsbook name
      * @return List of bets from that sportsbook
      */
     public List<Bet> getBetsBySportsbook(String sportsbookName) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserId(userId).stream()
-            .filter(b -> sportsbookName.equals(b.getSportsbookName()))
-            .toList();
+        return betRepository.findByUserIdAndSportsbookName(userId, sportsbookName);
     }
-    
+
     /**
      * Get bets for a specific sport
-     * 
+     *
      * @param sport - Sport name
      * @return List of bets on that sport
      */
     public List<Bet> getBetsBySport(String sport) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserId(userId).stream()
-            .filter(b -> sport.equals(b.getSport()))
-            .toList();
+        return betRepository.findByUserIdAndSport(userId, sport);
     }
-    
+
     /**
      * Get bets by type
-     * 
+     *
      * @param betType - Bet type (MONEYLINE, SPREAD, etc.)
      * @return List of bets of that type
      */
     public List<Bet> getBetsByType(String betType) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserId(userId).stream()
-            .filter(b -> betType.equals(b.getBetType()))
-            .toList();
+        return betRepository.findByUserIdAndBetType(userId, betType);
     }
-    
+
     /**
      * Get bets placed within a date range
-     * 
+     *
      * @param start - Start date/time
      * @param end - End date/time
      * @return List of bets in that range
@@ -180,9 +171,7 @@ public class BetService {
     public List<Bet> getBetsByDateRange(LocalDateTime start, LocalDateTime end) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserId(userId).stream()
-            .filter(b -> b.getPlacedAt() != null && !b.getPlacedAt().isBefore(start) && !b.getPlacedAt().isAfter(end))
-            .toList();
+        return betRepository.findByUserIdAndPlacedAtBetween(userId, start, end);
     }
     
     /**
@@ -340,155 +329,76 @@ public class BetService {
     // ============================================
     
     /**
-     * Calculate total profit/loss across all bets
-     * 
-     * @return Total profit (positive) or loss (negative)
+     * Calculate total profit/loss across all bets (single DB aggregate query).
      */
     public BigDecimal calculateTotalProfitLoss() {
-        return getAllBets().stream()
-            .map(Bet::getProfitLoss)
-            .filter(pl -> pl != null)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return BigDecimal.ZERO;
+        BigDecimal result = betRepository.calculateTotalProfitLossByUserId(userId);
+        return result != null ? result : BigDecimal.ZERO;
     }
-    
+
     /**
-     * Calculate profit/loss for a specific sportsbook
-     * 
-     * @param sportsbookName - Sportsbook name
-     * @return Profit/loss for that sportsbook
-     */
-    public BigDecimal calculateProfitLossBySportsbook(String sportsbookName) {
-        return getAllBets().stream()
-            .filter(b -> sportsbookName.equals(b.getSportsbookName()) && b.getProfitLoss() != null)
-            .map(Bet::getProfitLoss)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-    
-    /**
-     * Calculate profit/loss for a specific sport
-     * 
-     * @param sport - Sport name
-     * @return Profit/loss for that sport
-     */
-    public BigDecimal calculateProfitLossBySport(String sport) {
-        return getAllBets().stream()
-            .filter(b -> sport.equals(b.getSport()) && b.getProfitLoss() != null)
-            .map(Bet::getProfitLoss)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-    
-    /**
-     * Calculate win rate (percentage of bets won)
-     * 
+     * Calculate win rate (percentage of bets won) via DB aggregate.
+     *
      * @return Win rate as percentage (0-100)
      */
     public Double calculateWinRate() {
-        List<Bet> settled = getAllBets().stream()
-            .filter(b -> "WON".equals(b.getStatus()) || "LOST".equals(b.getStatus()))
-            .toList();
-        if (settled.isEmpty()) return 0.0;
-        long won = settled.stream().filter(b -> "WON".equals(b.getStatus())).count();
-        return (double) won / settled.size() * 100;
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return 0.0;
+        Double rate = betRepository.calculateWinRateByUserId(userId);
+        return rate != null ? rate * 100 : 0.0;
     }
-    
+
     /**
-     * Calculate ROI (Return on Investment)
-     * 
+     * Calculate ROI (Return on Investment) via DB aggregate.
+     *
      * @return ROI as percentage (e.g., 5.0 = 5%)
      */
     public Double calculateROI() {
-        List<Bet> bets = getAllBets().stream()
-            .filter(b -> b.getProfitLoss() != null && b.getStake() != null)
-            .toList();
-        if (bets.isEmpty()) return 0.0;
-        BigDecimal totalProfit = bets.stream().map(Bet::getProfitLoss).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalStake = bets.stream().map(Bet::getStake).reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (totalStake.compareTo(BigDecimal.ZERO) == 0) return 0.0;
-        return totalProfit.divide(totalStake, 4, java.math.RoundingMode.HALF_UP).doubleValue() * 100;
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return 0.0;
+        Double roi = betRepository.calculateROIByUserId(userId);
+        return roi != null ? roi * 100 : 0.0;
     }
-    
+
     /**
-     * Calculate total amount staked
-     * 
-     * @return Total stake across all bets
+     * Calculate total amount staked via DB aggregate.
      */
     public BigDecimal calculateTotalStaked() {
-        return getAllBets().stream()
-            .map(Bet::getStake)
-            .filter(s -> s != null)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return BigDecimal.ZERO;
+        BigDecimal result = betRepository.calculateTotalStakedByUserId(userId);
+        return result != null ? result : BigDecimal.ZERO;
     }
-    
+
     /**
-     * Get count of bets by status
-     * 
-     * @param status - Status to count
-     * @return Number of bets with that status
+     * Get count of bets by status via DB COUNT query.
      */
     public long countBetsByStatus(String status) {
-        return getAllBets().stream()
-            .filter(b -> status.equals(b.getStatus()))
-            .count();
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) return 0;
+        return betRepository.countByUserIdAndStatus(userId, status);
     }
-    
+
     /**
-     * Get count of bets by sportsbook
-     * 
-     * @param sportsbookName - Sportsbook to count
-     * @return Number of bets at that sportsbook
-     */
-    public long countBetsBySportsbook(String sportsbookName) {
-        return getAllBets().stream()
-            .filter(b -> sportsbookName.equals(b.getSportsbookName()))
-            .count();
-    }
-    
-    /**
-     * Get best performing sportsbook
-     * 
-     * @return List of sportsbooks ordered by profit (best first)
-     */
-    public List<String> getBestPerformingSportsbooks() {
-        return getAllBets().stream()
-            .filter(b -> b.getProfitLoss() != null)
-            .collect(java.util.stream.Collectors.groupingBy(
-                Bet::getSportsbookName,
-                java.util.stream.Collectors.reducing(BigDecimal.ZERO, Bet::getProfitLoss, BigDecimal::add)))
-            .entrySet().stream()
-            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
-            .map(java.util.Map.Entry::getKey)
-            .toList();
-    }
-    
-    /**
-     * Get most profitable sport
-     * 
-     * @return List of sports ordered by profit (best first)
-     */
-    public List<String> getMostProfitableSports() {
-        return getAllBets().stream()
-            .filter(b -> b.getProfitLoss() != null)
-            .collect(java.util.stream.Collectors.groupingBy(
-                Bet::getSport,
-                java.util.stream.Collectors.reducing(BigDecimal.ZERO, Bet::getProfitLoss, BigDecimal::add)))
-            .entrySet().stream()
-            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
-            .map(java.util.Map.Entry::getKey)
-            .toList();
-    }
-    
-    /**
-     * Get comprehensive betting statistics
-     * 
-     * @return BettingStats object with all statistics
+     * Get comprehensive betting statistics.
+     * Uses DB-level aggregate queries — no entity loading required.
+     * Before: 8 separate queries each loading ALL bets into memory.
+     * After:  6 lightweight COUNT/SUM queries, zero entity hydration.
      */
     public BettingStats getComprehensiveStats() {
+        Long userId = userContextService.getCurrentUserId();
+        if (userId == null) {
+            return new BettingStats(0, 0, 0, 0, 0, BigDecimal.ZERO, BigDecimal.ZERO, 0.0, 0.0);
+        }
+
         return new BettingStats(
-            betRepository.count(),
-            countBetsByStatus("PENDING"),
-            countBetsByStatus("WON"),
-            countBetsByStatus("LOST"),
-            countBetsByStatus("PUSH"),
+            betRepository.countByUserId(userId),
+            betRepository.countByUserIdAndStatus(userId, "PENDING"),
+            betRepository.countByUserIdAndStatus(userId, "WON"),
+            betRepository.countByUserIdAndStatus(userId, "LOST"),
+            betRepository.countByUserIdAndStatus(userId, "PUSH"),
             calculateTotalStaked(),
             calculateTotalProfitLoss(),
             calculateWinRate(),

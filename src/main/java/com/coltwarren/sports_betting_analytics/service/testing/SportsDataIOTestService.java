@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.service.testing;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,6 @@ import java.util.*;
 @Service
 public class SportsDataIOTestService {
 
-    private static final String API_KEY = "5b255ff80627441a9757ad28bf9578c1";
     private static final String BASE_URL = "https://api.sportsdata.io";
 
     // Missouri-legal sportsbooks we need to verify
@@ -46,11 +46,13 @@ public class SportsDataIOTestService {
     );
 
     private final WebClient webClient;
+    private final String apiKey;
 
-    public SportsDataIOTestService() {
+    public SportsDataIOTestService(@Value("${sportsdata.api.key:}") String apiKey) {
+        this.apiKey = apiKey;
         this.webClient = WebClient.builder()
             .baseUrl(BASE_URL)
-            .defaultHeader("Ocp-Apim-Subscription-Key", API_KEY)
+            .defaultHeader("Ocp-Apim-Subscription-Key", apiKey)
             .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .build();
     }
@@ -62,7 +64,7 @@ public class SportsDataIOTestService {
         Map<String, Object> results = new LinkedHashMap<>();
 
         results.put("testDate", LocalDate.now().toString());
-        results.put("apiKey", API_KEY.substring(0, 8) + "...");
+        results.put("apiKey", apiKey != null && apiKey.length() >= 8 ? apiKey.substring(0, 8) + "..." : "not-set");
 
         // Test each sport
         results.put("nflTest", testNFLOdds());
