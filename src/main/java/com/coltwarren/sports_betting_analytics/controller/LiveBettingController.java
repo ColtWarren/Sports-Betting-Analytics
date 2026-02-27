@@ -9,7 +9,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/live")
-@CrossOrigin(origins = "*")
 public class LiveBettingController {
     
     @Autowired

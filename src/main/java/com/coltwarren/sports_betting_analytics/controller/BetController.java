@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bets")
-@CrossOrigin(origins = "*")
 public class BetController {
     
     private final BetService betService;

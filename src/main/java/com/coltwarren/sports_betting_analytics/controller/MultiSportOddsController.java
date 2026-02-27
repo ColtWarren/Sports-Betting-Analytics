@@ -9,7 +9,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/odds/multi-sport")
-@CrossOrigin(origins = "*")
 public class MultiSportOddsController {
     
     @Autowired

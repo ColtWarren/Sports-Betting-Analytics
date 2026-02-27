@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/best-bets")
-@CrossOrigin(origins = "*")
 public class MultiSportBestBetsController {
     
     @Autowired
