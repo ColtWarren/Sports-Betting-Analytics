@@ -92,11 +92,11 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- H2 in-memory database for Railway deployment -->
+		<!-- H2 in-memory database for tests only -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
