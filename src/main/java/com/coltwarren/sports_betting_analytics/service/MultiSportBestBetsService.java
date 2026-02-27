@@ -15,6 +15,8 @@ import com.coltwarren.sports_betting_analytics.model.betting.ContrarianValue;
 import com.coltwarren.sports_betting_analytics.model.injury.InjuryImpact;
 import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
 import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,23 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class MultiSportBestBetsService {
+
+    private final ExecutorService executor = Executors.newFixedThreadPool(6);
+
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
     
     @Autowired
     private MultiSportOddsService multiSportOddsService;
@@ -63,17 +81,15 @@ public class MultiSportBestBetsService {
     
     public List<Map<String, Object>> getBestBetsAcrossAllSports() {
         try {
-            System.out.println("🔥 Starting multi-sport best bets analysis...");
-            
-            // Use parallel processing to analyze all sports simultaneously
-            ExecutorService executor = Executors.newFixedThreadPool(6);
+            log.info("Starting multi-sport best bets analysis...");
+
             List<Future<List<Map<String, Object>>>> futures = new ArrayList<>();
-            
+
             for (String sport : SPORTS) {
                 Future<List<Map<String, Object>>> future = executor.submit(() -> analyzeSport(sport));
                 futures.add(future);
             }
-            
+
             // Collect all bets from all sports (gracefully skip any that fail)
             List<Map<String, Object>> allBets = new ArrayList<>();
             for (int i = 0; i < futures.size(); i++) {
@@ -84,29 +100,26 @@ public class MultiSportBestBetsService {
                         allBets.addAll(sportBets);
                     }
                 } catch (TimeoutException e) {
-                    System.err.println("Timeout fetching " + sport + " bets - skipping");
+                    log.warn("Timeout fetching {} bets - skipping", sport);
                 } catch (Exception e) {
-                    System.err.println("Error fetching " + sport + " bets (skipping): " + e.getMessage());
+                    log.warn("Error fetching {} bets (skipping): {}", sport, e.getMessage());
                 }
             }
-            
-            executor.shutdown();
-            
-            System.out.println("📊 Found " + allBets.size() + " total bets across all sports");
-            
+
+            log.info("Found {} total bets across all sports", allBets.size());
+
             // Sort by confidence score
             allBets.sort((a, b) -> {
                 Double scoreA = (Double) a.getOrDefault("confidence", 0.0);
                 Double scoreB = (Double) b.getOrDefault("confidence", 0.0);
                 return scoreB.compareTo(scoreA);
             });
-            
+
             // Return top 20 bets
             return allBets.stream().limit(20).collect(Collectors.toList());
-            
+
         } catch (Exception e) {
-            System.err.println("Error getting best bets: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error getting best bets: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
     }
