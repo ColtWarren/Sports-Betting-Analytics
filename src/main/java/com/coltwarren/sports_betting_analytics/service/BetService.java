@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +31,6 @@ public class BetService {
     private final TaxReportService taxReportService;
     private final UserContextService userContextService;
 
-    @Autowired
     public BetService(BetRepository betRepository, TaxReportService taxReportService,
                       UserContextService userContextService) {
         this.betRepository = betRepository;

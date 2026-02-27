@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.LiveGameService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,9 +9,12 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/live")
 public class LiveBettingController {
-    
-    @Autowired
-    private LiveGameService liveGameService;
+
+    private final LiveGameService liveGameService;
+
+    public LiveBettingController(LiveGameService liveGameService) {
+        this.liveGameService = liveGameService;
+    }
     
     @GetMapping("/games")
     public ResponseEntity<Map<String, Object>> getLiveGames(

@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service.injury;
 import com.coltwarren.sports_betting_analytics.model.injury.PlayerInjury;
 import com.coltwarren.sports_betting_analytics.model.injury.InjuryImpact;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InjuryAnalysisService {
 
-    @Autowired
-    private ESPNInjuryService espnInjuryService;
+    private final ESPNInjuryService espnInjuryService;
+
+    public InjuryAnalysisService(ESPNInjuryService espnInjuryService) {
+        this.espnInjuryService = espnInjuryService;
+    }
 
     // Impact values by position (in points for spread) - NFL
     private static final Map<String, Double> NFL_POSITION_IMPACT = Map.ofEntries(

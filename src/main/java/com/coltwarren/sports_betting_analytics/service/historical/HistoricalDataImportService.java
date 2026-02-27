@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service.historical;
 import com.coltwarren.sports_betting_analytics.model.historical.HistoricalMatch;
 import com.coltwarren.sports_betting_analytics.repository.HistoricalMatchRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,10 +20,13 @@ import java.util.*;
 @Slf4j
 public class HistoricalDataImportService {
 
-    @Autowired
-    private HistoricalMatchRepository matchRepository;
+    private final HistoricalMatchRepository matchRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
+
+    public HistoricalDataImportService(HistoricalMatchRepository matchRepository) {
+        this.matchRepository = matchRepository;
+    }
 
     // Football-Data.co.uk URLs
     private static final String BASE_URL = "https://www.football-data.co.uk/mmz4281";

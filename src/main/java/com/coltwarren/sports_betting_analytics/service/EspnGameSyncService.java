@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,6 @@ public class EspnGameSyncService {
     private final WebClient webClient;
     private final GameStatsRepository gameStatsRepository;
     
-    @Autowired
     public EspnGameSyncService(GameStatsRepository gameStatsRepository) {
         this.gameStatsRepository = gameStatsRepository;
         

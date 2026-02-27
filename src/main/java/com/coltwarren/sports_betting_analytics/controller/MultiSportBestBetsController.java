@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.MultiSportBestBetsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,9 +10,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/best-bets")
 public class MultiSportBestBetsController {
-    
-    @Autowired
-    private MultiSportBestBetsService multiSportBestBetsService;
+
+    private final MultiSportBestBetsService multiSportBestBetsService;
+
+    public MultiSportBestBetsController(MultiSportBestBetsService multiSportBestBetsService) {
+        this.multiSportBestBetsService = multiSportBestBetsService;
+    }
     
     @GetMapping("/all-sports")
     public ResponseEntity<Map<String, Object>> getBestBetsAllSports(

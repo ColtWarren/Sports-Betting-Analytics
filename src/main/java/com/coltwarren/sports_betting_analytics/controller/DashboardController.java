@@ -4,7 +4,6 @@ import com.coltwarren.sports_betting_analytics.service.BetService;
 import com.coltwarren.sports_betting_analytics.service.BankrollService;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.model.Bankroll;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +14,10 @@ import java.util.Map;
 
 @Controller
 public class DashboardController {
-    
+
     private final BetService betService;
     private final BankrollService bankrollService;
-    
-    @Autowired
+
     public DashboardController(BetService betService, BankrollService bankrollService) {
         this.betService = betService;
         this.bankrollService = bankrollService;

@@ -5,7 +5,6 @@ import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.model.W2GForm;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.repository.W2GFormRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,14 +17,16 @@ import java.util.stream.Collectors;
 @Service
 public class TaxReportService {
 
-    @Autowired
-    private BetRepository betRepository;
+    private final BetRepository betRepository;
+    private final W2GFormRepository w2gFormRepository;
+    private final UserContextService userContextService;
 
-    @Autowired
-    private W2GFormRepository w2gFormRepository;
-
-    @Autowired
-    private UserContextService userContextService;
+    public TaxReportService(BetRepository betRepository, W2GFormRepository w2gFormRepository,
+                            UserContextService userContextService) {
+        this.betRepository = betRepository;
+        this.w2gFormRepository = w2gFormRepository;
+        this.userContextService = userContextService;
+    }
 
     private User requireCurrentUser() {
         return userContextService.getCurrentUser()

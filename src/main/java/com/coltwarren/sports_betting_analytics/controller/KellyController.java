@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.KellyCriterionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -12,7 +11,6 @@ public class KellyController {
     
     private final KellyCriterionService kellyService;
     
-    @Autowired
     public KellyController(KellyCriterionService kellyService) {
         this.kellyService = kellyService;
     }

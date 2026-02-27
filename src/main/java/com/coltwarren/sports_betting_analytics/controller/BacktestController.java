@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 import com.coltwarren.sports_betting_analytics.model.historical.*;
 import com.coltwarren.sports_betting_analytics.service.historical.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +19,14 @@ import java.util.*;
 @Slf4j
 public class BacktestController {
 
-    @Autowired
-    private HistoricalDataImportService importService;
+    private final HistoricalDataImportService importService;
+    private final BacktestingService backtestingService;
 
-    @Autowired
-    private BacktestingService backtestingService;
+    public BacktestController(HistoricalDataImportService importService,
+                              BacktestingService backtestingService) {
+        this.importService = importService;
+        this.backtestingService = backtestingService;
+    }
 
     // ==================== DATA IMPORT ENDPOINTS ====================
 

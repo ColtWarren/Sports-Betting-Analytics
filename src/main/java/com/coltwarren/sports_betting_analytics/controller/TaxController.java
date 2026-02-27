@@ -4,7 +4,6 @@ import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.model.W2GForm;
 import com.coltwarren.sports_betting_analytics.repository.W2GFormRepository;
 import com.coltwarren.sports_betting_analytics.service.TaxReportService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +16,14 @@ import java.util.Map;
 @RequestMapping("/tax")
 public class TaxController {
 
-    @Autowired
-    private TaxReportService taxReportService;
+    private final TaxReportService taxReportService;
+    private final W2GFormRepository w2gFormRepository;
 
-    @Autowired
-    private W2GFormRepository w2gFormRepository;
+    public TaxController(TaxReportService taxReportService,
+                         W2GFormRepository w2gFormRepository) {
+        this.taxReportService = taxReportService;
+        this.w2gFormRepository = w2gFormRepository;
+    }
 
     /**
      * Tax Center Dashboard

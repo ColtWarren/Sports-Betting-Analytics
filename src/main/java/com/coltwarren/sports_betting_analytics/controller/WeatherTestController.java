@@ -6,7 +6,6 @@ import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
 import com.coltwarren.sports_betting_analytics.repository.StadiumLocationRepository;
 import com.coltwarren.sports_betting_analytics.service.weather.OpenWeatherMapService;
 import com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,14 +21,17 @@ import java.util.Map;
 @RequestMapping("/api/test")
 public class WeatherTestController {
 
-    @Autowired
-    private WeatherAnalysisService weatherAnalysisService;
+    private final WeatherAnalysisService weatherAnalysisService;
+    private final OpenWeatherMapService openWeatherMapService;
+    private final StadiumLocationRepository stadiumRepository;
 
-    @Autowired
-    private OpenWeatherMapService openWeatherMapService;
-
-    @Autowired
-    private StadiumLocationRepository stadiumRepository;
+    public WeatherTestController(WeatherAnalysisService weatherAnalysisService,
+                                 OpenWeatherMapService openWeatherMapService,
+                                 StadiumLocationRepository stadiumRepository) {
+        this.weatherAnalysisService = weatherAnalysisService;
+        this.openWeatherMapService = openWeatherMapService;
+        this.stadiumRepository = stadiumRepository;
+    }
 
     @GetMapping("/weather/{stadiumName}")
     public ResponseEntity<?> testWeather(@PathVariable String stadiumName) {

@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service.historical;
 import com.coltwarren.sports_betting_analytics.model.historical.*;
 import com.coltwarren.sports_betting_analytics.repository.HistoricalMatchRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,8 +20,7 @@ import java.util.*;
 @Slf4j
 public class BacktestingService {
 
-    @Autowired
-    private HistoricalMatchRepository matchRepository;
+    private final HistoricalMatchRepository matchRepository;
 
     // Default settings
     private static final double DEFAULT_BANKROLL = 1000.0;
@@ -30,6 +28,10 @@ public class BacktestingService {
     private static final double MIN_EDGE = 0.02;       // Minimum 2% edge required
     private static final double MIN_ODDS = 1.50;       // Minimum odds to consider
     private static final double MAX_ODDS = 10.0;       // Maximum odds to consider
+
+    public BacktestingService(HistoricalMatchRepository matchRepository) {
+        this.matchRepository = matchRepository;
+    }
 
     /**
      * Run Kelly Criterion backtest on a league

@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,7 +15,6 @@ public class OddsBackfillService {
     private final WebClient espnOddsClient;
     private final GameStatsRepository gameStatsRepository;
     
-    @Autowired
     public OddsBackfillService(GameStatsRepository gameStatsRepository) {
         this.gameStatsRepository = gameStatsRepository;
         

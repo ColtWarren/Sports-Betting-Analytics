@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,15 +12,20 @@ import java.util.*;
 @Service
 public class ActiveBetsTrackerService {
     
-    @Autowired
-    private BetRepository betRepository;
-    
-    @Autowired
-    private LiveGameService liveGameService;
-    
-    @Autowired
-    private MultiSportOddsService multiSportOddsService;
-    
+    private final BetRepository betRepository;
+
+    private final LiveGameService liveGameService;
+
+    private final MultiSportOddsService multiSportOddsService;
+
+    public ActiveBetsTrackerService(BetRepository betRepository,
+                                    LiveGameService liveGameService,
+                                    MultiSportOddsService multiSportOddsService) {
+        this.betRepository = betRepository;
+        this.liveGameService = liveGameService;
+        this.multiSportOddsService = multiSportOddsService;
+    }
+
     public List<Map<String, Object>> getActiveBetsWithLiveData() {
         try {
             // Get all pending bets

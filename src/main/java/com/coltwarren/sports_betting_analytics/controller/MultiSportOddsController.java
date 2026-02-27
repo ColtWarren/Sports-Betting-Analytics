@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,9 +9,12 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/odds/multi-sport")
 public class MultiSportOddsController {
-    
-    @Autowired
-    private MultiSportOddsService multiSportOddsService;
+
+    private final MultiSportOddsService multiSportOddsService;
+
+    public MultiSportOddsController(MultiSportOddsService multiSportOddsService) {
+        this.multiSportOddsService = multiSportOddsService;
+    }
     
     @GetMapping("/{sport}")
     public ResponseEntity<Map<String, Object>> getOddsForSport(@PathVariable String sport) {

@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.AdvancedEVCalculator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -12,7 +11,6 @@ public class EVController {
     
     private final AdvancedEVCalculator evCalculator;
     
-    @Autowired
     public EVController(AdvancedEVCalculator evCalculator) {
         this.evCalculator = evCalculator;
     }

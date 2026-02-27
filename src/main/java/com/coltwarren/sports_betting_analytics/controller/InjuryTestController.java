@@ -4,7 +4,6 @@ import com.coltwarren.sports_betting_analytics.model.injury.PlayerInjury;
 import com.coltwarren.sports_betting_analytics.model.injury.InjuryImpact;
 import com.coltwarren.sports_betting_analytics.service.injury.ESPNInjuryService;
 import com.coltwarren.sports_betting_analytics.service.injury.InjuryAnalysisService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,11 +20,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/test/injuries")
 public class InjuryTestController {
 
-    @Autowired
-    private ESPNInjuryService espnInjuryService;
+    private final ESPNInjuryService espnInjuryService;
+    private final InjuryAnalysisService injuryAnalysisService;
 
-    @Autowired
-    private InjuryAnalysisService injuryAnalysisService;
+    public InjuryTestController(ESPNInjuryService espnInjuryService,
+                                InjuryAnalysisService injuryAnalysisService) {
+        this.espnInjuryService = espnInjuryService;
+        this.injuryAnalysisService = injuryAnalysisService;
+    }
 
     @GetMapping("/{sport}")
     public ResponseEntity<?> getInjuries(@PathVariable String sport) {

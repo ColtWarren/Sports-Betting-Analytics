@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.service.soccer;
 
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.soccer.TeamStanding;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,11 +22,15 @@ import java.util.*;
 @Service
 public class SoccerDataAggregatorService {
 
-    @Autowired
-    private ApiFootballService apiFootballService;
+    private final ApiFootballService apiFootballService;
 
-    @Autowired
-    private SoccerOddsService soccerOddsService;
+    private final SoccerOddsService soccerOddsService;
+
+    public SoccerDataAggregatorService(ApiFootballService apiFootballService,
+                                       SoccerOddsService soccerOddsService) {
+        this.apiFootballService = apiFootballService;
+        this.soccerOddsService = soccerOddsService;
+    }
 
     // League to sport key mapping
     private static final Map<String, String> LEAGUE_TO_SPORT_KEY = Map.of(

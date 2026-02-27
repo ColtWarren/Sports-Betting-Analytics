@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service.pattern;
 import com.coltwarren.sports_betting_analytics.model.pattern.BettingPattern;
 import com.coltwarren.sports_betting_analytics.model.pattern.PatternMatch;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,11 +18,14 @@ import java.util.*;
 @Slf4j
 public class PatternMatchingService {
 
-    @Autowired
-    private PatternDiscoveryService patternDiscoveryService;
+    private final PatternDiscoveryService patternDiscoveryService;
 
     // Cache discovered patterns
     private Map<String, List<BettingPattern>> patternCache = new HashMap<>();
+
+    public PatternMatchingService(PatternDiscoveryService patternDiscoveryService) {
+        this.patternDiscoveryService = patternDiscoveryService;
+    }
 
     /**
      * Find all pattern matches for today's games

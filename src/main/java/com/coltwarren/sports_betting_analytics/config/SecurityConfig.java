@@ -1,6 +1,5 @@
 package com.coltwarren.sports_betting_analytics.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,11 +11,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomOAuth2UserService oAuth2SuccessHandler;
+    private final CustomOAuth2UserService oAuth2SuccessHandler;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
+
+    public SecurityConfig(CustomOAuth2UserService oAuth2SuccessHandler) {
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

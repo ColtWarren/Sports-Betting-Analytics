@@ -4,7 +4,6 @@ import com.coltwarren.sports_betting_analytics.model.xg.TeamXGStats;
 import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
 import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +20,11 @@ import java.util.*;
 @Slf4j
 public class XGController {
 
-    @Autowired
-    private XGDataService xgDataService;
+    private final XGDataService xgDataService;
+
+    public XGController(XGDataService xgDataService) {
+        this.xgDataService = xgDataService;
+    }
 
     /**
      * Get xG stats for a team

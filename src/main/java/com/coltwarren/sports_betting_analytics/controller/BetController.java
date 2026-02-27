@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.service.BetService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +12,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/bets")
 public class BetController {
-    
+
     private final BetService betService;
-    
-    @Autowired
+
     public BetController(BetService betService) {
         this.betService = betService;
     }

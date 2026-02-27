@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.college.WNCAAWDataService;
 import com.coltwarren.sports_betting_analytics.service.wnba.WNBADataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,11 +14,13 @@ import java.util.*;
 @RestController
 public class WomensBasketballTestController {
 
-    @Autowired
-    private WNBADataService wnbaService;
+    private final WNBADataService wnbaService;
+    private final WNCAAWDataService wcbbService;
 
-    @Autowired
-    private WNCAAWDataService wcbbService;
+    public WomensBasketballTestController(WNBADataService wnbaService, WNCAAWDataService wcbbService) {
+        this.wnbaService = wnbaService;
+        this.wcbbService = wcbbService;
+    }
 
     // ==================== WNBA Endpoints ====================
 

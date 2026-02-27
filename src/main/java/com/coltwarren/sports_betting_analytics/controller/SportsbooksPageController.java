@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.SportsbookService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +12,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class SportsbooksPageController {
 
-    @Autowired
-    private SportsbookService sportsbookService;
+    private final SportsbookService sportsbookService;
+
+    public SportsbooksPageController(SportsbookService sportsbookService) {
+        this.sportsbookService = sportsbookService;
+    }
 
     /**
      * Sportsbooks Directory Page

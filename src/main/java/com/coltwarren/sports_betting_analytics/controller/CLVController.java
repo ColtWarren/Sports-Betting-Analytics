@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.CLVTracker;
 import com.coltwarren.sports_betting_analytics.model.Bet;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +13,6 @@ public class CLVController {
     
     private final CLVTracker clvTracker;
     
-    @Autowired
     public CLVController(CLVTracker clvTracker) {
         this.clvTracker = clvTracker;
     }

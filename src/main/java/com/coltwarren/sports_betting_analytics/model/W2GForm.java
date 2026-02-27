@@ -6,7 +6,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "w2g_forms")
+@Table(name = "w2g_forms", indexes = {
+    @Index(name = "idx_w2g_user_id", columnList = "user_id"),
+    @Index(name = "idx_w2g_tax_year", columnList = "tax_year"),
+    @Index(name = "idx_w2g_bet_id", columnList = "bet_id"),
+    @Index(name = "idx_w2g_user_year", columnList = "user_id, tax_year")
+})
 public class W2GForm {
 
     @Id

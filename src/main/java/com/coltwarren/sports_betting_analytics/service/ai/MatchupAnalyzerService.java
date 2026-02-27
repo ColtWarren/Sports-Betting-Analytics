@@ -5,7 +5,6 @@ import com.coltwarren.sports_betting_analytics.service.EspnService;
 import com.coltwarren.sports_betting_analytics.service.StatsService;
 import com.coltwarren.sports_betting_analytics.service.wnba.WNBADataService;
 import com.coltwarren.sports_betting_analytics.service.college.WNCAAWDataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,7 +24,6 @@ public class MatchupAnalyzerService {
     private final WNBADataService wnbaDataService;
     private final WNCAAWDataService wcbbDataService;
 
-    @Autowired
     public MatchupAnalyzerService(@Value("${claude.api.key}") String apiKey,
                                    WeatherService weatherService,
                                    EspnService espnService,

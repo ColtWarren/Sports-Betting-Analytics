@@ -1,6 +1,5 @@
 package com.coltwarren.sports_betting_analytics.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -12,7 +11,6 @@ public class LiveGameService {
     
     private final WebClient espnClient;
     
-    @Autowired
     public LiveGameService() {
         ExchangeStrategies strategies = ExchangeStrategies.builder()
             .codecs(configurer -> configurer

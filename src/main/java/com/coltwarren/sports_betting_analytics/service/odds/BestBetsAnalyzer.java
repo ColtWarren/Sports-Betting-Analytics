@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.service.odds;
 
 import com.coltwarren.sports_betting_analytics.model.odds.OddsResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -12,7 +11,6 @@ public class BestBetsAnalyzer {
     
     private final OddsService oddsService;
     
-    @Autowired
     public BestBetsAnalyzer(OddsService oddsService) {
         this.oddsService = oddsService;
     }

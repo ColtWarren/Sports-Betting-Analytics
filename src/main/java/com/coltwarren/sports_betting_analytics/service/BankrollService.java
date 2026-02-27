@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.repository.BankrollRepository;
 import com.coltwarren.sports_betting_analytics.model.Bankroll;
 import com.coltwarren.sports_betting_analytics.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,7 +19,6 @@ public class BankrollService {
     private final BetService betService;
     private final UserContextService userContextService;
 
-    @Autowired
     public BankrollService(BankrollRepository bankrollRepository, BetService betService,
                            UserContextService userContextService) {
         this.bankrollRepository = bankrollRepository;

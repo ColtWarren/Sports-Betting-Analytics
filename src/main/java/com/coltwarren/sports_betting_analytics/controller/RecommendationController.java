@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 import com.coltwarren.sports_betting_analytics.model.recommendation.*;
 import com.coltwarren.sports_betting_analytics.service.recommendation.MultiFactorEngine;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,8 +21,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RecommendationController {
 
-    @Autowired
-    private MultiFactorEngine multiFactorEngine;
+    private final MultiFactorEngine multiFactorEngine;
+
+    public RecommendationController(MultiFactorEngine multiFactorEngine) {
+        this.multiFactorEngine = multiFactorEngine;
+    }
 
     /**
      * Analyze a single game

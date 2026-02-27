@@ -1,6 +1,5 @@
 package com.coltwarren.sports_betting_analytics.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,7 +12,6 @@ public class KellyCriterionService {
     
     private final BankrollService bankrollService;
     
-    @Autowired
     public KellyCriterionService(BankrollService bankrollService) {
         this.bankrollService = bankrollService;
     }

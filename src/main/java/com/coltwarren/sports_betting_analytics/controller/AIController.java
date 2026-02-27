@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.BetService;
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +15,6 @@ public class AIController {
     private final ClaudeAIService claudeAIService;
     private final BetService betService;
     
-    @Autowired
     public AIController(ClaudeAIService claudeAIService, BetService betService) {
         this.claudeAIService = claudeAIService;
         this.betService = betService;

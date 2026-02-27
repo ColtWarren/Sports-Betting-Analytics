@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,7 +14,6 @@ public class AdvancedEVCalculator {
     private final ClaudeAIService claudeAIService;
     private final KellyCriterionService kellyService;
     
-    @Autowired
     public AdvancedEVCalculator(ClaudeAIService claudeAIService, KellyCriterionService kellyService) {
         this.claudeAIService = claudeAIService;
         this.kellyService = kellyService;

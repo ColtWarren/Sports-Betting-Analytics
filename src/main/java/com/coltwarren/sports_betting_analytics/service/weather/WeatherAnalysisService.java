@@ -5,7 +5,6 @@ import com.coltwarren.sports_betting_analytics.model.weather.WeatherData;
 import com.coltwarren.sports_betting_analytics.model.weather.WeatherImpact;
 import com.coltwarren.sports_betting_analytics.repository.StadiumLocationRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -41,11 +40,15 @@ import java.util.Optional;
 @Slf4j
 public class WeatherAnalysisService {
 
-    @Autowired
-    private StadiumLocationRepository stadiumRepository;
+    private final StadiumLocationRepository stadiumRepository;
 
-    @Autowired
-    private OpenWeatherMapService weatherService;
+    private final OpenWeatherMapService weatherService;
+
+    public WeatherAnalysisService(StadiumLocationRepository stadiumRepository,
+                                  OpenWeatherMapService weatherService) {
+        this.stadiumRepository = stadiumRepository;
+        this.weatherService = weatherService;
+    }
 
     /**
      * Analyze weather impact for a game

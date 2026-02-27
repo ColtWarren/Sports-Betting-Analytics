@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -25,8 +24,11 @@ public class UserContextService {
     private static final String CACHE_KEY = "UserContextService.currentUser";
     private static final String CACHE_MISS_KEY = "UserContextService.noUser";
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public UserContextService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     /**
      * Get the current authenticated User entity.

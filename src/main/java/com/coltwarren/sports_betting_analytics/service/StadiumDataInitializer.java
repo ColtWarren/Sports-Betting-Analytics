@@ -4,7 +4,6 @@ import com.coltwarren.sports_betting_analytics.model.StadiumLocation;
 import com.coltwarren.sports_betting_analytics.repository.StadiumLocationRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -22,8 +21,11 @@ import java.util.List;
 @Slf4j
 public class StadiumDataInitializer {
 
-    @Autowired
-    private StadiumLocationRepository stadiumRepository;
+    private final StadiumLocationRepository stadiumRepository;
+
+    public StadiumDataInitializer(StadiumLocationRepository stadiumRepository) {
+        this.stadiumRepository = stadiumRepository;
+    }
 
     @PostConstruct
     public void initializeStadiums() {

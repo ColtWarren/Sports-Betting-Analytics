@@ -5,7 +5,6 @@ import com.coltwarren.sports_betting_analytics.model.pattern.PatternMatch;
 import com.coltwarren.sports_betting_analytics.service.pattern.PatternDiscoveryService;
 import com.coltwarren.sports_betting_analytics.service.pattern.PatternMatchingService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,11 +24,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PatternController {
 
-    @Autowired
-    private PatternDiscoveryService patternDiscoveryService;
+    private final PatternDiscoveryService patternDiscoveryService;
+    private final PatternMatchingService patternMatchingService;
 
-    @Autowired
-    private PatternMatchingService patternMatchingService;
+    public PatternController(PatternDiscoveryService patternDiscoveryService,
+                             PatternMatchingService patternMatchingService) {
+        this.patternDiscoveryService = patternDiscoveryService;
+        this.patternMatchingService = patternMatchingService;
+    }
 
     /**
      * Discover all profitable patterns for a league

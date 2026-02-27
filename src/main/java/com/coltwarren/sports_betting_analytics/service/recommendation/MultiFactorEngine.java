@@ -7,7 +7,6 @@ import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
 import com.coltwarren.sports_betting_analytics.service.pattern.PatternMatchingService;
 import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,11 +28,13 @@ import java.util.*;
 @Slf4j
 public class MultiFactorEngine {
 
-    @Autowired
-    private PatternMatchingService patternMatchingService;
+    private final PatternMatchingService patternMatchingService;
+    private final XGDataService xgDataService;
 
-    @Autowired
-    private XGDataService xgDataService;
+    public MultiFactorEngine(PatternMatchingService patternMatchingService, XGDataService xgDataService) {
+        this.patternMatchingService = patternMatchingService;
+        this.xgDataService = xgDataService;
+    }
 
     // Factor weights (sum to 1.0)
     private static final double WEIGHT_PATTERN = 0.25;      // Historical patterns

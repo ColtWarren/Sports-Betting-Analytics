@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.espn.ESPNApiService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,7 +17,6 @@ public class AutoSettleService {
     private final BetRepository betRepository;
     private final ESPNApiService espnApiService;
     
-    @Autowired
     public AutoSettleService(BetRepository betRepository, ESPNApiService espnApiService) {
         this.betRepository = betRepository;
         this.espnApiService = espnApiService;

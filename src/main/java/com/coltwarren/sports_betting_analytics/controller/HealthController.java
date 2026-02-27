@@ -2,9 +2,9 @@ package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.CacheEvictionService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.management.ManagementFactory;
@@ -25,11 +25,13 @@ import java.util.*;
 @Slf4j
 public class HealthController {
 
-    @Autowired
-    private CacheEvictionService cacheEvictionService;
+    private final CacheEvictionService cacheEvictionService;
+    private final BuildProperties buildProperties;
 
-    @Autowired(required = false)
-    private BuildProperties buildProperties;
+    public HealthController(CacheEvictionService cacheEvictionService, @Nullable BuildProperties buildProperties) {
+        this.cacheEvictionService = cacheEvictionService;
+        this.buildProperties = buildProperties;
+    }
 
     private final LocalDateTime startTime = LocalDateTime.now();
 

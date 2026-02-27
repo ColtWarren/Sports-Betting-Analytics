@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 import com.coltwarren.sports_betting_analytics.model.betting.PublicBettingData;
 import com.coltwarren.sports_betting_analytics.model.betting.ContrarianValue;
 import com.coltwarren.sports_betting_analytics.service.betting.PublicBettingService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +19,11 @@ import java.util.Map;
 @RequestMapping("/api/test/public-betting")
 public class PublicBettingTestController {
 
-    @Autowired
-    private PublicBettingService publicBettingService;
+    private final PublicBettingService publicBettingService;
+
+    public PublicBettingTestController(PublicBettingService publicBettingService) {
+        this.publicBettingService = publicBettingService;
+    }
 
     @GetMapping("/{sport}/{homeTeam}/{awayTeam}")
     public ResponseEntity<?> testPublicBetting(

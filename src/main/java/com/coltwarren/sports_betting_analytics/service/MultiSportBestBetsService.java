@@ -17,7 +17,6 @@ import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
 import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,38 +43,41 @@ public class MultiSportBestBetsService {
         }
     }
     
-    @Autowired
-    private MultiSportOddsService multiSportOddsService;
+    private final MultiSportOddsService multiSportOddsService;
+    private final ClaudeAIService claudeAIService;
+    private final LiveGameService liveGameService;
+    private final KellyCriterionService kellyCriterionService;
+    private final SoccerDataAggregatorService soccerDataAggregator;
+    private final WeatherAnalysisService weatherAnalysisService;
+    private final PublicBettingService publicBettingService;
+    private final InjuryAnalysisService injuryAnalysisService;
+    private final XGDataService xgDataService;
+    private final WNBADataService wnbaDataService;
+    private final WNCAAWDataService wcbbDataService;
 
-    @Autowired
-    private ClaudeAIService claudeAIService;
-
-    @Autowired
-    private LiveGameService liveGameService;
-
-    @Autowired
-    private KellyCriterionService kellyCriterionService;
-
-    @Autowired
-    private SoccerDataAggregatorService soccerDataAggregator;
-
-    @Autowired
-    private WeatherAnalysisService weatherAnalysisService;
-
-    @Autowired
-    private PublicBettingService publicBettingService;
-
-    @Autowired
-    private InjuryAnalysisService injuryAnalysisService;
-
-    @Autowired
-    private XGDataService xgDataService;
-
-    @Autowired
-    private WNBADataService wnbaDataService;
-
-    @Autowired
-    private WNCAAWDataService wcbbDataService;
+    public MultiSportBestBetsService(MultiSportOddsService multiSportOddsService,
+                                     ClaudeAIService claudeAIService,
+                                     LiveGameService liveGameService,
+                                     KellyCriterionService kellyCriterionService,
+                                     SoccerDataAggregatorService soccerDataAggregator,
+                                     WeatherAnalysisService weatherAnalysisService,
+                                     PublicBettingService publicBettingService,
+                                     InjuryAnalysisService injuryAnalysisService,
+                                     XGDataService xgDataService,
+                                     WNBADataService wnbaDataService,
+                                     WNCAAWDataService wcbbDataService) {
+        this.multiSportOddsService = multiSportOddsService;
+        this.claudeAIService = claudeAIService;
+        this.liveGameService = liveGameService;
+        this.kellyCriterionService = kellyCriterionService;
+        this.soccerDataAggregator = soccerDataAggregator;
+        this.weatherAnalysisService = weatherAnalysisService;
+        this.publicBettingService = publicBettingService;
+        this.injuryAnalysisService = injuryAnalysisService;
+        this.xgDataService = xgDataService;
+        this.wnbaDataService = wnbaDataService;
+        this.wcbbDataService = wcbbDataService;
+    }
 
     private static final String[] SPORTS = {"NFL", "CFB", "NBA", "WNBA", "CBB", "WCBB", "MLB", "NHL", "SOCCER"};
     

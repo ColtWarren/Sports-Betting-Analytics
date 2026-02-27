@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,7 +15,6 @@ public class CLVTracker {
     private final BetService betService;
     private final BetRepository betRepository;
     
-    @Autowired
     public CLVTracker(BetService betService, BetRepository betRepository) {
         this.betService = betService;
         this.betRepository = betRepository;

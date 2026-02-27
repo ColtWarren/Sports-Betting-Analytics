@@ -1,7 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.ActiveBetsTrackerService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,9 +9,12 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/active-bets")
 public class ActiveBetsController {
-    
-    @Autowired
-    private ActiveBetsTrackerService activeBetsTrackerService;
+
+    private final ActiveBetsTrackerService activeBetsTrackerService;
+
+    public ActiveBetsController(ActiveBetsTrackerService activeBetsTrackerService) {
+        this.activeBetsTrackerService = activeBetsTrackerService;
+    }
     
     @GetMapping
     public ResponseEntity<Map<String, Object>> getActiveBets() {

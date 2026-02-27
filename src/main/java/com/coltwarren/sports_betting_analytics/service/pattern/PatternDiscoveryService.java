@@ -4,7 +4,6 @@ import com.coltwarren.sports_betting_analytics.model.historical.HistoricalMatch;
 import com.coltwarren.sports_betting_analytics.model.pattern.BettingPattern;
 import com.coltwarren.sports_betting_analytics.repository.HistoricalMatchRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -20,14 +19,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PatternDiscoveryService {
 
-    @Autowired
-    private HistoricalMatchRepository matchRepository;
+    private final HistoricalMatchRepository matchRepository;
 
     // Minimum requirements for a valid pattern
     private static final int MIN_SAMPLE_SIZE = 50;
     private static final double MIN_ROI = 3.0;  // Minimum 3% ROI
     private static final double MIN_WIN_RATE_FOR_FAVORITES = 52.0;
     private static final double MIN_WIN_RATE_FOR_UNDERDOGS = 28.0;
+
+    public PatternDiscoveryService(HistoricalMatchRepository matchRepository) {
+        this.matchRepository = matchRepository;
+    }
 
     /**
      * Discover all profitable patterns in a league

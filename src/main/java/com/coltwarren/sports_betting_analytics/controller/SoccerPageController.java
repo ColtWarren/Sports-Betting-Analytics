@@ -3,7 +3,6 @@ package com.coltwarren.sports_betting_analytics.controller;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.soccer.TeamStanding;
 import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +29,11 @@ import java.util.*;
 @Controller
 public class SoccerPageController {
 
-    @Autowired
-    private SoccerDataAggregatorService soccerDataAggregator;
+    private final SoccerDataAggregatorService soccerDataAggregator;
+
+    public SoccerPageController(SoccerDataAggregatorService soccerDataAggregator) {
+        this.soccerDataAggregator = soccerDataAggregator;
+    }
 
     /**
      * Main soccer page

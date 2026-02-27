@@ -2,7 +2,6 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.config.CacheConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,10 +19,13 @@ import java.util.Objects;
 @Slf4j
 public class CacheEvictionService {
 
-    @Autowired
-    private CacheManager cacheManager;
+    private final CacheManager cacheManager;
 
     private LocalDateTime lastEviction = LocalDateTime.now();
+
+    public CacheEvictionService(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
 
     /**
      * Clear odds cache every 5 minutes (odds change frequently)
