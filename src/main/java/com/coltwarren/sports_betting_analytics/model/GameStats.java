@@ -46,11 +46,20 @@ public class GameStats {
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
-    // Constructors
-    public GameStats() {
+
+    @PrePersist
+    protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // Constructors
+    public GameStats() {
     }
     
     // Getters and Setters

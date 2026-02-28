@@ -45,7 +45,7 @@ public class CustomOAuth2UserService implements AuthenticationSuccessHandler {
         String name = oAuth2User.getAttribute("name");
         String pictureUrl = oAuth2User.getAttribute("picture");
 
-        log.info("OAuth2 login success: googleId={}, email={}, name={}", googleId, email, name);
+        log.info("OAuth2 login success: googleId={}", googleId);
 
         try {
             Optional<User> existingUser = userRepository.findByGoogleIdAndDeletedFalse(googleId);
@@ -56,13 +56,13 @@ public class CustomOAuth2UserService implements AuthenticationSuccessHandler {
                 user.setPictureUrl(pictureUrl);
                 user.setLastLoginAt(LocalDateTime.now());
                 userRepository.save(user);
-                log.info("User updated: {} ({})", user.getName(), user.getEmail());
+                log.info("User updated: id={}", user.getId());
             } else {
                 User newUser = new User(email, name, googleId);
                 newUser.setPictureUrl(pictureUrl);
                 newUser.setLastLoginAt(LocalDateTime.now());
                 User saved = userRepository.save(newUser);
-                log.info("New user registered: {} ({}) with id={}", name, email, saved.getId());
+                log.info("New user registered: id={}", saved.getId());
             }
         } catch (Exception e) {
             log.error("Failed to save user during OAuth2 login", e);
