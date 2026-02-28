@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.repository;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ public interface GameStatsRepository extends JpaRepository<GameStats, Long> {
     
     // Find games by team (home or away)
     @Query("SELECT g FROM GameStats g WHERE g.homeTeam = :team OR g.awayTeam = :team ORDER BY g.gameTime DESC")
-    List<GameStats> findByTeam(@Param("team") String team);
+    List<GameStats> findByTeam(@Param("team") String team, Pageable pageable);
     
     // Find recent games by team
     @Query("SELECT g FROM GameStats g WHERE (g.homeTeam = :team OR g.awayTeam = :team) AND g.gameTime >= :since ORDER BY g.gameTime DESC")
@@ -36,5 +37,5 @@ public interface GameStatsRepository extends JpaRepository<GameStats, Long> {
     
     // Head to head
     @Query("SELECT g FROM GameStats g WHERE (g.homeTeam = :team1 AND g.awayTeam = :team2) OR (g.homeTeam = :team2 AND g.awayTeam = :team1) ORDER BY g.gameTime DESC")
-    List<GameStats> findHeadToHead(@Param("team1") String team1, @Param("team2") String team2);
+    List<GameStats> findHeadToHead(@Param("team1") String team1, @Param("team2") String team2, Pageable pageable);
 }

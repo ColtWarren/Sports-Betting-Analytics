@@ -3,6 +3,7 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.repository.BankrollRepository;
 import com.coltwarren.sports_betting_analytics.model.Bankroll;
 import com.coltwarren.sports_betting_analytics.model.User;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -117,10 +118,12 @@ public class BankrollService {
         return stats;
     }
     
+    private static final int DEFAULT_TRANSACTION_LIMIT = 500;
+
     public List<Bankroll> getAllTransactions() {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return bankrollRepository.findByUserIdOrderByRecordedAtDesc(userId);
+        return bankrollRepository.findByUserIdOrderByRecordedAtDesc(userId, PageRequest.of(0, DEFAULT_TRANSACTION_LIMIT));
     }
     
     public BigDecimal getStartingBankroll() {

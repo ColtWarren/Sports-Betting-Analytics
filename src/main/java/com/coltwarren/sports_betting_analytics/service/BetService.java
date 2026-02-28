@@ -3,6 +3,7 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,10 +84,12 @@ public class BetService {
      * 
      * @return List of all bets
      */
+    private static final int DEFAULT_BET_LIMIT = 500;
+
     public List<Bet> getAllBets() {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserIdOrderByPlacedAtDesc(userId);
+        return betRepository.findByUserIdOrderByPlacedAtDesc(userId, PageRequest.of(0, DEFAULT_BET_LIMIT));
     }
     
     /**
@@ -180,7 +183,7 @@ public class BetService {
     public List<Bet> getRecentBets() {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserIdOrderByPlacedAtDesc(userId);
+        return betRepository.findByUserIdOrderByPlacedAtDesc(userId, PageRequest.of(0, 50));
     }
     
     // ============================================

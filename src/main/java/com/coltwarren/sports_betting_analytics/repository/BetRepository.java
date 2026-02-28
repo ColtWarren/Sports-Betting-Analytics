@@ -141,7 +141,7 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
 
     List<Bet> findByUserIdAndPlacedAtBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
-    List<Bet> findByUserIdOrderByPlacedAtDesc(Long userId);
+    List<Bet> findByUserIdOrderByPlacedAtDesc(Long userId, Pageable pageable);
 
     Optional<Bet> findByIdAndUserId(Long id, Long userId);
 

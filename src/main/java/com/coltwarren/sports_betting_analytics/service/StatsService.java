@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +77,7 @@ public class StatsService {
             stats.put("team2Stats", team2Stats);
             
             // Get head-to-head history
-            List<GameStats> h2h = gameStatsRepository.findHeadToHead(team1, team2);
+            List<GameStats> h2h = gameStatsRepository.findHeadToHead(team1, team2, PageRequest.of(0, 50));
             stats.put("headToHead", h2h);
             stats.put("h2hCount", h2h.size());
             
