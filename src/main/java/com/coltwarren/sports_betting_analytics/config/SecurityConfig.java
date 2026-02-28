@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -64,9 +65,12 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
             )
 
-            // CSRF protection (disable for REST API endpoints)
+            // CSRF protection - cookie-based token for JS compatibility
+            // All POST/PUT/DELETE endpoints require CSRF token
+            // JS reads XSRF-TOKEN cookie and sends X-XSRF-TOKEN header
+            // Thymeleaf forms include token automatically as hidden field
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**", "/logout")
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             )
 
             // Session management

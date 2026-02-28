@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -248,12 +250,13 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
     
     /**
      * Find recent bets (last N bets, ordered by placement date)
-     * 
-     * @param limit - Number of recent bets to retrieve
+     * Usage: findRecentBets(PageRequest.of(0, 20))
+     *
+     * @param pageable - Pageable to limit results
      * @return List of recent bets
      */
     @Query("SELECT b FROM Bet b ORDER BY b.placedAt DESC")
-    List<Bet> findRecentBets();
+    List<Bet> findRecentBets(Pageable pageable);
     
     /**
      * Find best performing sportsbook by profit
