@@ -3,6 +3,7 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
+import com.coltwarren.sports_betting_analytics.util.TeamNameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -95,8 +96,8 @@ public class ActiveBetsTrackerService {
                 
                 // Check if bet matches this game
                 if (eventName.contains(homeTeam) || eventName.contains(awayTeam) ||
-                    eventName.contains(extractTeamName(homeTeam)) || 
-                    eventName.contains(extractTeamName(awayTeam))) {
+                    eventName.contains(TeamNameUtils.extractTeamName(homeTeam)) || 
+                    eventName.contains(TeamNameUtils.extractTeamName(awayTeam))) {
                     return game;
                 }
             }
@@ -253,12 +254,6 @@ public class ActiveBetsTrackerService {
         return hedge;
     }
     
-    private String extractTeamName(String fullName) {
-        // Extract last word (team name) from "City Team" format
-        String[] parts = fullName.split(" ");
-        return parts[parts.length - 1];
-    }
-    
     private double extractSpread(String selection) {
         // Extract number from "Team -3.5" or "Team +3.5"
         try {
@@ -291,7 +286,7 @@ public class ActiveBetsTrackerService {
     
     private boolean isHomeTeam(String selection, Map<String, Object> game) {
         String homeTeam = (String) game.get("homeTeam");
-        return selection.contains(homeTeam) || selection.contains(extractTeamName(homeTeam));
+        return selection.contains(homeTeam) || selection.contains(TeamNameUtils.extractTeamName(homeTeam));
     }
     
     private String[] parseTeamNames(String eventName) {

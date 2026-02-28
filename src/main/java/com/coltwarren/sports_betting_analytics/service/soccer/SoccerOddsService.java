@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service.soccer;
 
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
+import com.coltwarren.sports_betting_analytics.util.MissouriComplianceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,20 +37,6 @@ public class SoccerOddsService {
     private String apiKey;
 
     private final WebClient oddsClient;
-
-    // Missouri legal sportsbooks
-    private static final Set<String> MISSOURI_LEGAL_BOOKS = Set.of(
-        "draftkings",
-        "fanduel",
-        "betmgm",
-        "mgm",
-        "caesars",
-        "bet365",
-        "fanatics",
-        "circa",
-        "thescore",
-        "score"
-    );
 
     // Soccer league to sport_key mapping for The Odds API
     private static final Map<String, String> LEAGUE_TO_SPORT_KEY = Map.of(
@@ -166,7 +153,7 @@ public class SoccerOddsService {
             String bookmakerName = (String) bookmaker.get("title");
 
             // STRICT FILTER: Only Missouri-licensed bookmakers
-            if (!isMissouriLegal(bookmakerName)) {
+            if (!MissouriComplianceUtils.isMissouriLegal(bookmakerName)) {
                 continue;
             }
 
@@ -253,26 +240,6 @@ public class SoccerOddsService {
         }
 
         return odds;
-    }
-
-    /**
-     * Check if a bookmaker is Missouri-legal
-     */
-    private boolean isMissouriLegal(String bookmakerName) {
-        if (bookmakerName == null || bookmakerName.isEmpty()) {
-            return false;
-        }
-
-        String normalized = bookmakerName.toLowerCase()
-            .replace("sportsbook", "")
-            .replace(" ", "")
-            .replace(".", "")
-            .replace("ag", "")
-            .replace("the", "")
-            .trim();
-
-        return MISSOURI_LEGAL_BOOKS.stream()
-            .anyMatch(legalBook -> normalized.contains(legalBook) || legalBook.contains(normalized));
     }
 
     /**

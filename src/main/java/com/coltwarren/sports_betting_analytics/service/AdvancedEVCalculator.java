@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
+import com.coltwarren.sports_betting_analytics.util.OddsConversionUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -36,7 +37,7 @@ public class AdvancedEVCalculator {
             double estimatedProbability = extractProbability(aiResponse);
             
             // Calculate EV
-            double decimalOdds = americanToDecimal(odds);
+            double decimalOdds = OddsConversionUtils.americanToDecimal(odds);
             double ev = (decimalOdds * estimatedProbability) - 1;
             double evPercentage = ev * 100;
             
@@ -80,7 +81,7 @@ public class AdvancedEVCalculator {
     public Map<String, Object> calculateSimpleEV(int odds, double winProbability) {
         Map<String, Object> result = new HashMap<>();
         
-        double decimalOdds = americanToDecimal(odds);
+        double decimalOdds = OddsConversionUtils.americanToDecimal(odds);
         double ev = (decimalOdds * winProbability) - 1;
         double evPercentage = ev * 100;
         
@@ -176,14 +177,6 @@ public class AdvancedEVCalculator {
         
         // Default to 50% if can't extract
         return 0.50;
-    }
-    
-    private double americanToDecimal(int americanOdds) {
-        if (americanOdds > 0) {
-            return (americanOdds / 100.0) + 1;
-        } else {
-            return (100.0 / Math.abs(americanOdds)) + 1;
-        }
     }
     
     private String generateRecommendation(boolean isPositiveEV, double evPercentage, double edge) {

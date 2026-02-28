@@ -4,7 +4,9 @@
       "SlashCommand(/init)",
       "Bash(./mvnw clean compile)",
       "Bash(git push:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
+import com.coltwarren.sports_betting_analytics.util.TeamNameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -150,7 +151,7 @@ public class EspnGameSyncService {
             for (Map<String, Object> competitor : competitors) {
                 String homeAway = (String) competitor.get("homeAway");
                 Map<String, Object> team = (Map<String, Object>) competitor.get("team");
-                String teamName = extractTeamName((String) team.get("displayName"));
+                String teamName = TeamNameUtils.extractTeamName((String) team.get("displayName"));
                 Integer score = Integer.parseInt((String) competitor.get("score"));
                 
                 if ("home".equals(homeAway)) {
@@ -194,13 +195,6 @@ public class EspnGameSyncService {
             log.error("Error parsing game: {}", e.getMessage(), e);
             return null;
         }
-    }
-    
-    private String extractTeamName(String displayName) {
-        // Extract last word (team name) from "City Team" format
-        // e.g., "Buffalo Bills" -> "Bills"
-        String[] parts = displayName.split(" ");
-        return parts[parts.length - 1];
     }
     
     private boolean gameExists(GameStats newGame) {

@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.service.odds;
 
+import com.coltwarren.sports_betting_analytics.util.MissouriComplianceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,81 +41,10 @@ public class MultiSportOddsService {
 
     private final WebClient oddsClient;
 
-    /**
-     * MISSOURI LEGAL SPORTSBOOKS FILTER
-     *
-     * This set contains the ONLY sportsbooks that are licensed by the Missouri Gaming Commission.
-     *
-     * IMPORTANT: If Missouri licenses additional sportsbooks in the future, add them to this set.
-     * Format: lowercase, normalized names without spaces or "sportsbook" suffix
-     *
-     * Current licensed books (January 2026):
-     * - DraftKings (draftkings)
-     * - FanDuel (fanduel)
-     * - BetMGM (betmgm, mgm)
-     * - Caesars Sportsbook (caesars)
-     * - bet365 (bet365)
-     * - Fanatics Sportsbook (fanatics)
-     * - Circa Sports (circa)
-     * - theScore Bet (thescore, score)
-     */
-    private static final Set<String> MISSOURI_LEGAL_BOOKS = Set.of(
-        "draftkings",
-        "fanduel",
-        "betmgm",
-        "mgm",
-        "caesars",
-        "bet365",
-        "fanatics",
-        "circa",
-        "thescore",
-        "score"
-    );
-    
     public MultiSportOddsService(WebClient.Builder webClientBuilder) {
         this.oddsClient = webClientBuilder
             .baseUrl("https://api.the-odds-api.com/v4")
             .build();
-    }
-
-    /**
-     * Check if a bookmaker is licensed and legal in Missouri
-     *
-     * LEGAL COMPLIANCE: This method enforces STRICT filtering to ensure only
-     * Missouri-licensed sportsbooks are displayed to users.
-     *
-     * Normalization process:
-     * 1. Convert to lowercase
-     * 2. Remove common suffixes like "sportsbook"
-     * 3. Remove spaces and special characters
-     * 4. Check if normalized name matches any legal book
-     *
-     * Examples:
-     * - "DraftKings" -> "draftkings" -> LEGAL (Missouri-licensed)
-     * - "FanDuel Sportsbook" -> "fanduel" -> LEGAL (Missouri-licensed)
-     * - Any unlicensed book -> FILTERED OUT (not Missouri-licensed)
-     *
-     * @param bookmakerName The bookmaker name from The Odds API
-     * @return true if the bookmaker is Missouri-licensed, false otherwise
-     */
-    private boolean isMissouriLegal(String bookmakerName) {
-        if (bookmakerName == null || bookmakerName.isEmpty()) {
-            return false;
-        }
-
-        // Normalize the bookmaker name
-        String normalized = bookmakerName.toLowerCase()
-            .replace("sportsbook", "")
-            .replace(" ", "")
-            .replace(".", "")
-            .replace("ag", "")
-            .replace("the", "")
-            .trim();
-
-        // Check if the normalized name contains any of the legal book identifiers
-        // Use contains() to handle variations like "DraftKings Sportsbook" -> "draftkings"
-        return MISSOURI_LEGAL_BOOKS.stream()
-            .anyMatch(legalBook -> normalized.contains(legalBook) || legalBook.contains(normalized));
     }
 
     public List<Map<String, Object>> getOddsForSport(String sport) {
@@ -231,7 +161,7 @@ public class MultiSportOddsService {
                     String bookmakerName = (String) bookmaker.get("title");
 
                     // STRICT FILTER: Only process Missouri-licensed bookmakers
-                    if (!isMissouriLegal(bookmakerName)) {
+                    if (!MissouriComplianceUtils.isMissouriLegal(bookmakerName)) {
                         filteredBooks++;
                         log.info("FILTERED (Not MO-licensed): {}", bookmakerName);
                         continue; // Skip this bookmaker entirely

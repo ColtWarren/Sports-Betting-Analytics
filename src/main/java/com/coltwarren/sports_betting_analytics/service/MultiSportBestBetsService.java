@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
+import com.coltwarren.sports_betting_analytics.util.OddsConversionUtils;
 import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
 import com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService;
 import com.coltwarren.sports_betting_analytics.service.betting.PublicBettingService;
@@ -649,7 +650,7 @@ public class MultiSportBestBetsService {
             double winProbability = getSoccerAIProbability(fixture, outcome, xgAnalysis);
 
             // Convert American odds to decimal
-            double decimalOdds = americanToDecimal(odds.intValue());
+            double decimalOdds = OddsConversionUtils.americanToDecimal(odds.intValue());
 
             // Calculate Expected Value
             double rawExpectedValue = (winProbability * decimalOdds) - 1.0;
@@ -777,7 +778,7 @@ public class MultiSportBestBetsService {
 
         if (odds == null) return 0.0;
 
-        double impliedProb = oddsToImpliedProbability(odds.intValue());
+        double impliedProb = OddsConversionUtils.oddsToImpliedProbability(odds.intValue());
 
         // Use xG-based Poisson model when available
         if (xgAnalysis != null && xgAnalysis.getProjectedHomeGoals() != null
@@ -847,28 +848,6 @@ public class MultiSportBestBetsService {
             case "AWAY_WIN" -> fixture.getAwayTeam() + " to Win";
             default -> outcome;
         };
-    }
-
-    /**
-     * Convert American odds to decimal
-     */
-    private double americanToDecimal(int americanOdds) {
-        if (americanOdds > 0) {
-            return (americanOdds / 100.0) + 1;
-        } else {
-            return (100.0 / Math.abs(americanOdds)) + 1;
-        }
-    }
-
-    /**
-     * Convert American odds to implied probability
-     */
-    private double oddsToImpliedProbability(int americanOdds) {
-        if (americanOdds > 0) {
-            return 100.0 / (americanOdds + 100);
-        } else {
-            return Math.abs(americanOdds) / (Math.abs(americanOdds) + 100.0);
-        }
     }
 
     /**

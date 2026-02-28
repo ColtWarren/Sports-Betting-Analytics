@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.service;
 
+import com.coltwarren.sports_betting_analytics.util.OddsConversionUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ public class KellyCriterionService {
         Map<String, Object> result = new HashMap<>();
 
         // Convert American odds to decimal odds
-        double decimalOdds = americanToDecimal(americanOdds);
+        double decimalOdds = OddsConversionUtils.americanToDecimal(americanOdds);
 
         // Calculate probabilities
         double p = winProbability;
@@ -86,34 +87,18 @@ public class KellyCriterionService {
     }
     
     /**
-     * Convert American odds to decimal odds
-     */
-    private double americanToDecimal(int americanOdds) {
-        if (americanOdds > 0) {
-            // Positive odds: +150 = 2.5
-            return (americanOdds / 100.0) + 1;
-        } else {
-            // Negative odds: -110 = 1.909
-            return (100.0 / Math.abs(americanOdds)) + 1;
-        }
-    }
-    
-    /**
-     * Calculate implied probability from odds
+     * Calculate implied probability from odds.
+     * Delegates to shared utility.
      */
     public double calculateImpliedProbability(int americanOdds) {
-        if (americanOdds > 0) {
-            return 100.0 / (americanOdds + 100);
-        } else {
-            return Math.abs(americanOdds) / (Math.abs(americanOdds) + 100.0);
-        }
+        return OddsConversionUtils.oddsToImpliedProbability(americanOdds);
     }
     
     /**
      * Determine if bet has positive expected value
      */
     public boolean hasPositiveEV(int americanOdds, double winProbability) {
-        double decimalOdds = americanToDecimal(americanOdds);
+        double decimalOdds = OddsConversionUtils.americanToDecimal(americanOdds);
         double ev = (decimalOdds * winProbability) - 1;
         return ev > 0;
     }

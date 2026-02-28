@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
+import com.coltwarren.sports_betting_analytics.util.TeamNameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -148,7 +149,7 @@ public class OddsBackfillService {
                 for (Map<String, Object> competitor : competitors) {
                     Map<String, Object> team = (Map<String, Object>) competitor.get("team");
                     String homeAway = (String) competitor.get("homeAway");
-                    String teamName = extractTeamName((String) team.get("displayName"));
+                    String teamName = TeamNameUtils.extractTeamName((String) team.get("displayName"));
                     
                     if ("home".equals(homeAway)) {
                         espnHomeTeam = teamName;
@@ -248,10 +249,4 @@ public class OddsBackfillService {
         }
     }
     
-    private String extractTeamName(String displayName) {
-        // Extract last word (team name) from "City Team" format
-        // e.g., "Buffalo Bills" -> "Bills"
-        String[] parts = displayName.split(" ");
-        return parts[parts.length - 1];
-    }
 }

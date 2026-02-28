@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.model;
 
+import com.coltwarren.sports_betting_analytics.util.OddsConversionUtils;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -267,8 +268,8 @@ public class Bet {
             return null;
         }
         
-        double yourOddsDecimal = americanToDecimal(this.odds.intValue());
-        double closingOddsDecimal = americanToDecimal(this.closingOdds.intValue());
+        double yourOddsDecimal = OddsConversionUtils.americanToDecimal(this.odds.intValue());
+        double closingOddsDecimal = OddsConversionUtils.americanToDecimal(this.closingOdds.intValue());
         
         // CLV = (Your Decimal Odds / Closing Decimal Odds) - 1
         return ((yourOddsDecimal / closingOddsDecimal) - 1) * 100;
@@ -293,12 +294,5 @@ public class Bet {
         }
     }
     
-    private double americanToDecimal(int americanOdds) {
-        if (americanOdds > 0) {
-            return (americanOdds / 100.0) + 1;
-        } else {
-            return (100.0 / Math.abs(americanOdds)) + 1;
-        }
-    }
     }
 
