@@ -4,6 +4,7 @@ import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.espn.ESPNApiService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class AutoSettleService {
     /**
      * Auto-settle all pending bets that have finished
      */
+    @Transactional
     public Map<String, Object> autoSettleAllBets() {
         List<Bet> pendingBets = betRepository.findByStatus("PENDING");
         

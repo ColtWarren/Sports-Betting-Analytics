@@ -1,11 +1,13 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.ActiveBetsTrackerService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/active-bets")
 public class ActiveBetsController {
@@ -48,7 +50,7 @@ public class ActiveBetsController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", e.getMessage());
-            e.printStackTrace();
+            log.error("Error fetching active bets", e);
             return ResponseEntity.ok(response);
         }
     }

@@ -128,7 +128,7 @@ public class MultiSportBestBetsService {
     
     private List<Map<String, Object>> analyzeSport(String sport) {
         try {
-            System.out.println("🏈 Analyzing " + sport + "...");
+            log.info("Analyzing {}...", sport);
 
             // Special handling for soccer (3-way betting)
             if ("SOCCER".equals(sport)) {
@@ -139,21 +139,21 @@ public class MultiSportBestBetsService {
             List<Map<String, Object>> games = liveGameService.getLiveGames(sport);
             
             if (games.isEmpty()) {
-                System.out.println("⚠️ No games found for " + sport);
+                log.info("No games found for {}", sport);
                 return Collections.emptyList();
             }
             
-            System.out.println("📋 Found " + games.size() + " games for " + sport);
+            log.info("Found {} games for {}", games.size(), sport);
             
             // Get odds for this sport
             List<Map<String, Object>> oddsData = multiSportOddsService.getOddsForSport(sport);
             
             if (oddsData.isEmpty()) {
-                System.out.println("⚠️ No odds found for " + sport);
+                log.info("No odds found for {}", sport);
                 return Collections.emptyList();
             }
             
-            System.out.println("💰 Found odds for " + oddsData.size() + " games in " + sport);
+            log.info("Found odds for {} games in {}", oddsData.size(), sport);
             
             List<Map<String, Object>> sportBets = new ArrayList<>();
             
@@ -196,7 +196,7 @@ public class MultiSportBestBetsService {
                         }
                         injuryContext = injCtx.toString();
                     } catch (Exception e) {
-                        System.err.println("Pre-analysis injury fetch error: " + e.getMessage());
+                        log.error("Pre-analysis injury fetch error: {}", e.getMessage());
                     }
 
                     // Quick AI analysis (now with injury context)
@@ -247,7 +247,7 @@ public class MultiSportBestBetsService {
                                     }
                                 }
                             } catch (Exception e) {
-                                System.err.println("Weather analysis error: " + e.getMessage());
+                                log.error("Weather analysis error: {}", e.getMessage());
                             }
                         }
 
@@ -291,7 +291,7 @@ public class MultiSportBestBetsService {
                             }
 
                         } catch (Exception e) {
-                            System.err.println("Public betting analysis error: " + e.getMessage());
+                            log.error("Public betting analysis error: {}", e.getMessage());
                         }
 
                         // Store injury metadata (already fetched before AI analysis)
@@ -313,7 +313,7 @@ public class MultiSportBestBetsService {
                                 // Note: injury recommendations are already factored into
                                 // the AI analysis via injuryContext - no separate append needed
                             } catch (Exception e) {
-                                System.err.println("Injury metadata error: " + e.getMessage());
+                                log.error("Injury metadata error: {}", e.getMessage());
                             }
                         }
 
@@ -323,15 +323,15 @@ public class MultiSportBestBetsService {
                     gamesAnalyzed++;
                     
                 } catch (Exception e) {
-                    System.err.println("Error analyzing game: " + e.getMessage());
+                    log.error("Error analyzing game: {}", e.getMessage());
                 }
             }
             
-            System.out.println("✅ Found " + sportBets.size() + " quality bets for " + sport);
+            log.info("Found {} quality bets for {}", sportBets.size(), sport);
             return sportBets;
             
         } catch (Exception e) {
-            System.err.println("Error analyzing sport " + sport + ": " + e.getMessage());
+            log.error("Error analyzing sport {}: {}", sport, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -389,7 +389,7 @@ public class MultiSportBestBetsService {
             return analysis != null ? analysis : "No analysis available";
 
         } catch (Exception e) {
-            System.err.println("Error getting AI analysis: " + e.getMessage());
+            log.error("Error getting AI analysis: {}", e.getMessage());
             return "Analysis unavailable";
         }
     }
@@ -562,7 +562,7 @@ public class MultiSportBestBetsService {
             return kellyPercentage != null ? kellyPercentage : 0.0;
 
         } catch (Exception e) {
-            System.err.println("Error calculating Kelly: " + e.getMessage());
+            log.error("Error calculating Kelly: {}", e.getMessage());
             return 0.0;
         }
     }
@@ -575,18 +575,18 @@ public class MultiSportBestBetsService {
         List<Map<String, Object>> soccerBets = new ArrayList<>();
 
         try {
-            System.out.println("⚽ Analyzing soccer games (3-way betting)...");
+            log.info("Analyzing soccer games (3-way betting)...");
 
             // Get fixtures from all leagues using odds-only mode to conserve API limits
             Map<String, List<SoccerFixture>> allFixtures = soccerDataAggregator.getAllFixturesFromOddsOnly();
 
             if (allFixtures.isEmpty()) {
-                System.out.println("⚠️ No soccer fixtures found");
+                log.info("No soccer fixtures found");
                 return soccerBets;
             }
 
             int totalFixtures = allFixtures.values().stream().mapToInt(List::size).sum();
-            System.out.println("📋 Found " + totalFixtures + " soccer fixtures across " + allFixtures.size() + " leagues");
+            log.info("Found {} soccer fixtures across {} leagues", totalFixtures, allFixtures.size());
 
             int gamesAnalyzed = 0;
             int maxGamesPerLeague = 3; // Limit to conserve API calls
@@ -614,15 +614,15 @@ public class MultiSportBestBetsService {
                         gamesAnalyzed++;
 
                     } catch (Exception e) {
-                        System.err.println("Error analyzing soccer fixture: " + e.getMessage());
+                        log.error("Error analyzing soccer fixture: {}", e.getMessage());
                     }
                 }
             }
 
-            System.out.println("✅ Analyzed " + gamesAnalyzed + " soccer games, found " + soccerBets.size() + " quality bets");
+            log.info("Analyzed {} soccer games, found {} quality bets", gamesAnalyzed, soccerBets.size());
 
         } catch (Exception e) {
-            System.err.println("Error analyzing soccer: " + e.getMessage());
+            log.error("Error analyzing soccer: {}", e.getMessage());
         }
 
         return soccerBets;
@@ -642,7 +642,7 @@ public class MultiSportBestBetsService {
                 xgAnalysis = xgDataService.analyzeMatch(
                     fixture.getHomeTeam(), fixture.getAwayTeam(), league);
             } catch (Exception e) {
-                System.err.println("xG analysis unavailable: " + e.getMessage());
+                log.warn("xG analysis unavailable: {}", e.getMessage());
             }
 
             // Get model probability for this outcome (Poisson from xG when available)
@@ -656,9 +656,8 @@ public class MultiSportBestBetsService {
             // Cap EV at realistic maximum - no liquid market has 25%+ edges
             double expectedValue = Math.min(rawExpectedValue, 0.25);
             if (rawExpectedValue > 0.25) {
-                System.out.println("⚠️ EV capped: " + String.format("%.1f", rawExpectedValue * 100) +
-                    "% → 25% for " + fixture.getHomeTeam() + " vs " + fixture.getAwayTeam() +
-                    " (" + outcome + ")");
+                log.warn("EV capped: {}% -> 25% for {} vs {} ({})",
+                    String.format("%.1f", rawExpectedValue * 100), fixture.getHomeTeam(), fixture.getAwayTeam(), outcome);
             }
 
             // Only proceed if positive EV (or close to it for high-confidence picks)
@@ -761,7 +760,7 @@ public class MultiSportBestBetsService {
             allBets.add(bet);
 
         } catch (Exception e) {
-            System.err.println("Error analyzing soccer outcome: " + e.getMessage());
+            log.error("Error analyzing soccer outcome: {}", e.getMessage());
         }
     }
 

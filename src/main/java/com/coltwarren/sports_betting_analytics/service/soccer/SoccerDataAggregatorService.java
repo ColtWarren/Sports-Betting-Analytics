@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service.soccer;
 
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.soccer.TeamStanding;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.*;
  * This service provides a unified view of soccer data with complete
  * fixture information including odds from Missouri-licensed sportsbooks.
  */
+@Slf4j
 @Service
 public class SoccerDataAggregatorService {
 
@@ -54,14 +56,14 @@ public class SoccerDataAggregatorService {
         List<SoccerFixture> fixtures = apiFootballService.getUpcomingFixtures(league);
 
         if (fixtures.isEmpty()) {
-            System.out.println("No fixtures found for " + league);
+            log.info("No fixtures found for {}", league);
             return fixtures;
         }
 
         // Step 2: Get odds from The Odds API
         String sportKey = LEAGUE_TO_SPORT_KEY.get(league);
         if (sportKey == null) {
-            System.err.println("Unknown league for odds: " + league);
+            log.error("Unknown league for odds: {}", league);
             return fixtures;
         }
 
@@ -72,7 +74,7 @@ public class SoccerDataAggregatorService {
             mergeOddsIntoFixture(fixture, oddsMap);
         }
 
-        System.out.println("Aggregated " + fixtures.size() + " complete fixtures for " + league);
+        log.info("Aggregated {} complete fixtures for {}", fixtures.size(), league);
         return fixtures;
     }
 
@@ -102,7 +104,7 @@ public class SoccerDataAggregatorService {
                     allData.put(league, fixtures);
                 }
             } catch (Exception e) {
-                System.err.println("Error loading " + league + ": " + e.getMessage());
+                log.error("Error loading {}: {}", league, e.getMessage());
             }
         }
 
@@ -161,10 +163,9 @@ public class SoccerDataAggregatorService {
                 try {
                     ZonedDateTime zdt = ZonedDateTime.parse(commenceTime);
                     fixture.setKickoffTime(zdt.toLocalDateTime());
-                    System.out.println("⚽ " + odds.getHomeTeam() + " vs " + odds.getAwayTeam() +
-                                     " - Kickoff: " + fixture.getKickoffTime());
+                    log.info("{} vs {} - Kickoff: {}", odds.getHomeTeam(), odds.getAwayTeam(), fixture.getKickoffTime());
                 } catch (Exception e) {
-                    System.err.println("Error parsing commence_time: " + commenceTime + " - " + e.getMessage());
+                    log.error("Error parsing commence_time: {} - {}", commenceTime, e.getMessage());
                 }
             }
 
@@ -211,7 +212,7 @@ public class SoccerDataAggregatorService {
                     allData.put(league, fixtures);
                 }
             } catch (Exception e) {
-                System.err.println("Error loading odds for " + league + ": " + e.getMessage());
+                log.error("Error loading odds for {}: {}", league, e.getMessage());
             }
         }
 

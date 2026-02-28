@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.service.odds;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,6 +31,7 @@ import java.util.*;
  * This filter ensures users only see legal betting options.
  * All non-licensed bookmakers are FILTERED OUT automatically.
  */
+@Slf4j
 @Service
 public class MultiSportOddsService {
 
@@ -146,8 +148,7 @@ public class MultiSportOddsService {
             return games;
             
         } catch (Exception e) {
-            System.err.println("Error fetching odds for " + sport + ": " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error fetching odds for {}: {}", sport, e.getMessage(), e);
             return Collections.emptyList();
         }
     }
@@ -169,7 +170,7 @@ public class MultiSportOddsService {
             return Collections.emptyMap();
             
         } catch (Exception e) {
-            System.err.println("Error finding best odds: " + e.getMessage());
+            log.error("Error finding best odds: {}", e.getMessage());
             return Collections.emptyMap();
         }
     }
@@ -232,11 +233,11 @@ public class MultiSportOddsService {
                     // STRICT FILTER: Only process Missouri-licensed bookmakers
                     if (!isMissouriLegal(bookmakerName)) {
                         filteredBooks++;
-                        System.out.println("🚫 FILTERED (Not MO-licensed): " + bookmakerName);
+                        log.info("FILTERED (Not MO-licensed): {}", bookmakerName);
                         continue; // Skip this bookmaker entirely
                     }
 
-                    System.out.println("✅ LEGAL (MO-licensed): " + bookmakerName);
+                    log.info("LEGAL (MO-licensed): {}", bookmakerName);
 
                     List<Map<String, Object>> markets = (List<Map<String, Object>>) bookmaker.get("markets");
                     
@@ -260,8 +261,8 @@ public class MultiSportOddsService {
                                 } else if (team != null && awayTeam != null && team.equalsIgnoreCase(awayTeam)) {
                                     bookmakerOdds.put("awayML", price);
                                 } else {
-                                    System.err.println("⚠️ ML outcome team '" + team +
-                                        "' doesn't match home '" + homeTeam + "' or away '" + awayTeam + "'");
+                                    log.warn("ML outcome team '{}' doesn't match home '{}' or away '{}'",
+                                        team, homeTeam, awayTeam);
                                 }
                             }
                         } else if ("spreads".equals(marketKey)) {
@@ -280,8 +281,8 @@ public class MultiSportOddsService {
                                     bookmakerOdds.put("awaySpread", point.doubleValue());
                                     bookmakerOdds.put("awaySpreadOdds", price);
                                 } else {
-                                    System.err.println("⚠️ Spread outcome team '" + team +
-                                        "' doesn't match home '" + homeTeam + "' or away '" + awayTeam + "'");
+                                    log.warn("Spread outcome team '{}' doesn't match home '{}' or away '{}'",
+                                        team, homeTeam, awayTeam);
                                 }
                             }
                         } else if ("totals".equals(marketKey)) {
@@ -307,8 +308,8 @@ public class MultiSportOddsService {
                 // Log filtering summary for transparency
                 int legalBooks = totalBooks - filteredBooks;
                 if (filteredBooks > 0) {
-                    System.out.println("📊 FILTER SUMMARY: " + legalBooks + " MO-licensed books, " +
-                                     filteredBooks + " non-licensed books filtered out");
+                    log.info("FILTER SUMMARY: {} MO-licensed books, {} non-licensed books filtered out",
+                                     legalBooks, filteredBooks);
                 }
 
                 parsedGame.put("bookmakers", allBookmakerOdds);
@@ -318,8 +319,7 @@ public class MultiSportOddsService {
             }
             
         } catch (Exception e) {
-            System.err.println("Error parsing game: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error parsing game: {}", e.getMessage(), e);
         }
         
         return parsedGame;

@@ -6,6 +6,7 @@ import com.coltwarren.sports_betting_analytics.model.W2GForm;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.repository.W2GFormRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -155,6 +156,7 @@ public class TaxReportService {
     /**
      * Automatically create W-2G form entry when bet is marked as won and triggers W-2G
      */
+    @Transactional
     public void createW2GFormFromBet(Bet bet) {
         if (Boolean.TRUE.equals(bet.getTriggersW2G())) {
             // Check if W-2G form already exists for this bet

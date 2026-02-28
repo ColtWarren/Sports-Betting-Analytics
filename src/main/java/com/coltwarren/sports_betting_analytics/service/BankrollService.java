@@ -4,6 +4,7 @@ import com.coltwarren.sports_betting_analytics.repository.BankrollRepository;
 import com.coltwarren.sports_betting_analytics.model.Bankroll;
 import com.coltwarren.sports_betting_analytics.model.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,6 +32,7 @@ public class BankrollService {
             .orElseThrow(() -> new RuntimeException("Authentication required"));
     }
     
+    @Transactional
     public Bankroll recordDeposit(BigDecimal amount, String notes) {
         Bankroll bankroll = new Bankroll(amount, "DEPOSIT");
         bankroll.setNotes(notes);
@@ -38,6 +40,7 @@ public class BankrollService {
         return bankrollRepository.save(bankroll);
     }
     
+    @Transactional
     public Bankroll recordWithdrawal(BigDecimal amount, String notes) {
         Bankroll bankroll = new Bankroll(amount.negate(), "WITHDRAWAL");
         bankroll.setNotes(notes);

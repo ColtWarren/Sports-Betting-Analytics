@@ -1,11 +1,13 @@
 package com.coltwarren.sports_betting_analytics.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class LiveGameService {
     
@@ -55,7 +57,7 @@ public class LiveGameService {
             return liveGames;
             
         } catch (Exception e) {
-            System.err.println("Error fetching live games for " + sport + ": " + e.getMessage());
+            log.error("Error fetching live games for {}: {}", sport, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -215,7 +217,7 @@ public class LiveGameService {
             }
             
         } catch (Exception e) {
-            System.err.println("Error parsing game info: " + e.getMessage());
+            log.error("Error parsing game info: {}", e.getMessage());
         }
         
         return gameInfo;

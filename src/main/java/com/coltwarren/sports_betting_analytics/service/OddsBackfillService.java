@@ -2,12 +2,15 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class OddsBackfillService {
     
@@ -36,6 +39,7 @@ public class OddsBackfillService {
             .build();
     }
     
+    @Transactional
     public Map<String, Object> backfillClosingLines() {
         Map<String, Object> result = new HashMap<>();
         int gamesUpdated = 0;
@@ -54,14 +58,14 @@ public class OddsBackfillService {
                 }
             }
             
-            System.out.println("📊 Found " + gamesNeedingOdds.size() + " games needing odds data");
+            log.info("Found {} games needing odds data", gamesNeedingOdds.size());
             
             // Process each game individually
             for (GameStats game : gamesNeedingOdds) {
                 gamesProcessed++;
                 
                 try {
-                    System.out.println("🔍 Fetching odds for: " + game.getAwayTeam() + " @ " + game.getHomeTeam());
+                    log.info("Fetching odds for: {} @ {}", game.getAwayTeam(), game.getHomeTeam());
                     
                     Map<String, Object> oddsData = fetchEspnOdds(game);
                     
@@ -69,11 +73,10 @@ public class OddsBackfillService {
                         updateGameWithEspnOdds(game, oddsData);
                         gameStatsRepository.save(game);
                         gamesUpdated++;
-                        System.out.println("✅ Updated: " + game.getAwayTeam() + " @ " + game.getHomeTeam() + 
-                                         " (Spread: " + game.getClosingSpread() + ", Total: " + game.getClosingTotal() + ")");
+                        log.info("Updated: {} @ {} (Spread: {}, Total: {})", game.getAwayTeam(), game.getHomeTeam(), game.getClosingSpread(), game.getClosingTotal());
                     } else {
                         gamesFailed++;
-                        System.out.println("⚠️ No odds found: " + game.getAwayTeam() + " @ " + game.getHomeTeam());
+                        log.warn("No odds found: {} @ {}", game.getAwayTeam(), game.getHomeTeam());
                     }
                     
                     // Rate limiting - wait 500ms between requests
@@ -83,7 +86,7 @@ public class OddsBackfillService {
                     String error = "Error processing " + game.getAwayTeam() + " @ " + game.getHomeTeam() + ": " + e.getMessage();
                     errors.add(error);
                     gamesFailed++;
-                    System.err.println("❌ " + error);
+                    log.error("{}", error);
                 }
             }
             
@@ -93,13 +96,12 @@ public class OddsBackfillService {
             result.put("gamesFailed", gamesFailed);
             result.put("errors", errors);
             
-            System.out.println(String.format("✅ Backfill complete! Processed: %d, Updated: %d, Failed: %d", 
-                gamesProcessed, gamesUpdated, gamesFailed));
+            log.info("Backfill complete! Processed: {}, Updated: {}, Failed: {}", gamesProcessed, gamesUpdated, gamesFailed);
             
         } catch (Exception e) {
             result.put("success", false);
             result.put("error", e.getMessage());
-            System.err.println("❌ Backfill failed: " + e.getMessage());
+            log.error("Backfill failed: {}", e.getMessage(), e);
         }
         
         return result;
@@ -165,7 +167,7 @@ public class OddsBackfillService {
             return null;
             
         } catch (Exception e) {
-            System.err.println("Error fetching ESPN odds: " + e.getMessage());
+            log.error("Error fetching ESPN odds: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -192,7 +194,7 @@ public class OddsBackfillService {
             return items.get(0);
             
         } catch (Exception e) {
-            System.err.println("Error fetching odds for event " + eventId + ": " + e.getMessage());
+            log.error("Error fetching odds for event {}: {}", eventId, e.getMessage(), e);
             return null;
         }
     }
@@ -242,7 +244,7 @@ public class OddsBackfillService {
             }
             
         } catch (Exception e) {
-            System.err.println("Error updating game with ESPN odds: " + e.getMessage());
+            log.error("Error updating game with ESPN odds: {}", e.getMessage(), e);
         }
     }
     

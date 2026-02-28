@@ -2,9 +2,11 @@ package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
@@ -14,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+@Slf4j
 @Service
 public class EspnGameSyncService {
     
@@ -39,11 +42,12 @@ public class EspnGameSyncService {
     // Run automatically every day at 3 AM
     @Scheduled(cron = "0 0 3 * * *")
     public void syncCompletedGamesDaily() {
-        System.out.println("🔄 Starting daily ESPN game sync...");
+        log.info("Starting daily ESPN game sync...");
         syncCompletedGames();
     }
     
     // Manual sync method (can be called via endpoint)
+    @Transactional
     public Map<String, Object> syncCompletedGames() {
         Map<String, Object> result = new HashMap<>();
         int gamesProcessed = 0;
@@ -80,15 +84,13 @@ public class EspnGameSyncService {
                         if (!gameExists(gameStats)) {
                             gameStatsRepository.save(gameStats);
                             gamesSaved++;
-                            System.out.println("✅ Saved: " + gameStats.getAwayTeam() + " @ " + 
-                                             gameStats.getHomeTeam() + " (" + gameStats.getAwayScore() + 
-                                             "-" + gameStats.getHomeScore() + ")");
+                            log.info("Saved: {} @ {} ({}-{})", gameStats.getAwayTeam(), gameStats.getHomeTeam(), gameStats.getAwayScore(), gameStats.getHomeScore());
                         }
                     }
                     
                 } catch (Exception e) {
                     errors.add("Error processing game: " + e.getMessage());
-                    System.err.println("❌ Error processing game: " + e.getMessage());
+                    log.error("Error processing game: {}", e.getMessage(), e);
                 }
             }
             
@@ -98,13 +100,12 @@ public class EspnGameSyncService {
             result.put("gamesSkipped", gamesProcessed - gamesSaved);
             result.put("errors", errors);
             
-            System.out.println(String.format("✅ Sync complete! Processed: %d, Saved: %d, Skipped: %d", 
-                gamesProcessed, gamesSaved, gamesProcessed - gamesSaved));
+            log.info("Sync complete! Processed: {}, Saved: {}, Skipped: {}", gamesProcessed, gamesSaved, gamesProcessed - gamesSaved);
             
         } catch (Exception e) {
             result.put("success", false);
             result.put("error", e.getMessage());
-            System.err.println("❌ Sync failed: " + e.getMessage());
+            log.error("Sync failed: {}", e.getMessage(), e);
         }
         
         return result;
@@ -118,7 +119,7 @@ public class EspnGameSyncService {
                 .bodyToMono(Map.class)
                 .block();
         } catch (Exception e) {
-            System.err.println("Error fetching scoreboard: " + e.getMessage());
+            log.error("Error fetching scoreboard: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -190,7 +191,7 @@ public class EspnGameSyncService {
             return game;
             
         } catch (Exception e) {
-            System.err.println("Error parsing game: " + e.getMessage());
+            log.error("Error parsing game: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -218,6 +219,7 @@ public class EspnGameSyncService {
     }
     
     // Sync specific date range (useful for backfilling) - SYNC WEEK BY WEEK
+    @Transactional
     public Map<String, Object> syncDateRange(String startDate, String endDate) {
         Map<String, Object> result = new HashMap<>();
         int totalSaved = 0;
@@ -247,8 +249,7 @@ public class EspnGameSyncService {
                             if (gameStats != null && !gameExists(gameStats)) {
                                 gameStatsRepository.save(gameStats);
                                 totalSaved++;
-                                System.out.println("✅ Saved: " + gameStats.getAwayTeam() + " @ " + 
-                                                 gameStats.getHomeTeam());
+                                log.info("Saved: {} @ {}", gameStats.getAwayTeam(), gameStats.getHomeTeam());
                             }
                         }
                     } catch (Exception e) {

@@ -3,12 +3,14 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 public class ActiveBetsTrackerService {
     
@@ -75,8 +77,7 @@ public class ActiveBetsTrackerService {
             return activeBetsData;
             
         } catch (Exception e) {
-            System.err.println("Error getting active bets: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error getting active bets: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
     }
@@ -103,7 +104,7 @@ public class ActiveBetsTrackerService {
             return null;
             
         } catch (Exception e) {
-            System.err.println("Error finding live game: " + e.getMessage());
+            log.error("Error finding live game: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -199,7 +200,7 @@ public class ActiveBetsTrackerService {
             position.put("currentScore", homeScore + "-" + awayScore);
             
         } catch (Exception e) {
-            System.err.println("Error calculating position: " + e.getMessage());
+            log.error("Error calculating position: {}", e.getMessage(), e);
             position.put("status", "ERROR");
         }
         
@@ -224,7 +225,7 @@ public class ActiveBetsTrackerService {
             return multiSportOddsService.getBestOddsForGame(sport, homeTeam, awayTeam, betType);
             
         } catch (Exception e) {
-            System.err.println("Error getting current odds: " + e.getMessage());
+            log.error("Error getting current odds: {}", e.getMessage(), e);
             return Collections.emptyMap();
         }
     }
@@ -246,7 +247,7 @@ public class ActiveBetsTrackerService {
             // TODO: Implement full hedge calculation
             
         } catch (Exception e) {
-            System.err.println("Error calculating hedge: " + e.getMessage());
+            log.error("Error calculating hedge: {}", e.getMessage(), e);
         }
         
         return hedge;
@@ -268,7 +269,7 @@ public class ActiveBetsTrackerService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error extracting spread: " + e.getMessage());
+            log.warn("Error extracting spread: {}", e.getMessage());
         }
         return 0.0;
     }
@@ -283,7 +284,7 @@ public class ActiveBetsTrackerService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error extracting total: " + e.getMessage());
+            log.warn("Error extracting total: {}", e.getMessage());
         }
         return 0.0;
     }

@@ -1,12 +1,14 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.MultiSportBestBetsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/best-bets")
 public class MultiSportBestBetsController {
@@ -24,7 +26,7 @@ public class MultiSportBestBetsController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            System.out.println("🎯 Getting best bets for all sports...");
+            log.info("Getting best bets for all sports...");
             
             // Get all best bets
             List<Map<String, Object>> allBets = multiSportBestBetsService.getBestBetsAcrossAllSports();
@@ -51,13 +53,12 @@ public class MultiSportBestBetsController {
             response.put("sportCounts", sportCounts);
             response.put("appliedFilter", sport != null ? sport : "ALL");
             
-            System.out.println("✅ Returning " + filteredBets.size() + " best bets");
+            log.info("Returning {} best bets", filteredBets.size());
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            System.err.println("❌ Error getting best bets: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error getting best bets: {}", e.getMessage(), e);
             
             response.put("success", false);
             response.put("error", e.getMessage());

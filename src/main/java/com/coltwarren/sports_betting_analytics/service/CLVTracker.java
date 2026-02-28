@@ -3,6 +3,7 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -106,6 +107,7 @@ public class CLVTracker {
     /**
      * Update closing odds for a bet
      */
+    @Transactional
     public Bet updateClosingOdds(Long betId, Integer closingOdds) {
         Bet bet = betRepository.findById(betId)
             .orElseThrow(() -> new RuntimeException("Bet not found"));

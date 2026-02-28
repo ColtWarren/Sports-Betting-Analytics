@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service.soccer;
 
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -27,6 +28,7 @@ import java.util.*;
  * - totals (Over/Under goals, typically 2.5)
  * - btts (Both Teams To Score - Yes/No)
  */
+@Slf4j
 @Service
 public class SoccerOddsService {
 
@@ -89,11 +91,11 @@ public class SoccerOddsService {
                 .block();
 
             if (oddsData == null || oddsData.isEmpty()) {
-                System.out.println("No odds data returned for " + sportKey);
+                log.info("No odds data returned for {}", sportKey);
                 return oddsMap;
             }
 
-            System.out.println("Found " + oddsData.size() + " games with odds for " + sportKey);
+            log.info("Found {} games with odds for {}", oddsData.size(), sportKey);
 
             for (Map<String, Object> game : oddsData) {
                 try {
@@ -103,12 +105,12 @@ public class SoccerOddsService {
                         oddsMap.put(gameKey, odds);
                     }
                 } catch (Exception e) {
-                    System.err.println("Error parsing game odds: " + e.getMessage());
+                    log.error("Error parsing game odds: {}", e.getMessage());
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("Error fetching soccer odds for " + sportKey + ": " + e.getMessage());
+            log.error("Error fetching soccer odds for {}: {}", sportKey, e.getMessage());
         }
 
         return oddsMap;
@@ -120,7 +122,7 @@ public class SoccerOddsService {
     public Map<String, SoccerOdds> getOddsForLeague(String league) {
         String sportKey = LEAGUE_TO_SPORT_KEY.get(league);
         if (sportKey == null) {
-            System.err.println("Unknown league: " + league);
+            log.error("Unknown league: {}", league);
             return Collections.emptyMap();
         }
         return getSoccerOdds(sportKey);

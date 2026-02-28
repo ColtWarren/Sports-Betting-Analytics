@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service.soccer;
 
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.soccer.TeamStanding;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - Sporting Kansas City (MLS)
  * - St. Louis City SC (MLS)
  */
+@Slf4j
 @Service
 public class ApiFootballService {
 
@@ -82,7 +84,7 @@ public class ApiFootballService {
     public void resetDailyCount() {
         dailyRequestCount = 0;
         lastResetDate = LocalDate.now();
-        System.out.println("API-Football daily request count reset");
+        log.info("API-Football daily request count reset");
     }
 
     /**
@@ -96,7 +98,7 @@ public class ApiFootballService {
         }
 
         if (dailyRequestCount >= DAILY_LIMIT - 10) {
-            System.err.println("WARNING: Approaching API-Football daily limit! " + dailyRequestCount + "/100");
+            log.warn("Approaching API-Football daily limit! {}/100", dailyRequestCount);
         }
 
         return dailyRequestCount < DAILY_LIMIT;
@@ -107,7 +109,7 @@ public class ApiFootballService {
      */
     private void trackRequest() {
         dailyRequestCount++;
-        System.out.println("API-Football requests today: " + dailyRequestCount + "/" + DAILY_LIMIT);
+        log.info("API-Football requests today: {}/{}", dailyRequestCount, DAILY_LIMIT);
     }
 
     /**
@@ -119,18 +121,18 @@ public class ApiFootballService {
         // Check cache first
         CachedResponse cached = cache.get(cacheKey);
         if (cached != null && !cached.isExpired()) {
-            System.out.println("Cache HIT for " + league + " fixtures");
+            log.info("Cache HIT for {} fixtures", league);
             return (List<SoccerFixture>) cached.data;
         }
 
         if (!canMakeRequest()) {
-            System.err.println("API-Football daily limit reached, returning empty list");
+            log.error("API-Football daily limit reached, returning empty list");
             return Collections.emptyList();
         }
 
         Integer leagueId = LEAGUE_IDS.get(league);
         if (leagueId == null) {
-            System.err.println("Unknown league: " + league);
+            log.error("Unknown league: {}", league);
             return Collections.emptyList();
         }
 
@@ -159,7 +161,7 @@ public class ApiFootballService {
             return fixtures;
 
         } catch (Exception e) {
-            System.err.println("Error fetching " + league + " fixtures: " + e.getMessage());
+            log.error("Error fetching {} fixtures: {}", league, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -209,7 +211,7 @@ public class ApiFootballService {
             return fixtures;
 
         } catch (Exception e) {
-            System.err.println("Error fetching upcoming " + league + " fixtures: " + e.getMessage());
+            log.error("Error fetching upcoming {} fixtures: {}", league, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -254,7 +256,7 @@ public class ApiFootballService {
             return standings;
 
         } catch (Exception e) {
-            System.err.println("Error fetching " + league + " standings: " + e.getMessage());
+            log.error("Error fetching {} standings: {}", league, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -362,7 +364,7 @@ public class ApiFootballService {
                 fixtures.add(fixture);
 
             } catch (Exception e) {
-                System.err.println("Error parsing fixture: " + e.getMessage());
+                log.error("Error parsing fixture: {}", e.getMessage());
             }
         }
 
@@ -419,7 +421,7 @@ public class ApiFootballService {
                 standings.add(standing);
 
             } catch (Exception e) {
-                System.err.println("Error parsing standing: " + e.getMessage());
+                log.error("Error parsing standing: {}", e.getMessage());
             }
         }
 

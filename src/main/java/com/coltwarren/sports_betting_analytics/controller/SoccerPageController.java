@@ -3,6 +3,7 @@ package com.coltwarren.sports_betting_analytics.controller;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.model.soccer.TeamStanding;
 import com.coltwarren.sports_betting_analytics.service.soccer.SoccerDataAggregatorService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import java.util.*;
  * - Draw (X)
  * - Away Win (2)
  */
+@Slf4j
 @Controller
 public class SoccerPageController {
 
@@ -82,8 +84,7 @@ public class SoccerPageController {
             return "soccer";
 
         } catch (Exception e) {
-            System.err.println("Error loading soccer page: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error loading soccer page: {}", e.getMessage(), e);
             model.addAttribute("error", "Unable to load soccer data. Please try again later.");
             model.addAttribute("allFixtures", Collections.emptyMap());
             model.addAttribute("localGames", Collections.emptyList());

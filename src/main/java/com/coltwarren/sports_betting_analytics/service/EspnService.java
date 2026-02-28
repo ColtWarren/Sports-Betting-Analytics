@@ -1,11 +1,13 @@
 package com.coltwarren.sports_betting_analytics.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class EspnService {
     
@@ -178,7 +180,7 @@ public class EspnService {
                 .collect(Collectors.toList());
             
         } catch (Exception e) {
-            System.err.println("Error fetching injuries for team " + teamId + ": " + e.getMessage());
+            log.error("Error fetching injuries for team {}: {}", teamId, e.getMessage());
             return Collections.emptyList();
         }
     }

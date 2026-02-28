@@ -4,6 +4,7 @@ import com.coltwarren.sports_betting_analytics.model.historical.HistoricalMatch;
 import com.coltwarren.sports_betting_analytics.repository.HistoricalMatchRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
@@ -50,6 +51,7 @@ public class HistoricalDataImportService {
     /**
      * Import data for a specific league and season
      */
+    @Transactional
     public int importLeagueSeason(String league, String seasonCode) {
         String leagueCode = LEAGUE_CODES.get(league);
         if (leagueCode == null) {
@@ -297,6 +299,7 @@ public class HistoricalDataImportService {
     /**
      * Clear all data for a league
      */
+    @Transactional
     public int clearLeagueData(String league) {
         List<HistoricalMatch> matches = matchRepository.findByLeague(league);
         int count = matches.size();

@@ -1,11 +1,13 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.service.LiveGameService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/live")
 public class LiveBettingController {
@@ -34,7 +36,7 @@ public class LiveBettingController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", e.getMessage());
-            e.printStackTrace();
+            log.error("Error fetching live games for sport: {}", sport, e);
             return ResponseEntity.ok(response);
         }
     }

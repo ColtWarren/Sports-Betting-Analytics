@@ -5,6 +5,7 @@ import com.coltwarren.sports_betting_analytics.repository.StadiumLocationReposit
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ public class StadiumDataInitializer {
     }
 
     @PostConstruct
+    @Transactional
     public void initializeStadiums() {
         if (stadiumRepository.count() > 0) {
             log.info("Stadium database already populated ({} stadiums)", stadiumRepository.count());

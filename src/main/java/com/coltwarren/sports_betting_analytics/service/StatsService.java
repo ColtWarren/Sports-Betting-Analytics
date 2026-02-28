@@ -3,6 +3,7 @@ package com.coltwarren.sports_betting_analytics.service;
 import com.coltwarren.sports_betting_analytics.model.GameStats;
 import com.coltwarren.sports_betting_analytics.repository.GameStatsRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -156,6 +157,7 @@ public class StatsService {
         return summary.toString().trim();
     }
     
+    @Transactional
     public GameStats saveGameStats(GameStats gameStats) {
         gameStats.setUpdatedAt(LocalDateTime.now());
         return gameStatsRepository.save(gameStats);
