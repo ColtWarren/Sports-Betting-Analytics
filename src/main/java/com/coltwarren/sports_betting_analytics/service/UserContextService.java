@@ -61,7 +61,7 @@ public class UserContextService {
             }
 
             // DB lookup (once per request)
-            Optional<User> user = userRepository.findByGoogleId(googleId);
+            Optional<User> user = userRepository.findByGoogleIdAndDeletedFalse(googleId);
 
             // Cache the result
             if (attrs != null) {

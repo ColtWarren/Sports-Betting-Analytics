@@ -48,7 +48,7 @@ public class CustomOAuth2UserService implements AuthenticationSuccessHandler {
         log.info("OAuth2 login success: googleId={}, email={}, name={}", googleId, email, name);
 
         try {
-            Optional<User> existingUser = userRepository.findByGoogleId(googleId);
+            Optional<User> existingUser = userRepository.findByGoogleIdAndDeletedFalse(googleId);
 
             if (existingUser.isPresent()) {
                 User user = existingUser.get();
