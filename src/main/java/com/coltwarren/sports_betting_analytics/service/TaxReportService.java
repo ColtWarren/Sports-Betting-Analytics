@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.model.W2GForm;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
@@ -43,9 +44,7 @@ public class TaxReportService {
         if (userId == null) return List.of();
         LocalDateTime start = LocalDateTime.of(year, 1, 1, 0, 0);
         LocalDateTime end = LocalDateTime.of(year, 12, 31, 23, 59);
-        return betRepository.findBySettledAtBetween(start, end).stream()
-            .filter(b -> b.getUser() != null && userId.equals(b.getUser().getId()))
-            .toList();
+        return betRepository.findByUserIdAndSettledAtBetweenWithUser(userId, start, end);
     }
 
     /**
@@ -54,7 +53,7 @@ public class TaxReportService {
     public BigDecimal getTotalWinnings(int year) {
         List<Bet> bets = getBetsForTaxYear(year);
         return bets.stream()
-            .filter(b -> "WON".equals(b.getStatus()))
+            .filter(b -> b.getStatus() == BetStatus.WON)
             .map(Bet::getProfitLoss)
             .filter(pl -> pl != null && pl.compareTo(BigDecimal.ZERO) > 0)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -66,7 +65,7 @@ public class TaxReportService {
     public BigDecimal getTotalLosses(int year) {
         List<Bet> bets = getBetsForTaxYear(year);
         return bets.stream()
-            .filter(b -> "LOST".equals(b.getStatus()))
+            .filter(b -> b.getStatus() == BetStatus.LOST)
             .map(b -> b.getProfitLoss() != null ? b.getProfitLoss().abs() : BigDecimal.ZERO)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -144,7 +143,7 @@ public class TaxReportService {
         summary.put("w2gFormsPending", w2gForms.stream().filter(f -> !f.getFormReceived()).count());
 
         List<Bet> allBets = getBetsForTaxYear(year);
-        long wonBets = allBets.stream().filter(b -> "WON".equals(b.getStatus())).count();
+        long wonBets = allBets.stream().filter(b -> b.getStatus() == BetStatus.WON).count();
         long totalBets = allBets.size();
         double winRate = totalBets > 0 ? (double) wonBets / totalBets * 100 : 0;
         summary.put("totalBets", totalBets);

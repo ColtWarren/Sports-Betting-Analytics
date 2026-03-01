@@ -4,6 +4,7 @@ import com.coltwarren.sports_betting_analytics.service.BetService;
 import com.coltwarren.sports_betting_analytics.service.BankrollService;
 import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.model.Bankroll;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -34,10 +35,10 @@ public class DashboardController {
         Double roi = betService.calculateROI();
         
         long totalCount = allBets.size();
-        long pendingCount = betService.countBetsByStatus("PENDING");
-        long wonCount = betService.countBetsByStatus("WON");
-        long lostCount = betService.countBetsByStatus("LOST");
-        long pushCount = betService.countBetsByStatus("PUSH");
+        long pendingCount = betService.countBetsByStatus(BetStatus.PENDING);
+        long wonCount = betService.countBetsByStatus(BetStatus.WON);
+        long lostCount = betService.countBetsByStatus(BetStatus.LOST);
+        long pushCount = betService.countBetsByStatus(BetStatus.PUSH);
         
         model.addAttribute("allBets", allBets);
         model.addAttribute("pendingBets", pendingBets);

@@ -1,6 +1,9 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
+import com.coltwarren.sports_betting_analytics.model.BetType;
+import com.coltwarren.sports_betting_analytics.model.Sport;
 import com.coltwarren.sports_betting_analytics.model.User;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import org.springframework.data.domain.PageRequest;
@@ -70,7 +73,7 @@ public class BetService {
     public Bet createBet(String sport, String eventName, String betType, String selection,
                         BigDecimal stake, BigDecimal odds, String sportsbookName) {
         
-        Bet bet = new Bet(sport, eventName, betType, selection, stake, odds, sportsbookName);
+        Bet bet = new Bet(Sport.valueOf(sport), eventName, BetType.valueOf(betType), selection, stake, odds, sportsbookName);
         bet.setUser(requireCurrentUser());
         return betRepository.save(bet);
     }
@@ -112,7 +115,7 @@ public class BetService {
     public List<Bet> getPendingBets() {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserIdAndStatus(userId, "PENDING");
+        return betRepository.findByUserIdAndStatus(userId, BetStatus.PENDING);
     }
     
     /**
@@ -123,7 +126,7 @@ public class BetService {
     public List<Bet> getSettledBets() {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserIdAndStatusIn(userId, List.of("WON", "LOST", "PUSH"));
+        return betRepository.findByUserIdAndStatusIn(userId, List.of(BetStatus.WON, BetStatus.LOST, BetStatus.PUSH));
     }
 
     /**
@@ -147,7 +150,7 @@ public class BetService {
     public List<Bet> getBetsBySport(String sport) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserIdAndSport(userId, sport);
+        return betRepository.findByUserIdAndSport(userId, Sport.valueOf(sport));
     }
 
     /**
@@ -159,7 +162,7 @@ public class BetService {
     public List<Bet> getBetsByType(String betType) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return List.of();
-        return betRepository.findByUserIdAndBetType(userId, betType);
+        return betRepository.findByUserIdAndBetType(userId, BetType.valueOf(betType));
     }
 
     /**
@@ -376,7 +379,7 @@ public class BetService {
     /**
      * Get count of bets by status via DB COUNT query.
      */
-    public long countBetsByStatus(String status) {
+    public long countBetsByStatus(BetStatus status) {
         Long userId = userContextService.getCurrentUserId();
         if (userId == null) return 0;
         return betRepository.countByUserIdAndStatus(userId, status);
@@ -396,10 +399,10 @@ public class BetService {
 
         return new BettingStats(
             betRepository.countByUserId(userId),
-            betRepository.countByUserIdAndStatus(userId, "PENDING"),
-            betRepository.countByUserIdAndStatus(userId, "WON"),
-            betRepository.countByUserIdAndStatus(userId, "LOST"),
-            betRepository.countByUserIdAndStatus(userId, "PUSH"),
+            betRepository.countByUserIdAndStatus(userId, BetStatus.PENDING),
+            betRepository.countByUserIdAndStatus(userId, BetStatus.WON),
+            betRepository.countByUserIdAndStatus(userId, BetStatus.LOST),
+            betRepository.countByUserIdAndStatus(userId, BetStatus.PUSH),
             calculateTotalStaked(),
             calculateTotalProfitLoss(),
             calculateWinRate(),
@@ -431,7 +434,7 @@ public class BetService {
             throw new IllegalArgumentException("Odds cannot be null");
         }
         
-        if (bet.getSport() == null || bet.getSport().trim().isEmpty()) {
+        if (bet.getSport() == null) {
             throw new IllegalArgumentException("Sport cannot be empty");
         }
         
@@ -439,7 +442,7 @@ public class BetService {
             throw new IllegalArgumentException("Event name cannot be empty");
         }
         
-        if (bet.getBetType() == null || bet.getBetType().trim().isEmpty()) {
+        if (bet.getBetType() == null) {
             throw new IllegalArgumentException("Bet type cannot be empty");
         }
         

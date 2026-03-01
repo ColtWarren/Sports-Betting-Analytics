@@ -1,5 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service.espn;
 
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
+import com.coltwarren.sports_betting_analytics.model.BetType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -45,44 +47,44 @@ public class ESPNApiService {
     /**
      * Check if bet won based on game result
      */
-    public String determineBetOutcome(Map<String, Object> gameResult, String selection, 
-                                      String betType, Integer odds, Double line) {
-        
+    public BetStatus determineBetOutcome(Map<String, Object> gameResult, String selection,
+                                     BetType betType, Integer odds, Double line) {
+
         if (gameResult.containsKey("error")) {
-            return "PENDING";
+            return BetStatus.PENDING;
         }
-        
+
         String status = (String) gameResult.get("status");
         if (!"FINAL".equals(status)) {
-            return "PENDING";
+            return BetStatus.PENDING;
         }
-        
+
         int homeScore = (Integer) gameResult.get("homeScore");
         int awayScore = (Integer) gameResult.get("awayScore");
         String homeTeam = (String) gameResult.get("homeTeam");
         String awayTeam = (String) gameResult.get("awayTeam");
-        
+
         boolean selectedHome = selection.toUpperCase().contains(homeTeam.toUpperCase());
         boolean selectedAway = selection.toUpperCase().contains(awayTeam.toUpperCase());
-        
+
         if (!selectedHome && !selectedAway) {
-            return "PENDING";
+            return BetStatus.PENDING;
         }
-        
-        if ("MONEYLINE".equalsIgnoreCase(betType)) {
-            if (homeScore == awayScore) return "PUSH";
-            
+
+        if (betType == BetType.MONEYLINE) {
+            if (homeScore == awayScore) return BetStatus.PUSH;
+
             boolean homeWon = homeScore > awayScore;
             if (selectedHome) {
-                return homeWon ? "WON" : "LOST";
+                return homeWon ? BetStatus.WON : BetStatus.LOST;
             } else {
-                return homeWon ? "LOST" : "WON";
+                return homeWon ? BetStatus.LOST : BetStatus.WON;
             }
-            
-        } else if ("SPREAD".equalsIgnoreCase(betType) && line != null) {
+
+        } else if (betType == BetType.SPREAD && line != null) {
             double adjustedScore;
             double opponentScore;
-            
+
             if (selectedHome) {
                 adjustedScore = homeScore + line;
                 opponentScore = awayScore;
@@ -90,26 +92,26 @@ public class ESPNApiService {
                 adjustedScore = awayScore + line;
                 opponentScore = homeScore;
             }
-            
-            if (adjustedScore == opponentScore) return "PUSH";
-            return adjustedScore > opponentScore ? "WON" : "LOST";
-            
-        } else if (betType.toUpperCase().contains("OVER") || betType.toUpperCase().contains("UNDER")) {
-            if (line == null) return "PENDING";
-            
+
+            if (adjustedScore == opponentScore) return BetStatus.PUSH;
+            return adjustedScore > opponentScore ? BetStatus.WON : BetStatus.LOST;
+
+        } else if (betType == BetType.TOTAL_OVER || betType == BetType.TOTAL_UNDER || betType == BetType.OVER_GOALS || betType == BetType.UNDER_GOALS) {
+            if (line == null) return BetStatus.PENDING;
+
             int totalPoints = homeScore + awayScore;
-            
-            if (totalPoints == line) return "PUSH";
-            
-            boolean isOver = betType.toUpperCase().contains("OVER");
+
+            if (totalPoints == line) return BetStatus.PUSH;
+
+            boolean isOver = betType == BetType.TOTAL_OVER || betType == BetType.OVER_GOALS;
             if (isOver) {
-                return totalPoints > line ? "WON" : "LOST";
+                return totalPoints > line ? BetStatus.WON : BetStatus.LOST;
             } else {
-                return totalPoints < line ? "WON" : "LOST";
+                return totalPoints < line ? BetStatus.WON : BetStatus.LOST;
             }
         }
-        
-        return "PENDING";
+
+        return BetStatus.PENDING;
     }
     
     private String mapSportToESPN(String sport) {

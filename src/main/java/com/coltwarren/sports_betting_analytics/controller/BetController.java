@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import com.coltwarren.sports_betting_analytics.service.BetService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -117,10 +118,10 @@ public class BetController {
     public ResponseEntity<Map<String, Long>> getCountsByStatus() {
         Map<String, Long> counts = Map.of(
             "total", (long) betService.getAllBets().size(),
-            "pending", betService.countBetsByStatus("PENDING"),
-            "won", betService.countBetsByStatus("WON"),
-            "lost", betService.countBetsByStatus("LOST"),
-            "push", betService.countBetsByStatus("PUSH")
+            "pending", betService.countBetsByStatus(BetStatus.PENDING),
+            "won", betService.countBetsByStatus(BetStatus.WON),
+            "lost", betService.countBetsByStatus(BetStatus.LOST),
+            "push", betService.countBetsByStatus(BetStatus.PUSH)
         );
         return ResponseEntity.ok(counts);
     }

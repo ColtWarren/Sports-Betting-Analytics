@@ -27,14 +27,16 @@ public class Bet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String sport;
+    private Sport sport;
     
     @Column(nullable = false, length = 200)
     private String eventName;
     
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String betType;
+    private BetType betType;
     
     @Column(nullable = false, length = 100)
     private String selection;
@@ -54,8 +56,9 @@ public class Bet {
     @Column(nullable = false, length = 50)
     private String sportsbookName;
     
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status;
+    private BetStatus status;
     
     @Column(precision = 10, scale = 2)
     private BigDecimal profitLoss;
@@ -103,11 +106,11 @@ public class Bet {
 
     // Constructors
     public Bet() {
-        this.status = "PENDING";
+        this.status = BetStatus.PENDING;
         this.placedAt = LocalDateTime.now();
     }
-    
-    public Bet(String sport, String eventName, String betType, String selection,
+
+    public Bet(Sport sport, String eventName, BetType betType, String selection,
                BigDecimal stake, BigDecimal odds, String sportsbookName) {
         this();
         this.sport = sport;
@@ -133,7 +136,7 @@ public class Bet {
     }
     
     public void markAsWon() {
-        this.status = "WON";
+        this.status = BetStatus.WON;
         if (this.actualPayout == null) {
             this.actualPayout = this.potentialPayout;
         }
@@ -148,14 +151,14 @@ public class Bet {
     }
     
     public void markAsLost() {
-        this.status = "LOST";
+        this.status = BetStatus.LOST;
         this.actualPayout = BigDecimal.ZERO;
         this.profitLoss = this.stake.negate();
         this.settledAt = LocalDateTime.now();
     }
     
     public void markAsPush() {
-        this.status = "PUSH";
+        this.status = BetStatus.PUSH;
         this.actualPayout = this.stake;
         this.profitLoss = BigDecimal.ZERO;
         this.settledAt = LocalDateTime.now();
@@ -165,14 +168,14 @@ public class Bet {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
-    public String getSport() { return sport; }
-    public void setSport(String sport) { this.sport = sport; }
+    public Sport getSport() { return sport; }
+    public void setSport(Sport sport) { this.sport = sport; }
     
     public String getEventName() { return eventName; }
     public void setEventName(String eventName) { this.eventName = eventName; }
     
-    public String getBetType() { return betType; }
-    public void setBetType(String betType) { this.betType = betType; }
+    public BetType getBetType() { return betType; }
+    public void setBetType(BetType betType) { this.betType = betType; }
     
     public String getSelection() { return selection; }
     public void setSelection(String selection) { this.selection = selection; }
@@ -192,8 +195,8 @@ public class Bet {
     public String getSportsbookName() { return sportsbookName; }
     public void setSportsbookName(String sportsbookName) { this.sportsbookName = sportsbookName; }
     
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public BetStatus getStatus() { return status; }
+    public void setStatus(BetStatus status) { this.status = status; }
     
     public BigDecimal getProfitLoss() { return profitLoss; }
     public void setProfitLoss(BigDecimal profitLoss) { this.profitLoss = profitLoss; }
@@ -235,13 +238,13 @@ public class Bet {
     public String toString() {
         return "Bet{" +
                 "id=" + id +
-                ", sport='" + sport + '\'' +
+                ", sport=" + sport +
                 ", eventName='" + eventName + '\'' +
-                ", betType='" + betType + '\'' +
+                ", betType=" + betType +
                 ", selection='" + selection + '\'' +
                 ", stake=" + stake +
                 ", odds=" + odds +
-                ", status='" + status + '\'' +
+                ", status=" + status +
                 ", sportsbookName='" + sportsbookName + '\'' +
                 '}';
     }
@@ -251,7 +254,7 @@ public class Bet {
      * W-2G required if: winnings >= $600 AND payout is 300x or more the wager
      */
     public boolean checkIfTriggersW2G() {
-        if (status != null && status.equals("WON") && actualPayout != null && stake != null) {
+        if (status == BetStatus.WON && actualPayout != null && stake != null) {
             BigDecimal netWinnings = actualPayout.subtract(stake);
             boolean meetsAmountThreshold = netWinnings.compareTo(BigDecimal.valueOf(600)) >= 0;
 

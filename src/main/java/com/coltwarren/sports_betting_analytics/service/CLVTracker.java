@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +60,7 @@ public class CLVTracker {
         
         // Calculate CLV for winning bets
         double avgCLVWinners = betsWithClosingOdds.stream()
-            .filter(bet -> "WON".equals(bet.getStatus()))
+            .filter(bet -> bet.getStatus() == BetStatus.WON)
             .map(Bet::calculateCLV)
             .filter(clv -> clv != null)
             .mapToDouble(Double::doubleValue)
@@ -68,7 +69,7 @@ public class CLVTracker {
         
         // Calculate CLV for losing bets
         double avgCLVLosers = betsWithClosingOdds.stream()
-            .filter(bet -> "LOST".equals(bet.getStatus()))
+            .filter(bet -> bet.getStatus() == BetStatus.LOST)
             .map(Bet::calculateCLV)
             .filter(clv -> clv != null)
             .mapToDouble(Double::doubleValue)

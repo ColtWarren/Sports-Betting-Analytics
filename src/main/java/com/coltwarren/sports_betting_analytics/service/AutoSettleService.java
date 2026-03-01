@@ -1,6 +1,7 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.espn.ESPNApiService;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class AutoSettleService {
      */
     @Transactional
     public Map<String, Object> autoSettleAllBets() {
-        List<Bet> pendingBets = betRepository.findByStatus("PENDING");
+        List<Bet> pendingBets = betRepository.findByStatus(BetStatus.PENDING);
         
         int settled = 0;
         int failed = 0;
@@ -40,9 +41,9 @@ public class AutoSettleService {
                 bet.getEventStartTime().isBefore(LocalDateTime.now().minusHours(3))) {
                 
                 try {
-                    String outcome = attemptAutoSettle(bet);
-                    
-                    if (!"PENDING".equals(outcome)) {
+                    BetStatus outcome = attemptAutoSettle(bet);
+
+                    if (outcome != BetStatus.PENDING) {
                         bet.setStatus(outcome);
                         bet.setSettledAt(LocalDateTime.now());
                         betRepository.save(bet);
@@ -69,11 +70,11 @@ public class AutoSettleService {
     /**
      * Attempt to auto-settle a single bet
      */
-    public String attemptAutoSettle(Bet bet) {
+    public BetStatus attemptAutoSettle(Bet bet) {
         // Extract teams from event name (e.g., "Chiefs vs Bills")
         String[] teams = parseTeamsFromEvent(bet.getEventName());
         if (teams.length < 2) {
-            return "PENDING"; // Can't parse teams
+            return BetStatus.PENDING; // Can't parse teams
         }
         
         String homeTeam = teams[0];
@@ -81,8 +82,8 @@ public class AutoSettleService {
         
         // Get game result from ESPN
         Map<String, Object> gameResult = espnApiService.getGameResult(
-            bet.getSport(), 
-            homeTeam, 
+            bet.getSport().name(),
+            homeTeam,
             awayTeam
         );
         

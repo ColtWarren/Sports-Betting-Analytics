@@ -1,6 +1,9 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import com.coltwarren.sports_betting_analytics.model.Bet;
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
+import com.coltwarren.sports_betting_analytics.model.BetType;
+import com.coltwarren.sports_betting_analytics.model.Sport;
 import com.coltwarren.sports_betting_analytics.repository.BetRepository;
 import com.coltwarren.sports_betting_analytics.service.odds.MultiSportOddsService;
 import com.coltwarren.sports_betting_analytics.util.TeamNameUtils;
@@ -32,7 +35,7 @@ public class ActiveBetsTrackerService {
     public List<Map<String, Object>> getActiveBetsWithLiveData() {
         try {
             // Get all pending bets
-            List<Bet> pendingBets = betRepository.findByStatus("PENDING");
+            List<Bet> pendingBets = betRepository.findByStatus(BetStatus.PENDING);
             List<Map<String, Object>> activeBetsData = new ArrayList<>();
             
             for (Bet bet : pendingBets) {
@@ -85,8 +88,8 @@ public class ActiveBetsTrackerService {
     
     private Map<String, Object> findLiveGame(Bet bet) {
         try {
-            String sport = bet.getSport();
-            List<Map<String, Object>> liveGames = liveGameService.getLiveGames(sport);
+            Sport sport = bet.getSport();
+            List<Map<String, Object>> liveGames = liveGameService.getLiveGames(sport.name());
             
             String eventName = bet.getEventName();
             
@@ -114,18 +117,18 @@ public class ActiveBetsTrackerService {
         Map<String, Object> position = new HashMap<>();
         
         try {
-            String betType = bet.getBetType();
+            BetType betType = bet.getBetType();
             Integer homeScore = (Integer) liveGame.get("homeScore");
             Integer awayScore = (Integer) liveGame.get("awayScore");
-            
+
             if (homeScore == null || awayScore == null) {
                 position.put("status", "UNKNOWN");
                 return position;
             }
-            
+
             String selection = bet.getSelection();
-            
-            if ("SPREAD".equals(betType)) {
+
+            if (betType == BetType.SPREAD) {
                 // Extract spread from selection (e.g. "Bills -3.5")
                 double spread = extractSpread(selection);
                 boolean isHome = isHomeTeam(selection, liveGame);
@@ -144,7 +147,7 @@ public class ActiveBetsTrackerService {
                     position.put("margin", 0.0);
                 }
                 
-            } else if ("TOTAL".equals(betType) || "OVER/UNDER".equals(betType)) {
+            } else if (betType == BetType.TOTAL_OVER || betType == BetType.TOTAL_UNDER || betType == BetType.OVER_GOALS || betType == BetType.UNDER_GOALS) {
                 // Extract total from selection (e.g. "Over 51.5")
                 double total = extractTotal(selection);
                 int actualTotal = homeScore + awayScore;
@@ -170,7 +173,7 @@ public class ActiveBetsTrackerService {
                     }
                 }
                 
-            } else if ("MONEYLINE".equals(betType)) {
+            } else if (betType == BetType.MONEYLINE) {
                 boolean isHome = isHomeTeam(selection, liveGame);
                 
                 if (isHome) {
@@ -210,20 +213,20 @@ public class ActiveBetsTrackerService {
     
     private Map<String, Object> getCurrentOdds(Bet bet) {
         try {
-            String sport = bet.getSport();
+            Sport sport = bet.getSport();
             String eventName = bet.getEventName();
-            
+
             // Parse team names from event
             String[] teams = parseTeamNames(eventName);
             if (teams.length != 2) {
                 return Collections.emptyMap();
             }
-            
+
             String awayTeam = teams[0];
             String homeTeam = teams[1];
-            String betType = bet.getBetType();
-            
-            return multiSportOddsService.getBestOddsForGame(sport, homeTeam, awayTeam, betType);
+            BetType betType = bet.getBetType();
+
+            return multiSportOddsService.getBestOddsForGame(sport.name(), homeTeam, awayTeam, betType.name());
             
         } catch (Exception e) {
             log.error("Error getting current odds: {}", e.getMessage(), e);

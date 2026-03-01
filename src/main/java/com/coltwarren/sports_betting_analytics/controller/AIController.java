@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
+import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import com.coltwarren.sports_betting_analytics.service.BetService;
 import com.coltwarren.sports_betting_analytics.service.ai.ClaudeAIService;
 import org.springframework.stereotype.Controller;
@@ -24,8 +25,8 @@ public class AIController {
     public String analyzePerformance(Model model) {
         // Get current stats
         long totalBets = betService.getAllBets().size();
-        long wonCount = betService.countBetsByStatus("WON");
-        long lostCount = betService.countBetsByStatus("LOST");
+        long wonCount = betService.countBetsByStatus(BetStatus.WON);
+        long lostCount = betService.countBetsByStatus(BetStatus.LOST);
         BigDecimal profitLoss = betService.calculateTotalProfitLoss();
         Double winRate = betService.calculateWinRate();
         Double roi = betService.calculateROI();
