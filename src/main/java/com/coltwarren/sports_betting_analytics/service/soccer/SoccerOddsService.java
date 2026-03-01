@@ -1,9 +1,10 @@
 package com.coltwarren.sports_betting_analytics.service.soccer;
 
+import com.coltwarren.sports_betting_analytics.config.OddsApiProperties;
 import com.coltwarren.sports_betting_analytics.model.soccer.SoccerFixture;
 import com.coltwarren.sports_betting_analytics.util.MissouriComplianceUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -33,10 +34,8 @@ import java.util.*;
 @Service
 public class SoccerOddsService {
 
-    @Value("${odds.api.key}")
-    private String apiKey;
-
     private final WebClient oddsClient;
+    private final OddsApiProperties oddsApiProperties;
 
     // Soccer league to sport_key mapping for The Odds API
     private static final Map<String, String> LEAGUE_TO_SPORT_KEY = Map.of(
@@ -49,10 +48,10 @@ public class SoccerOddsService {
         "LIGUE_1", "soccer_france_ligue_one"
     );
 
-    public SoccerOddsService() {
-        this.oddsClient = WebClient.builder()
-            .baseUrl("https://api.the-odds-api.com/v4")
-            .build();
+    public SoccerOddsService(@Qualifier("oddsApiWebClient") WebClient oddsClient,
+                             OddsApiProperties oddsApiProperties) {
+        this.oddsClient = oddsClient;
+        this.oddsApiProperties = oddsApiProperties;
     }
 
     /**
@@ -68,7 +67,7 @@ public class SoccerOddsService {
             List<Map<String, Object>> oddsData = oddsClient.get()
                 .uri(uriBuilder -> uriBuilder
                     .path("/sports/" + sportKey + "/odds")
-                    .queryParam("apiKey", apiKey)
+                    .queryParam("apiKey", oddsApiProperties.getApiKey())
                     .queryParam("regions", "us")
                     .queryParam("markets", "h2h,totals")
                     .queryParam("oddsFormat", "american")

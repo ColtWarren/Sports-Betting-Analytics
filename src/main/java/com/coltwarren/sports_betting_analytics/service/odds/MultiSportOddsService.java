@@ -1,8 +1,9 @@
 package com.coltwarren.sports_betting_analytics.service.odds;
 
+import com.coltwarren.sports_betting_analytics.config.OddsApiProperties;
 import com.coltwarren.sports_betting_analytics.util.MissouriComplianceUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -36,15 +37,13 @@ import java.util.*;
 @Service
 public class MultiSportOddsService {
 
-    @Value("${odds.api.key}")
-    private String apiKey;
-
     private final WebClient oddsClient;
+    private final OddsApiProperties oddsApiProperties;
 
-    public MultiSportOddsService(WebClient.Builder webClientBuilder) {
-        this.oddsClient = webClientBuilder
-            .baseUrl("https://api.the-odds-api.com/v4")
-            .build();
+    public MultiSportOddsService(@Qualifier("oddsApiWebClient") WebClient oddsClient,
+                                 OddsApiProperties oddsApiProperties) {
+        this.oddsClient = oddsClient;
+        this.oddsApiProperties = oddsApiProperties;
     }
 
     public List<Map<String, Object>> getOddsForSport(String sport) {
@@ -55,7 +54,7 @@ public class MultiSportOddsService {
             List<Map<String, Object>> oddsData = oddsClient.get()
                 .uri(uriBuilder -> uriBuilder
                     .path("/sports/" + sportKey + "/odds")
-                    .queryParam("apiKey", apiKey)
+                    .queryParam("apiKey", oddsApiProperties.getApiKey())
                     .queryParam("regions", "us")
                     .queryParam("markets", "h2h,spreads,totals")
                     .queryParam("oddsFormat", "american")

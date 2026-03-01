@@ -8,7 +8,6 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -24,19 +23,11 @@ public class EspnGameSyncService {
     private final WebClient webClient;
     private final GameStatsRepository gameStatsRepository;
     
-    public EspnGameSyncService(GameStatsRepository gameStatsRepository) {
+    public EspnGameSyncService(GameStatsRepository gameStatsRepository,
+                               WebClient.Builder webClientBuilder) {
         this.gameStatsRepository = gameStatsRepository;
-        
-        // Increase buffer size to handle large responses
-        ExchangeStrategies strategies = ExchangeStrategies.builder()
-            .codecs(configurer -> configurer
-                .defaultCodecs()
-                .maxInMemorySize(10 * 1024 * 1024)) // 10 MB buffer
-            .build();
-        
-        this.webClient = WebClient.builder()
+        this.webClient = webClientBuilder
             .baseUrl("https://site.api.espn.com/apis/site/v2/sports/football/nfl")
-            .exchangeStrategies(strategies)
             .build();
     }
     

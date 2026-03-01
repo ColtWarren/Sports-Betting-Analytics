@@ -6,7 +6,6 @@ import com.coltwarren.sports_betting_analytics.util.TeamNameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
@@ -19,24 +18,14 @@ public class OddsBackfillService {
     private final WebClient espnOddsClient;
     private final GameStatsRepository gameStatsRepository;
     
-    public OddsBackfillService(GameStatsRepository gameStatsRepository) {
+    public OddsBackfillService(GameStatsRepository gameStatsRepository,
+                               WebClient.Builder webClientBuilder) {
         this.gameStatsRepository = gameStatsRepository;
-        
-        ExchangeStrategies strategies = ExchangeStrategies.builder()
-            .codecs(configurer -> configurer
-                .defaultCodecs()
-                .maxInMemorySize(10 * 1024 * 1024))
-            .build();
-        
-        // Separate clients for different base URLs
-        this.espnScoreboardClient = WebClient.builder()
+        this.espnScoreboardClient = webClientBuilder
             .baseUrl("https://site.api.espn.com/apis/site/v2/sports/football/nfl")
-            .exchangeStrategies(strategies)
             .build();
-            
-        this.espnOddsClient = WebClient.builder()
+        this.espnOddsClient = webClientBuilder
             .baseUrl("https://sports.core.api.espn.com/v2/sports/football/leagues/nfl")
-            .exchangeStrategies(strategies)
             .build();
     }
     

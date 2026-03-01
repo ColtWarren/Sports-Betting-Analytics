@@ -80,8 +80,8 @@ public class EspnService {
         NFL_TEAM_IDS.put("Seattle", "26");
     }
     
-    public EspnService() {
-        this.webClient = WebClient.builder()
+    public EspnService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder
             .baseUrl("https://site.api.espn.com/apis/site/v2/sports/football/nfl")
             .build();
     }

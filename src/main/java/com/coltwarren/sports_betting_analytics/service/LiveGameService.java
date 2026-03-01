@@ -1,8 +1,8 @@
 package com.coltwarren.sports_betting_analytics.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
@@ -13,17 +13,8 @@ public class LiveGameService {
     
     private final WebClient espnClient;
     
-    public LiveGameService() {
-        ExchangeStrategies strategies = ExchangeStrategies.builder()
-            .codecs(configurer -> configurer
-                .defaultCodecs()
-                .maxInMemorySize(10 * 1024 * 1024))
-            .build();
-        
-        this.espnClient = WebClient.builder()
-            .baseUrl("https://site.api.espn.com/apis/site/v2/sports")
-            .exchangeStrategies(strategies)
-            .build();
+    public LiveGameService(@Qualifier("espnWebClient") WebClient espnClient) {
+        this.espnClient = espnClient;
     }
     
     public List<Map<String, Object>> getLiveGames(String sport) {

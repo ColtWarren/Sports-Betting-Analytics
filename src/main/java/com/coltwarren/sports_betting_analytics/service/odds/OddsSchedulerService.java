@@ -9,6 +9,7 @@ import com.coltwarren.sports_betting_analytics.repository.OddsFetchLogRepository
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
@@ -45,15 +46,13 @@ public class OddsSchedulerService {
     public OddsSchedulerService(OddsApiProperties properties,
                                 CachedOddsRepository cachedOddsRepository,
                                 OddsFetchLogRepository oddsFetchLogRepository,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper,
+                                @Qualifier("oddsApiWebClient") WebClient webClient) {
         this.properties = properties;
         this.cachedOddsRepository = cachedOddsRepository;
         this.oddsFetchLogRepository = oddsFetchLogRepository;
         this.objectMapper = objectMapper;
-        this.webClient = WebClient.builder()
-            .baseUrl(properties.getBaseUrl())
-            .codecs(config -> config.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-            .build();
+        this.webClient = webClient;
     }
 
     /**

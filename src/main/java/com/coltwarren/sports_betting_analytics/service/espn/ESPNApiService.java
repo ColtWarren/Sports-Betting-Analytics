@@ -2,6 +2,7 @@ package com.coltwarren.sports_betting_analytics.service.espn;
 
 import com.coltwarren.sports_betting_analytics.model.BetStatus;
 import com.coltwarren.sports_betting_analytics.model.BetType;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -13,10 +14,8 @@ public class ESPNApiService {
     
     private final WebClient webClient;
     
-    public ESPNApiService() {
-        this.webClient = WebClient.builder()
-            .baseUrl("https://site.api.espn.com/apis/site/v2/sports")
-            .build();
+    public ESPNApiService(@Qualifier("espnWebClient") WebClient webClient) {
+        this.webClient = webClient;
     }
     
     /**
