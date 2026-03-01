@@ -12,17 +12,24 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Cached Odds Service — reads odds from the database cache.
+ *
+ * This service does NOT call The Odds API directly. It reads data previously
+ * cached by {@link OddsSchedulerService}. For live API fetches, use
+ * {@link MultiSportOddsService}.
+ */
 @Service
 @Slf4j
-public class OddsService {
+public class CachedOddsService {
 
     private final CachedOddsRepository cachedOddsRepository;
     private final OddsApiProperties properties;
     private final ObjectMapper objectMapper;
 
-    public OddsService(CachedOddsRepository cachedOddsRepository,
-                       OddsApiProperties properties,
-                       ObjectMapper objectMapper) {
+    public CachedOddsService(CachedOddsRepository cachedOddsRepository,
+                             OddsApiProperties properties,
+                             ObjectMapper objectMapper) {
         this.cachedOddsRepository = cachedOddsRepository;
         this.properties = properties;
         this.objectMapper = objectMapper;
@@ -136,24 +143,11 @@ public class OddsService {
     }
 
     public String getSportKey(String sport) {
-        return switch (sport.toUpperCase()) {
-            case "NFL" -> "americanfootball_nfl";
-            case "NBA" -> "basketball_nba";
-            case "MLB" -> "baseball_mlb";
-            case "NHL" -> "icehockey_nhl";
-            case "NCAAF" -> "americanfootball_ncaaf";
-            case "NCAAB" -> "basketball_ncaab";
-            default -> "americanfootball_nfl";
-        };
+        return SportKeyMapper.toApiKey(sport);
     }
 
     public String getMarketKey(String betType) {
-        return switch (betType.toUpperCase()) {
-            case "MONEYLINE" -> "h2h";
-            case "SPREAD" -> "spreads";
-            case "TOTAL_OVER", "TOTAL_UNDER" -> "totals";
-            default -> "h2h";
-        };
+        return SportKeyMapper.toMarketKey(betType);
     }
 
     /**

@@ -6,6 +6,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -152,7 +153,7 @@ public class ClaudeAIService {
                 .retrieve()
                 .bodyToMono(Map.class);
             
-            Map<String, Object> result = response.block();
+            Map<String, Object> result = response.block(Duration.ofSeconds(30));
             
             if (result != null && result.containsKey("content")) {
                 List<Map<String, Object>> content = (List<Map<String, Object>>) result.get("content");

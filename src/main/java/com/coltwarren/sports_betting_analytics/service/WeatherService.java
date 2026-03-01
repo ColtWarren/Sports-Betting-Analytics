@@ -1,24 +1,29 @@
 package com.coltwarren.sports_betting_analytics.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.coltwarren.sports_betting_analytics.model.weather.WeatherData;
+import com.coltwarren.sports_betting_analytics.service.weather.OpenWeatherMapService;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Simple weather lookup by game string.
+ *
+ * Delegates data fetching to {@link OpenWeatherMapService} (single source of truth
+ * for weather API calls). For sport-specific quantified impact analysis, use
+ * {@link com.coltwarren.sports_betting_analytics.service.weather.WeatherAnalysisService}.
+ */
 @Service
 public class WeatherService {
-    
-    private final WebClient webClient;
-    private final String apiKey;
-    
+
+    private final OpenWeatherMapService openWeatherMapService;
+
     // City to coordinates mapping for NFL stadiums
     private static final Map<String, double[]> NFL_STADIUMS = new ConcurrentHashMap<>();
     static {
-        // Format: [latitude, longitude]
         NFL_STADIUMS.put("Kansas City", new double[]{39.0489, -94.4839});
         NFL_STADIUMS.put("Buffalo", new double[]{42.7738, -78.7870});
         NFL_STADIUMS.put("Philadelphia", new double[]{39.9008, -75.1675});
@@ -50,55 +55,40 @@ public class WeatherService {
         NFL_STADIUMS.put("Washington", new double[]{38.9076, -76.8645});
         NFL_STADIUMS.put("Arizona", new double[]{33.5276, -112.2626});
     }
-    
-    public WeatherService(@Value("${weather.api.key:}") String apiKey) {
-        this.apiKey = apiKey;
-        this.webClient = WebClient.builder()
-            .baseUrl("https://api.openweathermap.org/data/2.5")
-            .build();
+
+    public WeatherService(OpenWeatherMapService openWeatherMapService) {
+        this.openWeatherMapService = openWeatherMapService;
     }
-    
+
     public Map<String, Object> getWeatherForGame(String game) {
         try {
-            // Extract city from game string (e.g., "Chiefs vs Bills" -> "Kansas City")
             String city = extractCity(game);
-            
+
             if (city == null || !NFL_STADIUMS.containsKey(city)) {
                 return createUnavailableWeather("City not found");
             }
-            
-            if (apiKey == null || apiKey.isEmpty()) {
-                return createUnavailableWeather("API key not configured");
-            }
-            
+
             double[] coords = NFL_STADIUMS.get(city);
-            
-            Map<String, Object> response = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                    .path("/weather")
-                    .queryParam("lat", coords[0])
-                    .queryParam("lon", coords[1])
-                    .queryParam("appid", apiKey)
-                    .queryParam("units", "imperial")
-                    .build())
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
-            
-            return formatWeatherData(response, city);
-            
+
+            WeatherData data = openWeatherMapService.getWeatherForecast(
+                    coords[0], coords[1], LocalDateTime.now(), city);
+
+            if (data == null) {
+                return createUnavailableWeather("Weather data unavailable");
+            }
+
+            return formatWeatherData(data, city);
+
         } catch (Exception e) {
-            return createUnavailableWeather("API error: " + e.getMessage());
+            return createUnavailableWeather("Error: " + e.getMessage());
         }
     }
-    
+
     private String extractCity(String game) {
-        // Try to find team name in game string
         for (String city : NFL_STADIUMS.keySet()) {
             if (game.contains(city)) {
                 return city;
             }
-            // Also check for common team nicknames
             if (game.contains("Chiefs") && city.equals("Kansas City")) return city;
             if (game.contains("Bills") && city.equals("Buffalo")) return city;
             if (game.contains("Eagles") && city.equals("Philadelphia")) return city;
@@ -132,97 +122,73 @@ public class WeatherService {
         }
         return null;
     }
-    
-    private Map<String, Object> formatWeatherData(Map<String, Object> response, String city) {
+
+    private Map<String, Object> formatWeatherData(WeatherData data, String city) {
         Map<String, Object> weather = new HashMap<>();
-        
-        try {
-            Map<String, Object> main = (Map<String, Object>) response.get("main");
-            Map<String, Object> wind = (Map<String, Object>) response.get("wind");
-            java.util.List<Map<String, Object>> weatherList = 
-                (java.util.List<Map<String, Object>>) response.get("weather");
-            
-            weather.put("available", true);
-            weather.put("city", city);
-            weather.put("temperature", Math.round((Double) main.get("temp")));
-            weather.put("feelsLike", Math.round((Double) main.get("feels_like")));
-            weather.put("humidity", main.get("humidity"));
-            weather.put("windSpeed", Math.round((Double) wind.get("speed")));
-            weather.put("windDirection", getWindDirection((Integer) wind.getOrDefault("deg", 0)));
-            weather.put("condition", weatherList.get(0).get("description"));
-            weather.put("icon", getWeatherIcon((String) weatherList.get(0).get("main")));
-            
-            // Betting impact assessment
-            weather.put("bettingImpact", assessBettingImpact(
-                (Double) main.get("temp"),
-                (Double) wind.get("speed"),
-                (String) weatherList.get(0).get("main")
-            ));
-            
-        } catch (Exception e) {
-            return createUnavailableWeather("Error parsing weather data");
-        }
-        
+
+        weather.put("available", true);
+        weather.put("city", city);
+        weather.put("temperature", Math.round(data.getTemperature()));
+        weather.put("feelsLike", Math.round(data.getFeelsLike()));
+        weather.put("humidity", data.getHumidity());
+        weather.put("windSpeed", Math.round(data.getWindSpeed()));
+        weather.put("windDirection", data.getWindDirection() != null ? data.getWindDirection() : "N/A");
+        weather.put("condition", data.getConditions() != null ? data.getConditions() : "Unknown");
+        weather.put("icon", getWeatherIcon(data.getConditions()));
+        weather.put("bettingImpact", assessBettingImpact(
+                data.getTemperature(), data.getWindSpeed(), data.getConditions()));
+
         return weather;
     }
-    
+
     private Map<String, Object> createUnavailableWeather(String reason) {
         Map<String, Object> weather = new HashMap<>();
         weather.put("available", false);
         weather.put("reason", reason);
-        weather.put("icon", "❓");
+        weather.put("icon", "?");
         weather.put("message", "Weather data unavailable");
         return weather;
     }
-    
-    private String getWindDirection(int degrees) {
-        String[] directions = {"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                              "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"};
-        return directions[(int) Math.round(((degrees % 360) / 22.5))];
-    }
-    
+
     private String getWeatherIcon(String condition) {
-        switch (condition.toLowerCase()) {
-            case "clear": return "☀️";
-            case "clouds": return "☁️";
-            case "rain": return "🌧️";
-            case "drizzle": return "🌦️";
-            case "snow": return "❄️";
-            case "thunderstorm": return "⛈️";
-            case "mist":
-            case "fog": return "🌫️";
-            default: return "🌤️";
-        }
+        if (condition == null) return "?";
+        return switch (condition.toLowerCase()) {
+            case "clear" -> "sunny";
+            case "clouds" -> "cloudy";
+            case "rain" -> "rainy";
+            case "drizzle" -> "drizzle";
+            case "snow" -> "snowy";
+            case "thunderstorm" -> "stormy";
+            case "mist", "fog" -> "foggy";
+            default -> "partly_cloudy";
+        };
     }
-    
+
     private String assessBettingImpact(double temp, double windSpeed, String condition) {
         StringBuilder impact = new StringBuilder();
-        
-        // Temperature impact
+
         if (temp < 32) {
-            impact.append("🥶 Very Cold - Favors running game, lowers totals. ");
+            impact.append("Very Cold - Favors running game, lowers totals. ");
         } else if (temp < 45) {
-            impact.append("❄️ Cold - May affect passing game slightly. ");
+            impact.append("Cold - May affect passing game slightly. ");
         } else if (temp > 85) {
-            impact.append("🔥 Hot - May tire defenses in 4th quarter. ");
+            impact.append("Hot - May tire defenses in 4th quarter. ");
         } else {
-            impact.append("🌡️ Ideal - Temperature neutral. ");
+            impact.append("Ideal - Temperature neutral. ");
         }
-        
-        // Wind impact
+
         if (windSpeed > 20) {
-            impact.append("💨 HIGH WIND - Significantly impacts passing/kicking. Bet UNDER. ");
+            impact.append("HIGH WIND - Significantly impacts passing/kicking. Bet UNDER. ");
         } else if (windSpeed > 15) {
-            impact.append("🌬️ Windy - May affect deep passes and field goals. ");
+            impact.append("Windy - May affect deep passes and field goals. ");
         } else {
-            impact.append("🍃 Light Wind - Minimal impact. ");
+            impact.append("Light Wind - Minimal impact. ");
         }
-        
-        // Precipitation impact
-        if (condition.toLowerCase().contains("rain") || condition.toLowerCase().contains("snow")) {
-            impact.append("☔ Precipitation - Favors rushing, bet UNDER. ");
+
+        if (condition != null && (condition.toLowerCase().contains("rain") || condition.toLowerCase().contains("snow"))) {
+            impact.append("Precipitation - Favors rushing, bet UNDER. ");
         }
-        
+
         return impact.toString().trim();
     }
 }

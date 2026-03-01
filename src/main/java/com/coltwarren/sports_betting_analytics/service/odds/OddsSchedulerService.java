@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -158,7 +159,7 @@ public class OddsSchedulerService {
     /**
      * Fetch a single league asynchronously (for on-demand refreshes).
      */
-    @Async
+    @Async("externalApiExecutor")
     public void fetchLeagueOdds(String league) {
         fetchLeagueOddsSync(league);
     }
@@ -284,7 +285,7 @@ public class OddsSchedulerService {
             .uri(url)
             .retrieve()
             .toEntity(new ParameterizedTypeReference<List<OddsResponse>>() {})
-            .block();
+            .block(Duration.ofSeconds(15));
 
         if (response != null) {
             // Track API credits from response headers

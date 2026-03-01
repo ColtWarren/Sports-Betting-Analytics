@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -61,7 +62,7 @@ public class MultiSportOddsService {
                     .build())
                 .retrieve()
                 .bodyToMono(List.class)
-                .block();
+                .block(Duration.ofSeconds(10));
             
             if (oddsData == null || oddsData.isEmpty()) {
                 return Collections.emptyList();
@@ -105,35 +106,7 @@ public class MultiSportOddsService {
     }
     
     private String getSportKey(String sport) {
-        switch (sport.toUpperCase()) {
-            case "NFL":
-                return "americanfootball_nfl";
-            case "CFB":
-            case "COLLEGE-FOOTBALL":
-                return "americanfootball_ncaaf";
-            case "NBA":
-                return "basketball_nba";
-            case "WNBA":
-                return "basketball_wnba";
-            case "CBB":
-            case "COLLEGE-BASKETBALL":
-                return "basketball_ncaab";
-            case "WCBB":
-            case "WOMENS-COLLEGE-BASKETBALL":
-                return "basketball_wncaab";
-            case "MLB":
-                return "baseball_mlb";
-            case "NHL":
-                return "icehockey_nhl";
-            case "MLS":
-                return "soccer_usa_mls";
-            case "EPL":
-                return "soccer_epl";
-            case "UFC":
-                return "mma_mixed_martial_arts";
-            default:
-                return "americanfootball_nfl";
-        }
+        return SportKeyMapper.toApiKey(sport);
     }
     
     private Map<String, Object> parseGame(Map<String, Object> game, String sport) {

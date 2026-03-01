@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -74,7 +75,7 @@ public class SoccerOddsService {
                     .build())
                 .retrieve()
                 .bodyToMono(List.class)
-                .block();
+                .block(Duration.ofSeconds(10));
 
             if (oddsData == null || oddsData.isEmpty()) {
                 log.info("No odds data returned for {}", sportKey);

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.*;
 
 @Slf4j
@@ -25,7 +26,7 @@ public class LiveGameService {
                 .uri(endpoint)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
             
             if (scoreboard == null || !scoreboard.containsKey("events")) {
                 return Collections.emptyList();

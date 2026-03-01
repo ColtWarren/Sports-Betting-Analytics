@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -79,7 +80,7 @@ public class OpenWeatherMapService {
                     .build())
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
+                .block(Duration.ofSeconds(10));
 
             if (response == null) {
                 log.error("No response from OpenWeatherMap");

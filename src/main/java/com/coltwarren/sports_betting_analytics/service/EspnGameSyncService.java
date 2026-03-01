@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -109,7 +110,7 @@ public class EspnGameSyncService {
                 .uri("/scoreboard")
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
         } catch (Exception e) {
             log.error("Error fetching scoreboard: {}", e.getMessage(), e);
             return null;
@@ -217,7 +218,7 @@ public class EspnGameSyncService {
                     .build())
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
             
             if (scoreboard != null && scoreboard.containsKey("events")) {
                 List<Map<String, Object>> events = 

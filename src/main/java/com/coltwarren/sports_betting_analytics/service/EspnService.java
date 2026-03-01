@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -160,7 +161,7 @@ public class EspnService {
                 .uri("/teams/" + teamId)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
             
             if (response == null || !response.containsKey("team")) {
                 return Collections.emptyList();

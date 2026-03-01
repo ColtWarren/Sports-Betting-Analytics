@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.*;
 
 @Slf4j
@@ -109,7 +110,7 @@ public class OddsBackfillService {
                     .build())
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
             
             if (scoreboard == null || !scoreboard.containsKey("events")) {
                 return null;
@@ -168,7 +169,7 @@ public class OddsBackfillService {
                 .uri("/events/" + eventId + "/competitions/" + eventId + "/odds")
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
             
             if (oddsResponse == null || !oddsResponse.containsKey("items")) {
                 return null;

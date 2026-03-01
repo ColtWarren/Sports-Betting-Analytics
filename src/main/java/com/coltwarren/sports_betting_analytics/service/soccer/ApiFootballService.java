@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -149,7 +150,7 @@ public class ApiFootballService {
                 .header("x-apisports-key", apiKey)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
 
             trackRequest();
 
@@ -201,7 +202,7 @@ public class ApiFootballService {
                 .header("x-apisports-key", apiKey)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
 
             trackRequest();
 
@@ -246,7 +247,7 @@ public class ApiFootballService {
                 .header("x-apisports-key", apiKey)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .block();
+                .block(Duration.ofSeconds(10));
 
             trackRequest();
 

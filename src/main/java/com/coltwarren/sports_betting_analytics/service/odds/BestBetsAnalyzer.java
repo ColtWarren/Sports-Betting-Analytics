@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class BestBetsAnalyzer {
-    
-    private final OddsService oddsService;
-    
-    public BestBetsAnalyzer(OddsService oddsService) {
+
+    private final CachedOddsService oddsService;
+
+    public BestBetsAnalyzer(CachedOddsService oddsService) {
         this.oddsService = oddsService;
     }
     

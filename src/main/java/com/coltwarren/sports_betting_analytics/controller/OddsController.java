@@ -1,7 +1,7 @@
 package com.coltwarren.sports_betting_analytics.controller;
 
 import com.coltwarren.sports_betting_analytics.model.odds.OddsResponse;
-import com.coltwarren.sports_betting_analytics.service.odds.OddsService;
+import com.coltwarren.sports_betting_analytics.service.odds.CachedOddsService;
 import com.coltwarren.sports_betting_analytics.service.odds.BestBetsAnalyzer;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +12,10 @@ import java.util.Map;
 @RequestMapping("/api/odds")
 public class OddsController {
     
-    private final OddsService oddsService;
+    private final CachedOddsService oddsService;
     private final BestBetsAnalyzer bestBetsAnalyzer;
     
-    public OddsController(OddsService oddsService, BestBetsAnalyzer bestBetsAnalyzer) {
+    public OddsController(CachedOddsService oddsService, BestBetsAnalyzer bestBetsAnalyzer) {
         this.oddsService = oddsService;
         this.bestBetsAnalyzer = bestBetsAnalyzer;
     }
