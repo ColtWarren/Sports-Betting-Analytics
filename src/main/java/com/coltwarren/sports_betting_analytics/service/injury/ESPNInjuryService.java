@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ESPN Injury Service
@@ -34,7 +35,7 @@ public class ESPNInjuryService {
     private static final String TEAM_INJURIES_TEMPLATE = "https://site.api.espn.com/apis/site/v2/sports/%s/%s/teams/%s/injuries";
 
     // Cache for injuries (5 minute TTL)
-    private Map<String, CachedInjuries> injuryCache = new HashMap<>();
+    private final Map<String, CachedInjuries> injuryCache = new ConcurrentHashMap<>();
     private static final long CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
     private static class CachedInjuries {

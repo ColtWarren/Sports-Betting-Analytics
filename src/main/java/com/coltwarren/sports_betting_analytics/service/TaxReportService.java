@@ -160,10 +160,10 @@ public class TaxReportService {
     public void createW2GFormFromBet(Bet bet) {
         if (Boolean.TRUE.equals(bet.getTriggersW2G())) {
             // Check if W-2G form already exists for this bet
-            W2GForm existing = w2gFormRepository.findByBetId(bet.getId());
+            W2GForm existing = w2gFormRepository.findByBet(bet);
             if (existing == null) {
                 W2GForm form = new W2GForm(
-                    bet.getId(),
+                    bet,
                     bet.getSettledAt().toLocalDate(),
                     bet.getActualPayout(),
                     bet.getStake(),

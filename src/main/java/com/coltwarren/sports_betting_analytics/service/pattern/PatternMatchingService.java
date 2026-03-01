@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Pattern Matching Service
@@ -21,7 +22,7 @@ public class PatternMatchingService {
     private final PatternDiscoveryService patternDiscoveryService;
 
     // Cache discovered patterns
-    private Map<String, List<BettingPattern>> patternCache = new HashMap<>();
+    private final Map<String, List<BettingPattern>> patternCache = new ConcurrentHashMap<>();
 
     public PatternMatchingService(PatternDiscoveryService patternDiscoveryService) {
         this.patternDiscoveryService = patternDiscoveryService;

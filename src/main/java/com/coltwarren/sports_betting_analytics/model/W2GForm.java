@@ -18,8 +18,9 @@ public class W2GForm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "bet_id")
-    private Long betId; // Reference to the bet that triggered this W-2G
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bet_id")
+    private Bet bet;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -81,9 +82,9 @@ public class W2GForm {
     // Constructors
     public W2GForm() {}
 
-    public W2GForm(Long betId, LocalDate dateWon, BigDecimal grossWinnings,
+    public W2GForm(Bet bet, LocalDate dateWon, BigDecimal grossWinnings,
                    BigDecimal wagerAmount, String sportsbookName, Integer taxYear) {
-        this.betId = betId;
+        this.bet = bet;
         this.dateWon = dateWon;
         this.grossWinnings = grossWinnings;
         this.wagerAmount = wagerAmount;
@@ -101,12 +102,12 @@ public class W2GForm {
         this.id = id;
     }
 
-    public Long getBetId() {
-        return betId;
+    public Bet getBet() {
+        return bet;
     }
 
-    public void setBetId(Long betId) {
-        this.betId = betId;
+    public void setBet(Bet bet) {
+        this.bet = bet;
     }
 
     public LocalDate getDateWon() {

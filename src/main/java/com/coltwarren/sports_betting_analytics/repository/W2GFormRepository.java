@@ -1,5 +1,6 @@
 package com.coltwarren.sports_betting_analytics.repository;
 
+import com.coltwarren.sports_betting_analytics.model.Bet;
 import com.coltwarren.sports_betting_analytics.model.W2GForm;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +16,7 @@ public interface W2GFormRepository extends JpaRepository<W2GForm, Long> {
     List<W2GForm> findByTaxYear(Integer taxYear);
 
     // Find W-2G form for a specific bet
-    W2GForm findByBetId(Long betId);
+    W2GForm findByBet(Bet bet);
 
     // Find all unreceived forms for a tax year
     List<W2GForm> findByTaxYearAndFormReceivedFalse(Integer taxYear);

@@ -28,15 +28,12 @@ public class SecurityConfig {
                 // Public routes - no auth required
                 .requestMatchers("/", "/login", "/login/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                .requestMatchers("/best-bets").permitAll()
                 .requestMatchers("/api/health", "/api/health/**").permitAll()
-                .requestMatchers("/api/best-bets", "/api/best-bets/**").permitAll()
-                .requestMatchers("/api/odds", "/api/odds/**").permitAll()
-                .requestMatchers("/api/soccer", "/api/soccer/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 // Everything else requires authentication
+                // (includes /best-bets, /api/best-bets/**, /api/odds/**, /api/soccer/**)
                 .anyRequest().authenticated()
             );
 

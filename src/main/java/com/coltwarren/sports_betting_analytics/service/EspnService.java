@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -14,7 +15,7 @@ public class EspnService {
     private final WebClient webClient;
     
     // Team name to ESPN team ID mapping
-    private static final Map<String, String> NFL_TEAM_IDS = new HashMap<>();
+    private static final Map<String, String> NFL_TEAM_IDS = new ConcurrentHashMap<>();
     static {
         NFL_TEAM_IDS.put("Bills", "2");
         NFL_TEAM_IDS.put("Buffalo", "2");

@@ -7,6 +7,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class WeatherService {
@@ -15,7 +16,7 @@ public class WeatherService {
     private final String apiKey;
     
     // City to coordinates mapping for NFL stadiums
-    private static final Map<String, double[]> NFL_STADIUMS = new HashMap<>();
+    private static final Map<String, double[]> NFL_STADIUMS = new ConcurrentHashMap<>();
     static {
         // Format: [latitude, longitude]
         NFL_STADIUMS.put("Kansas City", new double[]{39.0489, -94.4839});
