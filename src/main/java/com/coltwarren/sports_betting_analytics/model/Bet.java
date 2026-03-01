@@ -19,7 +19,12 @@ import java.time.LocalDateTime;
     @Index(name = "idx_bet_sport", columnList = "sport"),
     @Index(name = "idx_bet_placed_at", columnList = "placedAt"),
     @Index(name = "idx_bet_settled_at", columnList = "settledAt"),
-    @Index(name = "idx_bet_user_status", columnList = "user_id, status")
+    @Index(name = "idx_bet_sportsbook", columnList = "sportsbookName"),
+    @Index(name = "idx_bet_user_status", columnList = "user_id, status"),
+    @Index(name = "idx_bet_user_sport", columnList = "user_id, sport"),
+    @Index(name = "idx_bet_user_bet_type", columnList = "user_id, betType"),
+    @Index(name = "idx_bet_user_placed_at", columnList = "user_id, placedAt"),
+    @Index(name = "idx_bet_user_settled_at", columnList = "user_id, settledAt")
 })
 public class Bet {
     

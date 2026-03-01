@@ -94,4 +94,33 @@ public class MultiSportBestBetsService {
             return Collections.emptyList();
         }
     }
+
+    /**
+     * Returns best bets filtered by sport (or all if sport is null/empty/"ALL"),
+     * along with sport counts for the full unfiltered set.
+     */
+    public Map<String, Object> getBestBetsFiltered(String sport) {
+        List<Map<String, Object>> allBets = getBestBetsAcrossAllSports();
+
+        List<Map<String, Object>> filteredBets = allBets;
+        if (sport != null && !sport.isEmpty() && !sport.equalsIgnoreCase("ALL")) {
+            filteredBets = allBets.stream()
+                .filter(bet -> sport.equalsIgnoreCase((String) bet.get("sport")))
+                .collect(Collectors.toList());
+        }
+
+        Map<String, Long> sportCounts = allBets.stream()
+            .collect(Collectors.groupingBy(
+                bet -> (String) bet.get("sport"),
+                Collectors.counting()
+            ));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalBets", allBets.size());
+        result.put("filteredBets", filteredBets.size());
+        result.put("bets", filteredBets);
+        result.put("sportCounts", sportCounts);
+        result.put("appliedFilter", sport != null ? sport : "ALL");
+        return result;
+    }
 }

@@ -32,6 +32,33 @@ public class ActiveBetsTrackerService {
         this.multiSportOddsService = multiSportOddsService;
     }
 
+    /**
+     * Returns active bets separated into live and upcoming categories.
+     */
+    public Map<String, Object> getActiveBetsSeparated() {
+        List<Map<String, Object>> activeBets = getActiveBetsWithLiveData();
+
+        List<Map<String, Object>> liveBets = new ArrayList<>();
+        List<Map<String, Object>> upcomingBets = new ArrayList<>();
+
+        for (Map<String, Object> bet : activeBets) {
+            Boolean isLive = (Boolean) bet.get("isLive");
+            if (isLive != null && isLive) {
+                liveBets.add(bet);
+            } else {
+                upcomingBets.add(bet);
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalActiveBets", activeBets.size());
+        result.put("liveBets", liveBets);
+        result.put("liveCount", liveBets.size());
+        result.put("upcomingBets", upcomingBets);
+        result.put("upcomingCount", upcomingBets.size());
+        return result;
+    }
+
     public List<Map<String, Object>> getActiveBetsWithLiveData() {
         try {
             // Get all pending bets

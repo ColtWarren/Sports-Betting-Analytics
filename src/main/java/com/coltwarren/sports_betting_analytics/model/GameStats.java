@@ -8,7 +8,10 @@ import java.time.LocalDateTime;
     @Index(name = "idx_gamestats_sport", columnList = "sport"),
     @Index(name = "idx_gamestats_home_team", columnList = "homeTeam"),
     @Index(name = "idx_gamestats_away_team", columnList = "awayTeam"),
-    @Index(name = "idx_gamestats_game_time", columnList = "gameTime")
+    @Index(name = "idx_gamestats_game_time", columnList = "gameTime"),
+    @Index(name = "idx_gamestats_sport_game_time", columnList = "sport, gameTime"),
+    @Index(name = "idx_gamestats_home_team_game_time", columnList = "homeTeam, gameTime"),
+    @Index(name = "idx_gamestats_away_team_game_time", columnList = "awayTeam, gameTime")
 })
 public class GameStats {
     

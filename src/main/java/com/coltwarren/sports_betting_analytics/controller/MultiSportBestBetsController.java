@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -27,34 +26,12 @@ public class MultiSportBestBetsController {
         
         try {
             log.info("Getting best bets for all sports...");
-            
-            // Get all best bets
-            List<Map<String, Object>> allBets = multiSportBestBetsService.getBestBetsAcrossAllSports();
-            
-            // Filter by sport if requested
-            List<Map<String, Object>> filteredBets = allBets;
-            if (sport != null && !sport.isEmpty() && !sport.equalsIgnoreCase("ALL")) {
-                filteredBets = allBets.stream()
-                    .filter(bet -> sport.equalsIgnoreCase((String) bet.get("sport")))
-                    .collect(Collectors.toList());
-            }
-            
-            // Get sport counts
-            Map<String, Long> sportCounts = allBets.stream()
-                .collect(Collectors.groupingBy(
-                    bet -> (String) bet.get("sport"),
-                    Collectors.counting()
-                ));
-            
+
+            response = multiSportBestBetsService.getBestBetsFiltered(sport);
             response.put("success", true);
-            response.put("totalBets", allBets.size());
-            response.put("filteredBets", filteredBets.size());
-            response.put("bets", filteredBets);
-            response.put("sportCounts", sportCounts);
-            response.put("appliedFilter", sport != null ? sport : "ALL");
-            
-            log.info("Returning {} best bets", filteredBets.size());
-            
+
+            log.info("Returning {} best bets", response.get("filteredBets"));
+
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {

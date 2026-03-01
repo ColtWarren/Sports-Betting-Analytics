@@ -21,32 +21,12 @@ public class ActiveBetsController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getActiveBets() {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
-            List<Map<String, Object>> activeBets = activeBetsTrackerService.getActiveBetsWithLiveData();
-            
-            // Separate by status
-            List<Map<String, Object>> liveBets = new ArrayList<>();
-            List<Map<String, Object>> upcomingBets = new ArrayList<>();
-            
-            for (Map<String, Object> bet : activeBets) {
-                Boolean isLive = (Boolean) bet.get("isLive");
-                if (isLive != null && isLive) {
-                    liveBets.add(bet);
-                } else {
-                    upcomingBets.add(bet);
-                }
-            }
-            
+            response = activeBetsTrackerService.getActiveBetsSeparated();
             response.put("success", true);
-            response.put("totalActiveBets", activeBets.size());
-            response.put("liveBets", liveBets);
-            response.put("liveCount", liveBets.size());
-            response.put("upcomingBets", upcomingBets);
-            response.put("upcomingCount", upcomingBets.size());
-            
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", e.getMessage());
