@@ -1,7 +1,8 @@
 package com.coltwarren.sports_betting_analytics.model.historical;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDate;
 
 /**
@@ -16,7 +17,8 @@ import java.time.LocalDate;
     @Index(name = "idx_match_league", columnList = "league"),
     @Index(name = "idx_match_season", columnList = "season")
 })
-@Data
+@Getter
+@Setter
 public class HistoricalMatch {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -90,5 +92,18 @@ public class HistoricalMatch {
     public String getDisplayText() {
         return String.format("%s: %s %d-%d %s",
             matchDate, homeTeam, homeGoals, awayGoals, awayTeam);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HistoricalMatch that = (HistoricalMatch) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

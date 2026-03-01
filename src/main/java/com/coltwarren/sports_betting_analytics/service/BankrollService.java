@@ -97,7 +97,7 @@ public class BankrollService {
         if (totalDeposits.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal trueROI = profitLoss
                 .divide(totalDeposits, 4, RoundingMode.HALF_UP)
-                .multiply(new BigDecimal("100"));
+                .multiply(BigDecimal.valueOf(100));
             stats.put("trueROI", trueROI);
         } else {
             stats.put("trueROI", BigDecimal.ZERO);
@@ -109,7 +109,7 @@ public class BankrollService {
             BigDecimal growth = currentBankroll
                 .subtract(startingBankroll)
                 .divide(startingBankroll, 4, RoundingMode.HALF_UP)
-                .multiply(new BigDecimal("100"));
+                .multiply(BigDecimal.valueOf(100));
             stats.put("growth", growth);
         } else {
             stats.put("growth", BigDecimal.ZERO);

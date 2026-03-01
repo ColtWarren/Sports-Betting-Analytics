@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -114,7 +115,7 @@ public class TaxReportService {
     public BigDecimal getEstimatedTax(int year) {
         BigDecimal taxableWinnings = getTotalWinnings(year);
         // Assuming 24% tax bracket (user should adjust based on actual bracket)
-        return taxableWinnings.multiply(new BigDecimal("0.24")).setScale(2, BigDecimal.ROUND_HALF_UP);
+        return taxableWinnings.multiply(new BigDecimal("0.24")).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**

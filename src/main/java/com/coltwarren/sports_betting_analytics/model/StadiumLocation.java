@@ -1,7 +1,8 @@
 package com.coltwarren.sports_betting_analytics.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
@@ -18,7 +19,8 @@ import lombok.AllArgsConstructor;
  */
 @Entity
 @Table(name = "stadium_locations")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class StadiumLocation {
@@ -68,5 +70,18 @@ public class StadiumLocation {
     public boolean hasTeam(String teamName) {
         if (homeTeams == null) return false;
         return homeTeams.toLowerCase().contains(teamName.toLowerCase());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StadiumLocation that = (StadiumLocation) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

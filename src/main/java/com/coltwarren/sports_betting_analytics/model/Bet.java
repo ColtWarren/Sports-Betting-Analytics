@@ -123,11 +123,11 @@ public class Bet {
     // Business Logic
     private BigDecimal calculatePotentialPayout(BigDecimal stake, BigDecimal americanOdds) {
         if (americanOdds.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal profit = stake.multiply(americanOdds.divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP));
+            BigDecimal profit = stake.multiply(americanOdds.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
             return profit.add(stake);
         } else {
             BigDecimal absOdds = americanOdds.abs();
-            BigDecimal profit = stake.multiply(new BigDecimal("100").divide(absOdds, 2, BigDecimal.ROUND_HALF_UP));
+            BigDecimal profit = stake.multiply(BigDecimal.valueOf(100).divide(absOdds, 2, RoundingMode.HALF_UP));
             return profit.add(stake);
         }
     }
@@ -253,10 +253,10 @@ public class Bet {
     public boolean checkIfTriggersW2G() {
         if (status != null && status.equals("WON") && actualPayout != null && stake != null) {
             BigDecimal netWinnings = actualPayout.subtract(stake);
-            boolean meetsAmountThreshold = netWinnings.compareTo(new BigDecimal("600")) >= 0;
+            boolean meetsAmountThreshold = netWinnings.compareTo(BigDecimal.valueOf(600)) >= 0;
 
             BigDecimal ratio = actualPayout.divide(stake, 2, RoundingMode.HALF_UP);
-            boolean meets300xThreshold = ratio.compareTo(new BigDecimal("300")) >= 0;
+            boolean meets300xThreshold = ratio.compareTo(BigDecimal.valueOf(300)) >= 0;
 
             this.triggersW2G = meetsAmountThreshold && meets300xThreshold;
             return this.triggersW2G;
@@ -303,6 +303,19 @@ public class Bet {
             this.beatClosingLine = yourOdds > closing;
         }
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Bet that = (Bet) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
     }
 
