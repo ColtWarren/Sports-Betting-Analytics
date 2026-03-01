@@ -131,10 +131,14 @@ public class ClaudeAIService {
     }
 
     public String callClaudeAPI(String prompt) {
+        return callClaudeAPI(prompt, 1024);
+    }
+
+    public String callClaudeAPI(String prompt, int maxTokens) {
         try {
             Map<String, Object> requestBody = Map.of(
                 "model", model,
-                "max_tokens", 1024,
+                "max_tokens", maxTokens,
                 "messages", List.of(
                     Map.of(
                         "role", "user",

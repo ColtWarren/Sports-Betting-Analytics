@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
@@ -13,12 +14,15 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 public class SecurityConfig {
 
     private final CustomOAuth2UserService oAuth2SuccessHandler;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
 
-    public SecurityConfig(CustomOAuth2UserService oAuth2SuccessHandler) {
+    public SecurityConfig(CustomOAuth2UserService oAuth2SuccessHandler,
+                          RateLimitingFilter rateLimitingFilter) {
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.rateLimitingFilter = rateLimitingFilter;
     }
 
     @Bean
@@ -73,7 +77,10 @@ public class SecurityConfig {
             // Session management
             .sessionManagement(session -> session
                 .maximumSessions(3)
-            );
+            )
+
+            // Rate limiting
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
