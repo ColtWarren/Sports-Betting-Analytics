@@ -312,15 +312,15 @@
                 <div class="stat-item">
                     <div class="stat-label">Win Rate</div>
                     <div class="stat-value" 
-                         th:classappend="${winRate >= 0.55} ? '' : 'negative'">
-                        <span th:text="${#numbers.formatDecimal(winRate * 100, 1, 1)}">0.0</span>%
+                         th:classappend="${winRate >= 55} ? '' : 'negative'">
+                        <span th:text="${#numbers.formatDecimal(winRate, 1, 1)}">0.0</span>%
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">ROI</div>
                     <div class="stat-value" 
                          th:classappend="${roi >= 0} ? '' : 'negative'">
-                        <span th:if="${roi >= 0}">+</span><span th:text="${#numbers.formatDecimal(roi * 100, 1, 1)}">0.0</span>%
+                        <span th:if="${roi >= 0}">+</span><span th:text="${#numbers.formatDecimal(roi, 1, 1)}">0.0</span>%
                     </div>
                 </div>
             </div>

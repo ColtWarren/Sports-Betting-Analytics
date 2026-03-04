@@ -559,7 +559,7 @@
                 <div class="stat-label">Win Rate</div>
                 <div class="stat-value" 
                      th:classappend="${winRate != null && winRate >= 55} ? '' : (${winRate != null && winRate >= 50} ? 'warning' : 'negative')">
-                    <span th:text="${winRate != null ? #numbers.formatDecimal(winRate * 100, 1, 1) : '0.0'}">0.0</span>%
+                    <span th:text="${winRate != null ? #numbers.formatDecimal(winRate, 1, 1) : '0.0'}">0.0</span>%
                 </div>
             </div>
             
@@ -568,7 +568,7 @@
                 <div class="stat-label">ROI</div>
                 <div class="stat-value" 
                      th:classappend="${roi != null && roi >= 0} ? '' : 'negative'">
-                    <span th:if="${roi != null && roi >= 0}">+</span><span th:text="${roi != null ? #numbers.formatDecimal(roi * 100, 1, 1) : '0.0'}">0.0</span>%
+                    <span th:if="${roi != null && roi >= 0}">+</span><span th:text="${roi != null ? #numbers.formatDecimal(roi, 1, 1) : '0.0'}">0.0</span>%
                 </div>
             </div>
             
