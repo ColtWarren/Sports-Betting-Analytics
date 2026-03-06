@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics - Command Center</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
         
@@ -309,7 +310,7 @@
         </div>
     </div>
     
-    <script th:if="${!bets.isEmpty()}">
+    <script th:inline="javascript" th:if="${!bets.isEmpty()}">
         // Get bet data
         const bets = /*[[${bets}]]*/ [];
         

@@ -10,8 +10,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class DashboardController {
@@ -94,7 +94,17 @@ public class DashboardController {
     @GetMapping("/charts")
     public String charts(Model model) {
         List<Bet> bets = betService.getSettledBets();
-        model.addAttribute("bets", bets);
+        List<Map<String, Object>> chartData = bets.stream().map(bet -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("settledAt", bet.getSettledAt() != null ? bet.getSettledAt().toString() : null);
+            map.put("profitLoss", bet.getProfitLoss());
+            map.put("status", bet.getStatus().name());
+            map.put("sportsbookName", bet.getSportsbookName());
+            map.put("sport", bet.getSport().name());
+            map.put("betType", bet.getBetType().name());
+            return map;
+        }).collect(Collectors.toList());
+        model.addAttribute("bets", chartData);
         return "charts";
     }
     
