@@ -1,10 +1,16 @@
 package com.coltwarren.sports_betting_analytics.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -50,9 +56,10 @@ public class SecurityConfig {
                 .failureUrl("/login?error=true")
             );
         } else {
-            // No OAuth2 configured - use form login as fallback
+            // No OAuth2 configured - use form login as fallback for local dev
             http.formLogin(form -> form
                 .loginPage("/login")
+                .defaultSuccessUrl("/dashboard", true)
                 .permitAll()
             );
         }
@@ -83,5 +90,22 @@ public class SecurityConfig {
             .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PasswordEncoder.class)
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(UserDetailsService.class)
+    public UserDetailsService inMemoryUserDetailsService(PasswordEncoder encoder) {
+        return new InMemoryUserDetailsManager(
+            User.withUsername("admin")
+                .password(encoder.encode("admin"))
+                .roles("USER", "ADMIN")
+                .build()
+        );
     }
 }
