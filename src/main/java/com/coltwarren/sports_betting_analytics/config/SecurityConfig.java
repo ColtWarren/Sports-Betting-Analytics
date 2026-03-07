@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 .requestMatchers("/error").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 // Everything else requires authentication
                 // (includes /best-bets, /api/best-bets/**, /api/odds/**, /api/soccer/**)
                 .anyRequest().authenticated()
@@ -79,6 +80,7 @@ public class SecurityConfig {
             // Thymeleaf forms include token automatically as hidden field
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers("/ws/**")
             )
 
             // Session management

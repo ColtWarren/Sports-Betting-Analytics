@@ -37,6 +37,7 @@ public class OddsSchedulerService {
     private final OddsFetchLogRepository oddsFetchLogRepository;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+    private final OddsBroadcastService oddsBroadcastService;
 
     // Track API credits from response headers
     private volatile int creditsRemaining = -1;
@@ -48,12 +49,14 @@ public class OddsSchedulerService {
                                 CachedOddsRepository cachedOddsRepository,
                                 OddsFetchLogRepository oddsFetchLogRepository,
                                 ObjectMapper objectMapper,
-                                @Qualifier("oddsApiWebClient") WebClient webClient) {
+                                @Qualifier("oddsApiWebClient") WebClient webClient,
+                                OddsBroadcastService oddsBroadcastService) {
         this.properties = properties;
         this.cachedOddsRepository = cachedOddsRepository;
         this.oddsFetchLogRepository = oddsFetchLogRepository;
         this.objectMapper = objectMapper;
         this.webClient = webClient;
+        this.oddsBroadcastService = oddsBroadcastService;
     }
 
     /**
@@ -148,8 +151,9 @@ public class OddsSchedulerService {
                 log.warn("Odds fetch had {} failures out of {} leagues", failCount, leagues.size());
             }
 
-            // Record fetch time and clean up expired cache entries
+            // Record fetch time, broadcast update, and clean up expired cache entries
             this.lastFetchTime = LocalDateTime.now();
+            oddsBroadcastService.broadcastAll();
             cleanExpiredCache();
         } finally {
             fetchInProgress.set(false);
