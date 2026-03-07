@@ -32,6 +32,8 @@ public class OddsApiProperties {
         "americanfootball_nfl",
         "basketball_nba",
         "basketball_ncaab",
+        "basketball_wnba",
+        "basketball_wncaab",
         "icehockey_nhl",
         "baseball_mlb",
         "americanfootball_ncaaf",

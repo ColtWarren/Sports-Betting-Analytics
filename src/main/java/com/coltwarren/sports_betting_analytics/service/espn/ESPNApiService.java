@@ -118,10 +118,12 @@ public class ESPNApiService {
         return switch (sport.toUpperCase()) {
             case "NFL" -> "football/nfl";
             case "NBA" -> "basketball/nba";
+            case "WNBA" -> "basketball/wnba";
             case "MLB" -> "baseball/mlb";
             case "NHL" -> "hockey/nhl";
             case "NCAAF" -> "football/college-football";
             case "NCAAB" -> "basketball/mens-college-basketball";
+            case "WCBB" -> "basketball/womens-college-basketball";
             default -> "football/nfl";
         };
     }

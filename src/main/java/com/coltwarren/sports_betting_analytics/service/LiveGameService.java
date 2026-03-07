@@ -63,9 +63,13 @@ public class LiveGameService {
                 return "/football/college-football/scoreboard";
             case "NBA":
                 return "/basketball/nba/scoreboard";
+            case "WNBA":
+                return "/basketball/wnba/scoreboard";
             case "CBB":
             case "COLLEGE-BASKETBALL":
                 return "/basketball/mens-college-basketball/scoreboard";
+            case "WCBB":
+                return "/basketball/womens-college-basketball/scoreboard";
             case "MLB":
                 return "/baseball/mlb/scoreboard";
             case "NHL":
@@ -84,9 +88,13 @@ public class LiveGameService {
                 return "College Football";
             case "NBA":
                 return "NBA";
+            case "WNBA":
+                return "WNBA";
             case "CBB":
             case "COLLEGE-BASKETBALL":
                 return "College Basketball";
+            case "WCBB":
+                return "Women's College Basketball";
             case "MLB":
                 return "MLB";
             case "NHL":
