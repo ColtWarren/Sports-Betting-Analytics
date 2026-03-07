@@ -120,6 +120,7 @@ public class ESPNInjuryService {
         return switch (sport.toUpperCase()) {
             case "NFL", "FOOTBALL" -> NFL_INJURIES_URL;
             case "NBA", "BASKETBALL" -> NBA_INJURIES_URL;
+            case "WNBA" -> "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/injuries";
             case "MLB", "BASEBALL" -> MLB_INJURIES_URL;
             case "NHL", "HOCKEY" -> NHL_INJURIES_URL;
             case "CFB", "COLLEGE-FOOTBALL", "NCAAF" -> CFB_INJURIES_URL;
@@ -131,7 +132,7 @@ public class ESPNInjuryService {
     private String getSportPath(String sport) {
         return switch (sport.toUpperCase()) {
             case "NFL", "CFB" -> "football";
-            case "NBA", "WCBB", "CBB" -> "basketball";
+            case "NBA", "WNBA", "WCBB", "CBB" -> "basketball";
             case "MLB" -> "baseball";
             case "NHL" -> "hockey";
             default -> null;
@@ -142,6 +143,7 @@ public class ESPNInjuryService {
         return switch (sport.toUpperCase()) {
             case "NFL" -> "nfl";
             case "NBA" -> "nba";
+            case "WNBA" -> "wnba";
             case "MLB" -> "mlb";
             case "NHL" -> "nhl";
             case "CFB", "NCAAF" -> "college-football";
