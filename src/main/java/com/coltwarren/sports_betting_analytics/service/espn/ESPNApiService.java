@@ -122,6 +122,7 @@ public class ESPNApiService {
             case "NHL" -> "hockey/nhl";
             case "NCAAF" -> "football/college-football";
             case "NCAAB" -> "basketball/mens-college-basketball";
+            case "WCBB" -> "basketball/womens-college-basketball";
             default -> "football/nfl";
         };
     }

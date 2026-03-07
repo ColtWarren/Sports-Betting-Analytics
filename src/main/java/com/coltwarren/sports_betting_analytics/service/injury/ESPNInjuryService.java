@@ -123,6 +123,7 @@ public class ESPNInjuryService {
             case "MLB", "BASEBALL" -> MLB_INJURIES_URL;
             case "NHL", "HOCKEY" -> NHL_INJURIES_URL;
             case "CFB", "COLLEGE-FOOTBALL", "NCAAF" -> CFB_INJURIES_URL;
+            case "WCBB" -> "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/injuries";
             default -> null;
         };
     }
@@ -130,7 +131,7 @@ public class ESPNInjuryService {
     private String getSportPath(String sport) {
         return switch (sport.toUpperCase()) {
             case "NFL", "CFB" -> "football";
-            case "NBA" -> "basketball";
+            case "NBA", "WCBB", "CBB" -> "basketball";
             case "MLB" -> "baseball";
             case "NHL" -> "hockey";
             default -> null;
@@ -144,6 +145,7 @@ public class ESPNInjuryService {
             case "MLB" -> "mlb";
             case "NHL" -> "nhl";
             case "CFB", "NCAAF" -> "college-football";
+            case "WCBB" -> "womens-college-basketball";
             default -> null;
         };
     }
