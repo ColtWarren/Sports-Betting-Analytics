@@ -204,6 +204,10 @@ public class MultiSportOddsService {
                         }
                     }
                     
+                    // Per-bookmaker ML↔spread consistency check
+                    validateBookmakerConsistency(bookmakerOdds, (String) game.get("home_team"),
+                        (String) game.get("away_team"));
+
                     allBookmakerOdds.add(bookmakerOdds);
                 }
 
@@ -217,7 +221,13 @@ public class MultiSportOddsService {
                 parsedGame.put("bookmakers", allBookmakerOdds);
 
                 // Find best odds (ONLY from Missouri-legal bookmakers)
-                parsedGame.put("bestOdds", findBestOdds(allBookmakerOdds));
+                Map<String, Object> bestOdds = findBestOdds(allBookmakerOdds);
+
+                // Cross-bookmaker ML↔spread consistency check on the assembled best odds
+                validateBestOddsConsistency(bestOdds, (String) game.get("home_team"),
+                    (String) game.get("away_team"));
+
+                parsedGame.put("bestOdds", bestOdds);
             }
             
         } catch (Exception e) {
@@ -373,7 +383,111 @@ public class MultiSportOddsService {
     }
     
     private boolean matchesTeams(String team1, String team2) {
-        return team1.toLowerCase().contains(team2.toLowerCase()) || 
+        return team1.toLowerCase().contains(team2.toLowerCase()) ||
                team2.toLowerCase().contains(team1.toLowerCase());
+    }
+
+    /**
+     * Validate that a single bookmaker's ML and spread are consistent.
+     * If ML implies a spread that differs from actual spread by >10 points,
+     * flag the bookmaker's data as potentially stale.
+     */
+    private void validateBookmakerConsistency(Map<String, Object> bookmakerOdds,
+                                               String homeTeam, String awayTeam) {
+        String bookmaker = (String) bookmakerOdds.get("bookmaker");
+
+        // Check home side: homeML vs homeSpread
+        if (bookmakerOdds.containsKey("homeML") && bookmakerOdds.containsKey("homeSpread")) {
+            int homeML = (Integer) bookmakerOdds.get("homeML");
+            double homeSpread = (Double) bookmakerOdds.get("homeSpread");
+            double impliedSpread = mlToImpliedSpread(homeML);
+            double discrepancy = Math.abs(impliedSpread - homeSpread);
+
+            if (discrepancy > 10.0) {
+                log.warn("STALE ODDS at {}: {} ML {} implies ~{} spread, but actual spread is {}. "
+                    + "Discrepancy: {:.1f} pts. Bookmaker data may be stale.",
+                    bookmaker, homeTeam, homeML,
+                    String.format("%.1f", impliedSpread), homeSpread, discrepancy);
+                bookmakerOdds.put("mlSpreadMismatch", true);
+                bookmakerOdds.put("mlSpreadDiscrepancy", discrepancy);
+            }
+        }
+    }
+
+    /**
+     * Validate that the assembled "best odds" (which may come from different bookmakers)
+     * have consistent ML and spread. Adds warning flags to the bestOdds map if not.
+     */
+    private void validateBestOddsConsistency(Map<String, Object> bestOdds,
+                                              String homeTeam, String awayTeam) {
+        // Check home side
+        if (bestOdds.containsKey("homeML") && bestOdds.containsKey("homeSpread")) {
+            int homeML = (Integer) bestOdds.get("homeML");
+            double homeSpread = ((Number) bestOdds.get("homeSpread")).doubleValue();
+            String mlBook = (String) bestOdds.get("homeMLBook");
+            String spreadBook = (String) bestOdds.get("homeSpreadBook");
+            double impliedSpread = mlToImpliedSpread(homeML);
+            double discrepancy = Math.abs(impliedSpread - homeSpread);
+
+            if (discrepancy > 10.0) {
+                log.warn("ML/SPREAD MISMATCH in best odds for {}: "
+                    + "ML {} (from {}) implies ~{} spread, but spread is {} (from {}). "
+                    + "Discrepancy: {:.1f} pts. These come from different bookmakers.",
+                    homeTeam, homeML, mlBook,
+                    String.format("%.1f", impliedSpread), homeSpread, spreadBook, discrepancy);
+                bestOdds.put("mlSpreadWarning", true);
+                bestOdds.put("mlSpreadDiscrepancy", discrepancy);
+                bestOdds.put("mlImpliedSpread", impliedSpread);
+            }
+        }
+
+        // Check away side
+        if (bestOdds.containsKey("awayML") && bestOdds.containsKey("awaySpread")) {
+            int awayML = (Integer) bestOdds.get("awayML");
+            double awaySpread = ((Number) bestOdds.get("awaySpread")).doubleValue();
+            String mlBook = (String) bestOdds.get("awayMLBook");
+            String spreadBook = (String) bestOdds.get("awaySpreadBook");
+            double impliedSpread = mlToImpliedSpread(awayML);
+            double discrepancy = Math.abs(impliedSpread - awaySpread);
+
+            if (discrepancy > 10.0) {
+                log.warn("ML/SPREAD MISMATCH in best odds for {}: "
+                    + "ML {} (from {}) implies ~{} spread, but spread is {} (from {}). "
+                    + "Discrepancy: {:.1f} pts. These come from different bookmakers.",
+                    awayTeam, awayML, mlBook,
+                    String.format("%.1f", impliedSpread), awaySpread, spreadBook, discrepancy);
+                bestOdds.put("mlSpreadWarning", true);
+                bestOdds.put("mlSpreadDiscrepancy", discrepancy);
+                bestOdds.put("mlImpliedSpread", impliedSpread);
+            }
+        }
+    }
+
+    /**
+     * Convert American moneyline odds to an implied point spread.
+     *
+     * Steps:
+     * 1. ML → implied win probability (no-vig)
+     * 2. Win probability → approximate spread using ~4% per point (NBA/NFL average)
+     *
+     * This is an approximation for flagging large discrepancies, not for precise modeling.
+     * Negative result = favorite (should have negative spread).
+     */
+    private double mlToImpliedSpread(int ml) {
+        double impliedProb;
+        if (ml < 0) {
+            // Favorite: prob = |ML| / (|ML| + 100)
+            impliedProb = Math.abs(ml) / (Math.abs(ml) + 100.0);
+        } else if (ml > 0) {
+            // Underdog: prob = 100 / (ML + 100)
+            impliedProb = 100.0 / (ml + 100.0);
+        } else {
+            return 0.0; // Even money = pick'em
+        }
+
+        // Convert probability to spread: ~4% per point, centered at 50%
+        // Negative spread = favorite, positive = underdog
+        double impliedSpread = -((impliedProb - 0.5) / 0.04);
+        return Math.round(impliedSpread * 2) / 2.0; // Round to nearest 0.5
     }
 }

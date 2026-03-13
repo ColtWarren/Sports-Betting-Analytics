@@ -13,6 +13,20 @@ import java.util.stream.Collectors;
  *
  * Analyzes injury reports and calculates betting impact.
  * Provides spread adjustments and betting recommendations based on injury severity.
+ *
+ * Impact model:
+ *   impact = positionCeiling * tierMultiplier * statusMultiplier
+ *
+ * Position ceiling = max spread impact for a star/All-Star at that position.
+ * Tier multiplier scales based on player importance (star → bench).
+ * Without minutes/usage data from ESPN, players default to ROTATION tier
+ * unless they appear in the known-stars set.
+ *
+ * Target impact ranges:
+ *   Star/All-Star (30+ min, high usage): 4-6 pts
+ *   Quality starter (25-30 min):         2-3 pts
+ *   Rotation player (15-25 min):         0.5-1.5 pts
+ *   Deep bench (<15 min):                0-0.5 pts
  */
 @Service
 @Slf4j
@@ -24,26 +38,85 @@ public class InjuryAnalysisService {
         this.espnInjuryService = espnInjuryService;
     }
 
-    // Impact values by position (in points for spread) - NFL
+    // ── Player Tier Multipliers ──────────────────────────────────────────
+    // Applied to position ceiling to get actual impact.
+    // These create the proper separation between stars and bench players.
+    private static final double TIER_STAR = 1.0;       // All-Star / franchise player
+    private static final double TIER_STARTER = 0.55;    // Quality starter
+    private static final double TIER_ROTATION = 0.22;   // Rotation player (15-25 min)
+    private static final double TIER_BENCH = 0.08;      // Deep bench (<15 min)
+    private static final double TIER_DEFAULT = TIER_ROTATION; // Conservative default
+
+    // ── Known Star Players ───────────────────────────────────────────────
+    // Without minutes/usage data from ESPN, we identify stars explicitly.
+    // Players not in this set default to ROTATION tier.
+    // This should be updated periodically (trades, breakouts, retirements).
+    private static final Set<String> NBA_STARS = Set.of(
+        // MVP-caliber
+        "nikola jokic", "shai gilgeous-alexander", "luka doncic", "giannis antetokounmpo",
+        "jayson tatum", "anthony edwards", "joel embiid", "victor wembanyama",
+        // All-Star level
+        "stephen curry", "lebron james", "kevin durant", "anthony davis",
+        "jaylen brown", "damian lillard", "devin booker", "ja morant",
+        "donovan mitchell", "trae young", "bam adebayo", "karl-anthony towns",
+        "tyrese haliburton", "paolo banchero", "jimmy butler", "pascal siakam",
+        "chet holmgren", "lauri markkanen", "de'aaron fox", "domantas sabonis",
+        "jalen brunson", "julius randle", "mikal bridges", "deandre ayton",
+        "zion williamson", "lamelo ball", "scottie barnes", "evan mobley",
+        "franz wagner", "alperen sengun", "desmond bane", "jaren jackson jr."
+    );
+
+    // Quality starters — not stars, but clearly above rotation level
+    private static final Set<String> NBA_STARTERS = Set.of(
+        "michael porter jr.", "andrew wiggins", "khris middleton", "jrue holiday",
+        "marcus smart", "al horford", "bobby portis", "brook lopez",
+        "derrick white", "jarrett allen", "myles turner", "buddy hield",
+        "tyler herro", "coby white", "darius garland", "cam thomas",
+        "herb jones", "josh hart", "og anunoby", "immanuel quickley",
+        "brandon ingram", "dejounte murray", "fred vanvleet", "cade cunningham",
+        "austin reaves", "rui hachimura", "jabari smith jr.", "jalen green",
+        "jonathan kuminga", "nic claxton", "cameron johnson", "spencer dinwiddie",
+        "mark williams", "tre jones", "keldon johnson", "devin vassell"
+    );
+
+    private static final Set<String> NFL_STARS = Set.of(
+        "patrick mahomes", "josh allen", "lamar jackson", "joe burrow", "jalen hurts",
+        "tua tagovailoa", "justin jefferson", "ja'marr chase", "tyreek hill",
+        "ceedee lamb", "davante adams", "travis kelce", "nick bosa",
+        "myles garrett", "micah parsons", "t.j. watt", "aaron donald",
+        "jalen ramsey", "derwin james", "sauce gardner", "christian mccaffrey",
+        "bijan robinson", "breece hall", "saquon barkley"
+    );
+
+    private static final Set<String> WNBA_STARS = Set.of(
+        "a'ja wilson", "breanna stewart", "caitlin clark", "sabrina ionescu",
+        "alyssa thomas", "napheesa collier", "kelsey plum", "jewell loyd",
+        "kahleah copper", "chelsea gray", "dearica hamby", "jonquel jones"
+    );
+
+    // ── Position Impact Ceilings (star-level max, in spread points) ─────
+    // These represent the impact when a STAR at this position is out.
+    // Actual impact is scaled down by tier multiplier.
+
     private static final Map<String, Double> NFL_POSITION_IMPACT = Map.ofEntries(
-        Map.entry("QB", 7.0),      // Starting QB out is HUGE
-        Map.entry("LT", 2.5),      // Left tackle protects QB's blind side
+        Map.entry("QB", 7.0),
+        Map.entry("LT", 2.5),
         Map.entry("RT", 2.0),
-        Map.entry("WR", 2.0),
-        Map.entry("TE", 1.5),
-        Map.entry("RB", 1.5),
-        Map.entry("DE", 1.5),
-        Map.entry("EDGE", 1.5),
-        Map.entry("DT", 1.0),
-        Map.entry("NT", 1.0),
-        Map.entry("LB", 1.5),
-        Map.entry("MLB", 1.5),
-        Map.entry("OLB", 1.3),
-        Map.entry("ILB", 1.3),
-        Map.entry("CB", 2.0),      // Top corners are valuable
-        Map.entry("S", 1.5),
-        Map.entry("FS", 1.5),
-        Map.entry("SS", 1.5),
+        Map.entry("WR", 2.5),
+        Map.entry("TE", 2.0),
+        Map.entry("RB", 2.0),
+        Map.entry("DE", 2.0),
+        Map.entry("EDGE", 2.0),
+        Map.entry("DT", 1.5),
+        Map.entry("NT", 1.5),
+        Map.entry("LB", 2.0),
+        Map.entry("MLB", 2.0),
+        Map.entry("OLB", 1.5),
+        Map.entry("ILB", 1.5),
+        Map.entry("CB", 2.5),
+        Map.entry("S", 2.0),
+        Map.entry("FS", 2.0),
+        Map.entry("SS", 2.0),
         Map.entry("K", 1.0),
         Map.entry("P", 0.5),
         Map.entry("OL", 1.5),
@@ -51,14 +124,15 @@ public class InjuryAnalysisService {
         Map.entry("C", 1.5)
     );
 
+    // NBA: star PG out = ~5 pts spread impact (e.g., Brunson out for Knicks)
     private static final Map<String, Double> NBA_POSITION_IMPACT = Map.of(
-        "PG", 4.0,
-        "SG", 3.5,
-        "SF", 3.5,
-        "PF", 3.0,
-        "C", 3.5,
-        "G", 3.5,
-        "F", 3.0
+        "PG", 5.0,
+        "SG", 4.5,
+        "SF", 4.5,
+        "PF", 4.0,
+        "C", 5.0,
+        "G", 4.5,
+        "F", 4.0
     );
 
     private static final Map<String, Double> MLB_POSITION_IMPACT = Map.ofEntries(
@@ -87,15 +161,15 @@ public class InjuryAnalysisService {
         "D", 2.0
     );
 
-    // WNBA: Higher impact than NBA because 12-team league means star players are more critical
+    // WNBA: Higher ceilings because 12-team league = star concentration
     private static final Map<String, Double> WNBA_POSITION_IMPACT = Map.of(
-        "PG", 5.0,   // Star PGs (Clark, Ionescu) have outsized impact in smaller league
-        "SG", 4.0,
-        "SF", 4.0,
-        "PF", 3.5,
-        "C", 4.5,    // Elite centers (Wilson, Stewart) dominate both ends
-        "G", 4.0,
-        "F", 3.5
+        "PG", 6.0,
+        "SG", 5.0,
+        "SF", 5.0,
+        "PF", 4.5,
+        "C", 5.5,
+        "G", 5.0,
+        "F", 4.5
     );
 
     /**
@@ -129,12 +203,11 @@ public class InjuryAnalysisService {
                 continue;
             }
 
-            double positionImpact = getPositionImpact(injury.getPosition(), sport);
+            double positionCeiling = getPositionImpact(injury.getPosition(), sport);
             double statusMultiplier = getStatusMultiplier(injury.getStatus());
-            double playerMultiplier = injury.getPlayerRating() != null ?
-                injury.getPlayerRating() / 80.0 : 1.0; // Boost for star players
+            double tierMultiplier = getPlayerTierMultiplier(injury.getPlayerName(), sport);
 
-            double injuryImpact = positionImpact * statusMultiplier * playerMultiplier;
+            double injuryImpact = positionCeiling * tierMultiplier * statusMultiplier;
             totalSpreadImpact += injuryImpact;
 
             // Track significant injuries for summary
@@ -145,8 +218,16 @@ public class InjuryAnalysisService {
                     injury.getStatus() != null ? injury.getStatus() : ""));
             }
 
-            log.debug("Injury impact: {} {} = {:.1f} points",
-                     injury.getPlayerName(), injury.getStatus(), injuryImpact);
+            log.debug("Injury impact: {} [{}] {} = {:.1f} pts (ceiling={:.1f}, tier={:.2f}, status={:.2f})",
+                     injury.getPlayerName(), getTierLabel(tierMultiplier),
+                     injury.getStatus(), injuryImpact,
+                     positionCeiling, tierMultiplier, statusMultiplier);
+        }
+
+        // Cap max injury impact at 12 points per team to prevent runaway values
+        if (totalSpreadImpact > 12.0) {
+            log.info("Capping {} injury impact from {:.1f} to 12.0 pts", teamName, totalSpreadImpact);
+            totalSpreadImpact = 12.0;
         }
 
         impact.setSpreadImpact(-totalSpreadImpact); // Negative because team is worse
@@ -227,8 +308,9 @@ public class InjuryAnalysisService {
         double awaySpreadImpact = awayImpact != null && awayImpact.getSpreadImpact() != null ?
             awayImpact.getSpreadImpact() : 0.0;
 
-        // If home has -3 impact and away has -5 impact, home has +2 advantage
-        return awaySpreadImpact - homeSpreadImpact;
+        // Positive = home team healthier (less injury damage)
+        // If home has -3 impact and away has -5 impact: (-3) - (-5) = +2 → home is healthier
+        return homeSpreadImpact - awaySpreadImpact;
     }
 
     /**
@@ -274,12 +356,17 @@ public class InjuryAnalysisService {
             return true;
         }
 
-        // One fully contains the other, but only if the shorter string is
-        // substantial enough (>5 chars) to avoid false positives like contains("")
-        if (normalizedTeamName.length() > 5 && normalizedInjuryTeam.contains(normalizedTeamName)) {
+        // One fully contains the other, but ONLY when the shorter string is
+        // at least 60% the length of the longer string to prevent loose matches
+        // like "Jazz" matching "Trail Blazers Jazz Festival"
+        int maxLen = Math.max(normalizedTeamName.length(), normalizedInjuryTeam.length());
+        int minLen = Math.min(normalizedTeamName.length(), normalizedInjuryTeam.length());
+        boolean lengthRatioOk = maxLen > 0 && (double) minLen / maxLen >= 0.6;
+
+        if (lengthRatioOk && normalizedInjuryTeam.contains(normalizedTeamName)) {
             return true;
         }
-        if (normalizedInjuryTeam.length() > 5 && normalizedTeamName.contains(normalizedInjuryTeam)) {
+        if (lengthRatioOk && normalizedTeamName.contains(normalizedInjuryTeam)) {
             return true;
         }
 
@@ -335,16 +422,58 @@ public class InjuryAnalysisService {
         if (sport.equalsIgnoreCase("NFL") || sport.equalsIgnoreCase("CFB")) {
             return NFL_POSITION_IMPACT.getOrDefault(upperPos, 1.0);
         } else if (sport.equalsIgnoreCase("WNBA")) {
-            return WNBA_POSITION_IMPACT.getOrDefault(upperPos, 4.0);
+            return WNBA_POSITION_IMPACT.getOrDefault(upperPos, 4.5);
         } else if (sport.equalsIgnoreCase("NBA") || sport.equalsIgnoreCase("CBB") ||
                    sport.equalsIgnoreCase("WCBB")) {
-            return NBA_POSITION_IMPACT.getOrDefault(upperPos, 3.0);
+            return NBA_POSITION_IMPACT.getOrDefault(upperPos, 4.0);
         } else if (sport.equalsIgnoreCase("MLB")) {
             return MLB_POSITION_IMPACT.getOrDefault(upperPos, 1.0);
         } else if (sport.equalsIgnoreCase("NHL")) {
             return NHL_POSITION_IMPACT.getOrDefault(upperPos, 2.0);
         }
 
-        return 1.5; // Default for other sports
+        return 1.5;
+    }
+
+    /**
+     * Determine a player's tier multiplier based on known-player lookups.
+     *
+     * Without minutes/usage data from ESPN, we can't programmatically determine
+     * player importance. Instead we use curated sets of known stars and starters.
+     * Unknown players default to ROTATION tier (conservative — avoids inflating
+     * impact for bench players like Ziaire Williams, Day'Ron Sharpe, Egor Demin).
+     */
+    private double getPlayerTierMultiplier(String playerName, String sport) {
+        if (playerName == null) return TIER_DEFAULT;
+        String normalized = playerName.toLowerCase().trim();
+
+        if (sport == null) return TIER_DEFAULT;
+        String upperSport = sport.toUpperCase();
+
+        switch (upperSport) {
+            case "NBA", "BASKETBALL" -> {
+                if (NBA_STARS.contains(normalized)) return TIER_STAR;
+                if (NBA_STARTERS.contains(normalized)) return TIER_STARTER;
+                return TIER_DEFAULT;
+            }
+            case "NFL", "FOOTBALL" -> {
+                if (NFL_STARS.contains(normalized)) return TIER_STAR;
+                return TIER_DEFAULT;
+            }
+            case "WNBA" -> {
+                if (WNBA_STARS.contains(normalized)) return TIER_STAR;
+                return TIER_DEFAULT;
+            }
+            default -> {
+                return TIER_DEFAULT;
+            }
+        }
+    }
+
+    private String getTierLabel(double tierMultiplier) {
+        if (tierMultiplier >= TIER_STAR) return "STAR";
+        if (tierMultiplier >= TIER_STARTER) return "STARTER";
+        if (tierMultiplier >= TIER_ROTATION) return "ROTATION";
+        return "BENCH";
     }
 }

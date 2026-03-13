@@ -23,6 +23,11 @@ public class ESPNInjuryService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RosterValidationService rosterValidationService;
+
+    public ESPNInjuryService(RosterValidationService rosterValidationService) {
+        this.rosterValidationService = rosterValidationService;
+    }
 
     // ESPN API endpoints (free, no key needed!)
     private static final String NFL_INJURIES_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries";
@@ -233,6 +238,13 @@ public class ESPNInjuryService {
             injury.setTeam(teamName);
             injury.setTeamId(teamId);
             injury.setSport(sport);
+
+            // Validate player actually belongs to this team using roster data
+            if (!rosterValidationService.isPlayerOnTeam(injury.getPlayerName(), teamName, sport)) {
+                log.warn("Skipping injury for {} - roster validation confirms player is NOT on {}",
+                    injury.getPlayerName(), teamName);
+                return null;
+            }
 
             // Parse injury status
             injury.setStatus(node.path("status").asText("UNKNOWN"));

@@ -39,3 +39,7 @@ application-local.properties
 **/secrets/
 **/credentials/
 **/private/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/

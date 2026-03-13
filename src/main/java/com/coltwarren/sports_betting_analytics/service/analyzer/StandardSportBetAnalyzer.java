@@ -88,7 +88,7 @@ public class StandardSportBetAnalyzer {
                     String analysis = getQuickAnalysis(sport, homeTeam, awayTeam, injuryCtx.promptText());
                     double confidence = BetAnalysisUtils.extractConfidence(analysis);
 
-                    if (confidence >= 7.0) {
+                    if (confidence >= getMinConfidenceThreshold(sport)) {
                         Map<String, Object> bet = buildBet(sport, game, gameOdds, analysis, confidence);
 
                         if (OUTDOOR_SPORTS.contains(sport)) {
@@ -127,7 +127,7 @@ public class StandardSportBetAnalyzer {
         bet.put("analysis", analysis);
         bet.put("confidence", confidence);
         bet.put("recommendation", BetAnalysisUtils.extractRecommendation(analysis));
-        bet.put("kellyPercent", calculateKellyForBet(gameOdds, confidence));
+        bet.put("kellyPercent", calculateKellyForBet(gameOdds, confidence, sport));
         return bet;
     }
 
@@ -235,7 +235,14 @@ public class StandardSportBetAnalyzer {
         }
     }
 
-    private double calculateKellyForBet(Map<String, Object> gameOdds, double confidence) {
+    private double getMinConfidenceThreshold(String sport) {
+        if ("WCBB".equals(sport)) {
+            return 6.0; // WCBB markets are less efficient — lower threshold captures more edges
+        }
+        return 7.0;
+    }
+
+    private double calculateKellyForBet(Map<String, Object> gameOdds, double confidence, String sport) {
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> bestOdds = (Map<String, Object>) gameOdds.get("bestOdds");
@@ -257,7 +264,7 @@ public class StandardSportBetAnalyzer {
             double winProbability = 0.50 + (confidence - 7.0) * 0.05;
             winProbability = Math.max(0.50, Math.min(0.70, winProbability));
 
-            Map<String, Object> kellyResult = kellyCriterionService.calculateKelly(odds, winProbability, true);
+            Map<String, Object> kellyResult = kellyCriterionService.calculateKelly(odds, winProbability, true, sport);
             Double kellyPercentage = (Double) kellyResult.get("kellyPercentage");
             return kellyPercentage != null ? kellyPercentage : 0.0;
 
