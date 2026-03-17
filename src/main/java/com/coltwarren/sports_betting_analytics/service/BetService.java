@@ -55,6 +55,11 @@ public class BetService {
     public Bet createBet(Bet bet) {
         validateBet(bet);
         bet.setUser(requireCurrentUser());
+        // Ensure potentialPayout is calculated (the default constructor used by
+        // JSON deserialization doesn't call calculatePotentialPayout)
+        if (bet.getPotentialPayout() == null && bet.getStake() != null && bet.getOdds() != null) {
+            bet.recalculatePotentialPayout();
+        }
         return betRepository.save(bet);
     }
     
