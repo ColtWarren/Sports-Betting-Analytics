@@ -131,17 +131,34 @@ public class Bet {
     // Business Logic
     private BigDecimal calculatePotentialPayout(BigDecimal stake, BigDecimal americanOdds) {
         if (americanOdds.compareTo(BigDecimal.ZERO) > 0) {
+            // Positive odds: profit = stake × (odds / 100)
             BigDecimal profit = stake.multiply(americanOdds.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
             return profit.add(stake);
         } else {
+            // Negative odds: profit = stake × (100 / |odds|)
             BigDecimal absOdds = americanOdds.abs();
             BigDecimal profit = stake.multiply(BigDecimal.valueOf(100).divide(absOdds, 2, RoundingMode.HALF_UP));
             return profit.add(stake);
         }
     }
-    
+
+    /**
+     * Recalculate potentialPayout from current stake and odds.
+     * Call this after setting stake/odds on a bet created via the default constructor
+     * (e.g., JSON deserialization), which does not auto-calculate potentialPayout.
+     */
+    public void recalculatePotentialPayout() {
+        if (this.stake != null && this.odds != null) {
+            this.potentialPayout = calculatePotentialPayout(this.stake, this.odds);
+        }
+    }
+
     public void markAsWon() {
         this.status = BetStatus.WON;
+        // Ensure potentialPayout exists (defensive — covers bets created before the fix)
+        if (this.potentialPayout == null && this.stake != null && this.odds != null) {
+            this.potentialPayout = calculatePotentialPayout(this.stake, this.odds);
+        }
         if (this.actualPayout == null) {
             this.actualPayout = this.potentialPayout;
         }

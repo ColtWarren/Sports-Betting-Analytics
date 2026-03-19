@@ -4,6 +4,7 @@ import com.coltwarren.sports_betting_analytics.model.recommendation.*;
 import com.coltwarren.sports_betting_analytics.model.pattern.BettingPattern;
 import com.coltwarren.sports_betting_analytics.model.pattern.PatternMatch;
 import com.coltwarren.sports_betting_analytics.model.xg.MatchXGAnalysis;
+import com.coltwarren.sports_betting_analytics.service.KellyCriterionService;
 import com.coltwarren.sports_betting_analytics.service.pattern.PatternMatchingService;
 import com.coltwarren.sports_betting_analytics.service.xg.XGDataService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +31,14 @@ public class MultiFactorEngine {
 
     private final PatternMatchingService patternMatchingService;
     private final XGDataService xgDataService;
+    private final KellyCriterionService kellyCriterionService;
 
-    public MultiFactorEngine(PatternMatchingService patternMatchingService, XGDataService xgDataService) {
+    public MultiFactorEngine(PatternMatchingService patternMatchingService,
+                              XGDataService xgDataService,
+                              KellyCriterionService kellyCriterionService) {
         this.patternMatchingService = patternMatchingService;
         this.xgDataService = xgDataService;
+        this.kellyCriterionService = kellyCriterionService;
     }
 
     // Factor weights (sum to 1.0)
@@ -47,7 +52,6 @@ public class MultiFactorEngine {
     // Thresholds
     private static final double MIN_CONFIDENCE_TO_BET = 6.0;
     private static final double MIN_EV_TO_BET = 2.0;        // 2% minimum expected value
-    private static final double MAX_KELLY = 0.05;           // 5% max stake
 
     /**
      * Generate multi-factor recommendation for a single game
@@ -508,9 +512,12 @@ public class MultiFactorEngine {
             double ev = (winProb * (odds - 1)) - ((1 - winProb) * 1);
             rec.setExpectedValue(ev * 100);
 
-            // Calculate Kelly stake
-            double kelly = (winProb * odds - 1) / (odds - 1);
-            kelly = Math.max(0, Math.min(MAX_KELLY, kelly * 0.5)); // Half-Kelly, capped
+            // Calculate Kelly stake with sport-specific cap
+            double rawKelly = (winProb * odds - 1) / (odds - 1);
+            rawKelly = Math.max(0, rawKelly);
+            double kellyCap = kellyCriterionService.getKellyCap(rec.getSport());
+            double cappedKelly = Math.min(rawKelly, kellyCap);
+            double kelly = cappedKelly / 2.0; // Half-Kelly for additional safety
             rec.setKellyStake(kelly * 100);
 
             // Suggested amount

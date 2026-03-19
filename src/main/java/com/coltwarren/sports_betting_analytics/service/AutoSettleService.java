@@ -44,8 +44,12 @@ public class AutoSettleService {
                     BetStatus outcome = attemptAutoSettle(bet);
 
                     if (outcome != BetStatus.PENDING) {
-                        bet.setStatus(outcome);
-                        bet.setSettledAt(LocalDateTime.now());
+                        switch (outcome) {
+                            case WON -> bet.markAsWon();
+                            case LOST -> bet.markAsLost();
+                            case PUSH -> bet.markAsPush();
+                            default -> bet.setStatus(outcome);
+                        }
                         betRepository.save(bet);
                         settled++;
                         results.add(bet.getEventName() + ": " + outcome);
