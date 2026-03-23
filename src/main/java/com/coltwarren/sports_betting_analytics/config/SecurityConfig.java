@@ -21,14 +21,17 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService oAuth2SuccessHandler;
     private final RateLimitingFilter rateLimitingFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
 
     public SecurityConfig(CustomOAuth2UserService oAuth2SuccessHandler,
-                          RateLimitingFilter rateLimitingFilter) {
+                          RateLimitingFilter rateLimitingFilter,
+                          InternalApiKeyFilter internalApiKeyFilter) {
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.rateLimitingFilter = rateLimitingFilter;
+        this.internalApiKeyFilter = internalApiKeyFilter;
     }
 
     @Bean
@@ -89,7 +92,10 @@ public class SecurityConfig {
             )
 
             // Rate limiting
-            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+
+            // Internal API key for service-to-service calls (runs before auth)
+            .addFilterBefore(internalApiKeyFilter, RateLimitingFilter.class);
 
         return http.build();
     }
